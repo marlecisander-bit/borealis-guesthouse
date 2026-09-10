@@ -1,0 +1,5 @@
+import Link from 'next/link';
+
+export function ExperienceActions({ slug, price }: { slug: string; price: number | null }) {
+  return <div className="fixed inset-x-0 bottom-0 z-30 border-t border-lake/10 bg-white/95 px-4 pb-[max(.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_30px_rgba(23,50,77,.12)] backdrop-blur md:hidden"><div className="mx-auto flex max-w-lg items-center gap-3"><p className="text-xs text-muted">{price===null?'Price on request':<>From<br/><strong className="text-lg text-lake">€{price}</strong></>}</p><Link href={`/book?experience=${slug}`} className="ml-auto min-h-14 flex-1 rounded-full bg-lake px-5 py-4 text-center text-sm font-bold text-white">Book experience</Link></div></div>;
+}

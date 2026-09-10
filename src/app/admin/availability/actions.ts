@@ -1,0 +1,5 @@
+'use server';import {revalidatePath} from 'next/cache';import {requireAdmin} from '@/lib/admin/auth';import {validateBlock} from '@/lib/admin/availability-validation';import {adminAvailabilityRepository} from '@/lib/repositories/admin/availability';import type {AvailabilityState} from '@/types/availability-admin';
+const refresh=()=>{revalidatePath('/admin/availability');revalidatePath('/book')};
+export async function createAvailabilityBlock(_:AvailabilityState,d:FormData):Promise<AvailabilityState>{const session=await requireAdmin(['owner','manager','staff']);const value=validateBlock(d);if(!value.data)return value.state!;try{await adminAvailabilityRepository.createBlock(session,value.data);refresh();return{ok:true,message:'Dates blocked. Availability is updated immediately.'}}catch(error){return{ok:false,message:error instanceof Error?error.message:'Dates could not be blocked.'}}}
+export async function reopenAvailability(id:string){const session=await requireAdmin(['owner','manager','staff']);await adminAvailabilityRepository.reopen(session,id);refresh()}
+

@@ -1,0 +1,4 @@
+'use client';
+import { useState } from 'react';
+import AdminSidebar from './AdminSidebar';
+export function AdminMobileNav(){const[open,setOpen]=useState(false);return <><button onClick={()=>setOpen(true)} className="min-h-11 rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold lg:hidden" aria-expanded={open} aria-controls="admin-mobile-menu">Menu</button>{open&&<div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Admin navigation"><button className="absolute inset-0 bg-slate-950/50" onClick={()=>setOpen(false)} aria-label="Close navigation"/><div id="admin-mobile-menu" className="relative h-full w-[min(20rem,88vw)]"><AdminSidebar onNavigate={()=>setOpen(false)}/><button onClick={()=>setOpen(false)} className="absolute right-3 top-3 size-11 rounded-full border border-slate-200 bg-white text-xl" aria-label="Close navigation">×</button></div></div>}</>}

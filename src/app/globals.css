@@ -1,26 +1,7 @@
 @import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+:root{--lake:#17324d;--green:#506f6c;--sand:#e8ded0;--ivory:#f7f4ee;--charcoal:#22292d;--muted:#657077}
+@theme inline{--color-lake:var(--lake);--color-green:var(--green);--color-sand:var(--sand);--color-ivory:var(--ivory);--color-charcoal:var(--charcoal);--color-muted:var(--muted);--font-sans:var(--font-manrope);--font-serif:var(--font-cormorant)}
+*{box-sizing:border-box}html{max-width:100%;overflow-x:hidden;scroll-behavior:smooth}body{margin:0;max-width:100%;overflow-x:hidden;background:#fff;color:var(--charcoal);font-family:var(--font-manrope),Arial,sans-serif;font-size:1rem;line-height:1.65;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}main{isolation:isolate}h1,h2,h3{letter-spacing:-.025em;text-wrap:balance}p{text-wrap:pretty}a,button,input,select,textarea{outline-offset:4px}a,button{transition-property:color,background-color,border-color,opacity,transform,box-shadow;transition-duration:220ms;transition-timing-function:ease}button:not(:disabled),a[href]{cursor:pointer}:focus-visible{outline:2px solid var(--green);outline-offset:4px}::selection{background:var(--sand);color:var(--lake)}.shell{width:min(100% - 2rem,80rem);margin-inline:auto}.eyebrow{font-size:.7rem;font-weight:800;line-height:1.5;letter-spacing:.18em;text-transform:uppercase;color:var(--green)}
+.booking-input{display:block;width:100%;min-height:3.5rem;margin-top:.35rem;background:transparent;font-size:1rem;font-weight:500;color:var(--charcoal);outline:none}
+@media(hover:hover){a[href^="/book"]:hover,button.bg-lake:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(23,50,77,.14)}}
+@media(min-width:768px){.shell{width:min(100% - 4rem,80rem)}}@media(min-width:1600px){.shell{width:min(100% - 6rem,80rem)}}@media(max-width:359px){.shell{width:min(100% - 1.5rem,80rem)}.eyebrow{letter-spacing:.14em}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
