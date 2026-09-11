@@ -23,14 +23,6 @@ import {getPublishedHomepageHero} from '@/lib/repositories/public/homepage';
 const reviews:Review[]=[];
 export async function generateMetadata():Promise<Metadata>{return createPageMetadata('homepage')}
 
-const highlights = [
-  { mark: '01', label: 'Lakefront location' },
-  { mark: '02', label: 'Breakfast included' },
-  { mark: '03', label: 'Private parking' },
-  { mark: '04', label: 'Local experiences' },
-  { mark: '05', label: 'Guest transfers' },
-];
-
 export default async function Home({searchParams}:{searchParams:Promise<{preview?:string}>}) {
   const preview=Boolean(await authorizePreview('homepage',(await searchParams).preview));
   const [liveProperty, allRooms, allExperiences, allGallery, homepageContent, homepageCmsRaw, publishedHero, liveArticles, liveTransfers, navigation,language] = await Promise.all([
@@ -57,7 +49,7 @@ export default async function Home({searchParams}:{searchParams:Promise<{preview
     <>
       <Header overlay navigation={navigation} languages={language.enabled} selectedLanguage={language.selected?.code||''}/>
       <main className="flex flex-col">{preview&&<PreviewBanner label="Homepage draft preview"/>}
-        {visible('hero')&&<section style={{order:order('hero',0)}} className="hero-section relative z-30 min-h-[88svh] bg-lake text-white lg:min-h-[94svh]">
+        {visible('hero')&&<section data-homepage-section="hero" style={{order:order('hero',0)}} className="hero-section relative z-30 min-h-[88svh] bg-lake text-white lg:min-h-[94svh]">
           <Image src={!preview&&publishedHero?.imageUrl?publishedHero.imageUrl:hero?.backgroundMediaId?homepageCms?.mediaUrls[hero.backgroundMediaId]||liveProperty.heroImage:liveProperty.heroImage} alt="Koman Lake surrounded by mountain slopes" fill priority sizes="100vw" className="object-cover" />
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,25,18,.58)_0%,rgba(10,25,18,.10)_38%,rgba(10,25,18,.72)_100%)]" />
           <div className="shell relative flex min-h-[88svh] flex-col justify-end pb-7 pt-28 lg:min-h-[94svh] lg:pb-0">
@@ -71,18 +63,7 @@ export default async function Home({searchParams}:{searchParams:Promise<{preview
           </div>
         </section>}
 
-        {visible('property_highlights')&&<section style={{order:order('property_highlights',10)}} className="bg-ivory pb-14 pt-14 md:pb-20 md:pt-24" aria-label="Property highlights">
-          <div className="shell grid grid-cols-2 gap-y-7 sm:grid-cols-3 md:grid-cols-5 md:gap-y-0">
-            {(homepageCms?.highlights.length?homepageCms.highlights:highlights.map((item,index)=>({id:item.label,title:item.label,description:'',icon:item.mark,sortOrder:index,visible:true,status:'published' as const}))).map((item,index) => (
-              <div key={item.id} className="flex min-h-24 min-w-0 flex-col items-center px-3 text-center md:border-r md:border-lake/10 md:px-6 md:last:border-r-0">
-                <span className="grid size-9 place-items-center rounded-full border border-green/20 font-serif text-lg text-green">{item.icon||String(index+1).padStart(2,'0')}</span>
-                <p className="mt-3 text-sm font-semibold leading-5 text-lake">{item.title}</p>{item.description&&<p className="mt-1 max-w-48 text-xs leading-5 text-muted">{item.description}</p>}
-              </div>
-            ))}
-          </div>
-        </section>}
-
-        {visible('intro')&&<section style={{order:order('intro',20)}} className="py-20 md:py-32">
+        {visible('intro')&&<section data-homepage-section="intro" style={{order:order('intro',20)}} className="py-20 md:py-32">
           <div className="shell grid items-center gap-12 lg:grid-cols-[1.15fr_.85fr] lg:gap-20">
             <div className="relative min-h-[32rem] overflow-hidden rounded-[2rem] md:min-h-[42rem]">
               <Image src={intro?.backgroundMediaId?homepageCms?.mediaUrls[intro.backgroundMediaId]||liveProperty.heroImage:liveProperty.heroImage} alt={String(intro?.settings.imageAlt||'A peaceful terrace surrounded by nature')} fill sizes="(max-width: 1024px) 100vw, 58vw" className="object-cover" />
