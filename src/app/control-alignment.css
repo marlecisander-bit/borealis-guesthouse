@@ -15,6 +15,15 @@
   justify-content: space-between;
 }
 
+/* The shared rounded-control alignment rule above is intentionally stronger
+   than utility display classes. Reassert the public header breakpoint so its
+   mobile control can never leak into the desktop navigation. */
+@media (min-width: 1024px) {
+  button[data-mobile-menu-toggle] {
+    display: none;
+  }
+}
+
 /* Admin tabular lists: headings and values share the same alignment rules. */
 [data-admin-shell] table th,
 [data-admin-shell] table td {

@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getCurrentAdmin } from '@/lib/admin/auth';
 import { mediaBucket, resolvePublicMediaUrl } from '@/lib/media-url';
+import { MEDIA_UPLOAD_CONFIG } from '@/lib/media-upload-config';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
-const maxBytes = 10 * 1024 * 1024;
 const signatures = [
   { mime: 'image/jpeg', ext: 'jpg', test: (b: Uint8Array) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff },
   { mime: 'image/png', ext: 'png', test: (b: Uint8Array) => b.slice(0, 8).every((v, i) => v === [137,80,78,71,13,10,26,10][i]) },
@@ -17,16 +17,20 @@ export async function POST(request: Request) {
   const form = await request.formData();
   const file = form.get('file');
   if (!(file instanceof File)) return NextResponse.json({ error: 'Choose an image.' }, { status: 400 });
-  if (!file.size || file.size > maxBytes) return NextResponse.json({ error: 'Images must be between 1 byte and 10 MB.' }, { status: 400 });
+  if (!file.size || file.size > MEDIA_UPLOAD_CONFIG.maxUploadBytes) return NextResponse.json({ error: 'Images must be between 1 byte and 10 MB.' }, { status: 400 });
   const bytes = new Uint8Array(await file.arrayBuffer());
   const detected = signatures.find(signature => signature.test(bytes));
   if (!detected) return NextResponse.json({ error: 'Only genuine JPEG, PNG, WebP, and AVIF images are accepted.' }, { status: 415 });
-  const width = Number(form.get('width') || 0), height = Number(form.get('height') || 0);
+  const submittedWidth = Number(form.get('width') || 0), submittedHeight = Number(form.get('height') || 0);
+  const width = Number.isInteger(submittedWidth) && submittedWidth > 0 && submittedWidth <= 50_000 ? submittedWidth : null;
+  const height = Number.isInteger(submittedHeight) && submittedHeight > 0 && submittedHeight <= 50_000 ? submittedHeight : null;
+  const filenameBase = file.name.replace(/\.[^.]+$/, '').replace(/[^\p{L}\p{N}._ -]+/gu, '-').trim().slice(0, 240) || 'image';
+  const filename = `${filenameBase}.${detected.ext}`;
   const path = `${session.propertyId}/${crypto.randomUUID()}.${detected.ext}`;
   const db = await createServerSupabaseClient();
   const upload = await db.storage.from(mediaBucket).upload(path, bytes, { contentType: detected.mime, cacheControl: '31536000', upsert: false });
   if (upload.error) return NextResponse.json({ error: upload.error.message }, { status: 400 });
-  const { data, error } = await db.from('media_assets').insert({ property_id: session.propertyId, storage_bucket: mediaBucket, file_path: path, filename: file.name.slice(0, 255), title: String(form.get('displayName') || file.name).trim().slice(0, 255), mime_type: detected.mime, file_type: detected.mime, size_bytes: file.size, width: width > 0 ? width : null, height: height > 0 ? height : null, alt_text: String(form.get('altText') || '').trim().slice(0, 500) || null, caption: String(form.get('caption') || '').trim().slice(0, 2000) || null, status: 'published', is_published: true, is_visible: true, placement: 'gallery', created_by: session.userId, updated_by: session.userId }).select(columns).single();
+  const { data, error } = await db.from('media_assets').insert({ property_id: session.propertyId, storage_bucket: mediaBucket, file_path: path, filename, title: String(form.get('displayName') || filenameBase).trim().slice(0, 255), mime_type: detected.mime, file_type: detected.mime, size_bytes: file.size, width, height, alt_text: String(form.get('altText') || '').trim().slice(0, 500) || null, caption: String(form.get('caption') || '').trim().slice(0, 2000) || null, status: 'published', is_published: true, is_visible: true, placement: 'gallery', created_by: session.userId, updated_by: session.userId }).select(columns).single();
   if (error) { await db.storage.from(mediaBucket).remove([path]); return NextResponse.json({ error: error.message }, { status: 400 }); }
   return NextResponse.json({ asset: { ...data, publicUrl: resolvePublicMediaUrl(path, mediaBucket), referencedByPublishedContent: false } }, { status: 201 });
 }

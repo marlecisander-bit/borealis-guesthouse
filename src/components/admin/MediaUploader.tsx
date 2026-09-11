@@ -2,21 +2,9 @@
 
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { ACCEPTED_MEDIA_MIME_TYPES, MEDIA_UPLOAD_CONFIG } from '@/lib/media-upload-config';
+import { imageStorageSavings, prepareImageForUpload } from '@/lib/media/optimize-image';
 import type { AdminMediaAsset } from '@/types/media';
-
-const MAX_SIZE = 10 * 1024 * 1024;
-const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif']);
-
-async function dimensions(file: File) {
-  try {
-    const bitmap = await createImageBitmap(file);
-    const result = { width: bitmap.width, height: bitmap.height };
-    bitmap.close();
-    return result;
-  } catch {
-    return { width: 0, height: 0 };
-  }
-}
 
 function send(form: FormData, onProgress: (value: number) => void): Promise<AdminMediaAsset> {
   return new Promise((resolve, reject) => {
@@ -52,6 +40,7 @@ export function MediaUploader({
   const [caption, setCaption] = useState('');
   const [progress, setProgress] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [phase, setPhase] = useState('');
   const [message, setMessage] = useState('');
   const previews = useMemo(
     () => files.map(file => ({ file, url: URL.createObjectURL(file) })),
@@ -64,12 +53,19 @@ export function MediaUploader({
   );
 
   function choose(selected: File[]) {
-    const invalid = selected.find(
-      file => !ACCEPTED_TYPES.has(file.type) || file.size <= 0 || file.size > MAX_SIZE,
-    );
-    if (invalid) {
+    const unsupported = selected.find(file => !ACCEPTED_MEDIA_MIME_TYPES.has(file.type));
+    if (unsupported) {
       setFiles([]);
-      setMessage(`${invalid.name} must be a JPEG, PNG, WebP or AVIF image no larger than 10 MB.`);
+      const heic = /\.(heic|heif)$/i.test(unsupported.name) || /heic|heif/i.test(unsupported.type);
+      setMessage(heic
+        ? 'HEIC/HEIF photos are not supported by this browser workflow. Export the photo as JPEG first.'
+        : `${unsupported.name} must be a JPEG, PNG, WebP or AVIF image.`);
+      return;
+    }
+    const invalidSize = selected.find(file => file.size <= 0 || file.size > MEDIA_UPLOAD_CONFIG.maxSourceImageBytes);
+    if (invalidSize) {
+      setFiles([]);
+      setMessage(`${invalidSize.name} is empty or too large to optimize safely. Choose an image smaller than 50 MB.`);
       return;
     }
     setFiles(selected);
@@ -96,21 +92,35 @@ export function MediaUploader({
       return;
     }
     setBusy(true);
+    setProgress(0);
+    setPhase('Preparing image…');
     setMessage('');
     try {
       const uploaded: AdminMediaAsset[] = [];
+      let optimizedCount = 0;
+      let originalBytes = 0;
+      let finalBytes = 0;
       for (let index = 0; index < files.length; index++) {
-        const file = files[index];
-        const size = await dimensions(file);
+        const source = files[index];
+        if (source.size > MEDIA_UPLOAD_CONFIG.optimizationTriggerBytes) setPhase('Optimizing image…');
+        else setPhase('Preparing image…');
+        const prepared = await prepareImageForUpload(source);
+        if (prepared.optimized) optimizedCount++;
+        originalBytes += prepared.originalBytes;
+        finalBytes += prepared.file.size;
         const form = new FormData();
-        form.set('file', file);
-        form.set('width', String(size.width));
-        form.set('height', String(size.height));
-        form.set('displayName', files.length === 1 ? displayName : file.name.replace(/\.[^.]+$/, ''));
+        form.set('file', prepared.file);
+        form.set('width', String(prepared.width));
+        form.set('height', String(prepared.height));
+        form.set('displayName', files.length === 1 ? displayName : source.name.replace(/\.[^.]+$/, ''));
         form.set('altText', files.length === 1 ? altText : altText ? `${altText} ${index + 1}` : '');
         form.set('caption', caption);
         uploaded.push(
-          await send(form, value => setProgress(Math.round((index * 100 + value) / files.length))),
+          await send(form, value => {
+            const nextProgress = Math.round((index * 100 + value) / files.length);
+            setProgress(nextProgress);
+            setPhase(`Uploading ${nextProgress}%…`);
+          }),
         );
       }
       await onUploaded?.(uploaded);
@@ -120,7 +130,8 @@ export function MediaUploader({
       setCaption('');
       setProgress(100);
       if (inputRef.current) inputRef.current.value = '';
-      setMessage(`${uploaded.length} image${uploaded.length === 1 ? '' : 's'} uploaded.`);
+      const savings = imageStorageSavings(originalBytes, finalBytes);
+      setMessage(`Upload complete. ${uploaded.length} image${uploaded.length === 1 ? '' : 's'} uploaded.${optimizedCount ? ` Large image${optimizedCount === 1 ? '' : 's'} optimized automatically${savings ? `, saving ${savings}%` : ''}.` : ''}`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Upload failed.');
     } finally {
@@ -139,7 +150,7 @@ export function MediaUploader({
         className="rounded-xl border-2 border-dashed border-slate-300 p-5 text-center"
       >
         <p className="text-sm font-semibold text-slate-800">Drop images here or choose files</p>
-        <p className="mt-1 text-xs text-slate-500">JPEG, PNG, WebP or AVIF · 10 MB maximum each</p>
+        <p className="mt-1 text-xs text-slate-500">JPEG, PNG, WebP or AVIF · large photos optimized automatically</p>
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
@@ -246,8 +257,11 @@ export function MediaUploader({
         )}
       </div>
       {busy && (
-        <div className="mt-4 h-2 overflow-hidden rounded bg-slate-200" aria-label={`Upload ${progress}% complete`}>
-          <div className="h-full bg-emerald-600 transition-all" style={{ width: `${progress}%` }} />
+        <div className="mt-4" role="status" aria-live="polite">
+          <p className="mb-2 text-sm font-medium text-slate-700">{phase}</p>
+          <div className="h-2 overflow-hidden rounded bg-slate-200" aria-label={`Upload ${progress}% complete`}>
+            <div className="h-full bg-emerald-600 transition-all" style={{ width: `${progress}%` }} />
+          </div>
         </div>
       )}
       <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -257,7 +271,7 @@ export function MediaUploader({
           onClick={() => void upload()}
           className="min-h-11 rounded-lg bg-slate-950 px-5 text-sm font-semibold text-white disabled:opacity-50"
         >
-          {busy ? `Uploading ${progress}%` : 'Upload images'}
+          {busy ? phase : 'Upload images'}
         </button>
         {message && <p role="status" className="text-sm text-slate-600">{message}</p>}
       </div>

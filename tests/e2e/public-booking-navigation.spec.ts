@@ -1,6 +1,6 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 
-const representativeProjects = new Set(['desktop-chromium', 'mobile-390x844']);
+const representativeProjects = new Set(['desktop-1440x900', 'mobile-390x844']);
 
 function runOnRepresentativeViewports(testInfo: TestInfo) {
   test.skip(!representativeProjects.has(testInfo.project.name), 'Covered on one desktop and one narrow mobile viewport.');
@@ -36,7 +36,7 @@ test('header Book now responds immediately and reaches the prefetched booking ro
   await expect(cta.locator('[aria-busy="true"]')).toBeVisible();
   await expect(page).toHaveURL(/\/book$/);
   await expect(page.getByRole('heading', { name:'Your Koman stay, made simple.' })).toBeVisible();
-  if (testInfo.project.name === 'desktop-chromium') {
+  if (testInfo.project.name === 'desktop-1440x900') {
     await expect(page.getByText('Booking summary', { exact:true }).locator('..')).toHaveCSS('background-color', 'rgb(36, 82, 62)');
   }
   await expectNoHorizontalOverflow(page);

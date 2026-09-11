@@ -22,6 +22,19 @@ const exactMobileProjects: Project[] = [
   },
 }));
 
+const exactDesktopProjects: Project[] = [
+  ['desktop-1024x768', 1024, 768],
+  ['desktop-1280x800', 1280, 800],
+  ['desktop-1440x900', 1440, 900],
+  ['desktop-1920x1080', 1920, 1080],
+].map(([name, width, height]) => ({
+  name: String(name),
+  use: {
+    browserName: 'chromium' as const,
+    viewport: { width: Number(width), height: Number(height) },
+  },
+}));
+
 export default defineConfig({
   testDir: './tests/e2e',
   outputDir: './test-results/playwright-artifacts',
@@ -40,7 +53,7 @@ export default defineConfig({
   },
   expect: { timeout: 8_000 },
   projects: [
-    { name: 'desktop-chromium', use: { browserName: 'chromium', viewport: { width: 1440, height: 900 } } },
+    ...exactDesktopProjects,
     ...exactMobileProjects,
     { name: 'iphone-13', use: { ...devices['iPhone 13'], browserName: 'chromium' } },
     { name: 'pixel-7', use: { ...devices['Pixel 7'] } },

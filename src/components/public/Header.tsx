@@ -111,10 +111,11 @@ export function Header({ overlay = false, navigation, languages = [], selectedLa
   const active = (href: string) => href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`);
   const scrolledOverlay = overlay && scrolled;
 
-  return <header
+  return <><header
     data-public-header
+    data-overlay={overlay}
     data-state={open ? 'menu-open' : transparent ? 'hero' : 'scrolled'}
-    className={`public-header ${overlay ? 'fixed' : 'sticky'} inset-x-0 top-0 z-40 transition-[background-color,box-shadow] duration-300 ${transparent ? 'bg-transparent' : scrolledOverlay ? 'bg-lake/98 shadow-[0_8px_28px_rgba(9,25,15,.16)] lg:bg-ivory/95 lg:backdrop-blur-md' : 'bg-ivory/95 shadow-sm lg:backdrop-blur-md'}`}
+    className={`public-header fixed inset-x-0 top-0 z-40 transition-[background-color,box-shadow] duration-300 ${transparent ? 'bg-transparent' : scrolledOverlay ? 'bg-lake/98 shadow-[0_8px_28px_rgba(9,25,15,.16)] lg:bg-ivory/95 lg:backdrop-blur-md' : 'bg-ivory/95 shadow-sm lg:backdrop-blur-md'}`}
   >
     <div className={`public-header-bar shell flex items-center justify-between border-b transition-[height,border-color] duration-300 ${transparent ? 'border-white/20' : scrolledOverlay ? 'border-white/10 lg:border-lake/10' : 'border-lake/10'}`}>
       <HomeLink ariaLabel="Borealis Guest House — Home" className="flex h-full shrink-0 items-center">
@@ -123,7 +124,7 @@ export function Header({ overlay = false, navigation, languages = [], selectedLa
           <BorealisLogo priority variant="dark" className="hidden h-14 w-auto lg:block" />
         </> : <BorealisLogo priority variant={transparent ? 'light' : 'dark'} className="block h-14 w-auto -translate-y-0.5 sm:translate-y-0" />}
       </HomeLink>
-      <nav className={`hidden items-center gap-3 text-[.58rem] font-semibold uppercase tracking-[.1em] lg:flex xl:gap-5 xl:text-[.64rem] xl:tracking-[.13em] ${desktopTone}`} aria-label="Main navigation">
+      <nav data-desktop-navigation className={`hidden items-center gap-3 text-[.58rem] font-semibold uppercase tracking-[.1em] lg:flex xl:gap-5 xl:text-[.64rem] xl:tracking-[.13em] ${desktopTone}`} aria-label="Main navigation">
         {links.map(([label, href]) => href === '/' ? <HomeLink key={`${label}-${href}`} ariaCurrent={active(href) ? 'page' : undefined} className="transition-opacity hover:opacity-60">{label}</HomeLink> : <Link key={`${label}-${href}`} href={href} aria-current={active(href) ? 'page' : undefined} className="transition-opacity hover:opacity-60">{label}</Link>)}
       </nav>
       <div className="flex items-center gap-2">
@@ -133,6 +134,7 @@ export function Header({ overlay = false, navigation, languages = [], selectedLa
         <BookingLink href="/book" pendingLabel="Opening…" className="public-primary-cta inline-flex min-h-11 min-w-[5.8rem] items-center justify-center rounded-full px-3 py-2.5 text-[.62rem] font-bold uppercase tracking-[.13em] min-[360px]:min-w-[6.5rem] min-[360px]:px-4 min-[360px]:text-[.65rem] sm:px-5">Book now</BookingLink>
         <button
           ref={menuButton}
+          data-mobile-menu-toggle
           type="button"
           onClick={() => setOpen(value => !value)}
           className={`public-menu-toggle relative size-11 shrink-0 rounded-full border lg:hidden ${transparent || scrolledOverlay ? 'border-white/45 text-white' : 'border-lake/20 text-lake'}`}
@@ -174,5 +176,5 @@ export function Header({ overlay = false, navigation, languages = [], selectedLa
       </nav>
       <BookingLink onClick={closeMenu} href="/book" className="mt-auto inline-flex min-h-14 shrink-0 items-center justify-center rounded-full bg-sand px-6 py-4 text-center text-sm font-bold uppercase tracking-[.12em] text-lake">Check availability</BookingLink>
     </div>
-  </header>;
+  </header>{!overlay&&<div aria-hidden="true" className="public-header-spacer" />}</>;
 }

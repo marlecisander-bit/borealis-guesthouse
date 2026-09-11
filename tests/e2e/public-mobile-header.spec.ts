@@ -27,7 +27,7 @@ async function expectHeaderInsideViewport(page: Page) {
 }
 
 test('public mobile header remains stable through menu and scroll states', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name === 'desktop-chromium', 'Mobile header behavior is covered by mobile and tablet projects.');
+  test.skip(testInfo.project.name.startsWith('desktop-'), 'Mobile header behavior is covered by mobile and tablet projects.');
   const browserErrors: string[] = [];
   page.on('console', message => {
     if (message.type() === 'error') browserErrors.push(message.text());
