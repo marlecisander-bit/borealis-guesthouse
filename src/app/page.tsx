@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { BookingSearch } from '@/components/public/BookingSearch';
 import { MobileBookingBar } from '@/components/public/MobileBookingBar';
-import { BorealisLogo } from '@/components/brand/BorealisLogo';
+import { MapFallback, MapPlaceholder } from '@/components/public/MapPlaceholder';
 import { ExperienceCard, RoomCard, SectionHeader } from '@/components/public/Cards';
 import { Footer } from '@/components/public/Footer';
 import { Header } from '@/components/public/Header';
@@ -13,7 +14,7 @@ import { contentRepository } from '@/services/content';
 import { getHomepageCms } from '@/services/homepage-cms';
 import{localizeHomepageCms}from'@/services/homepage-translations';
 import{getLanguageContext}from'@/services/translations';
-import { getNavigation, getSiteDocument } from '@/services/site-content';
+import { getContactInfo, getNavigation, getSiteDocument } from '@/services/site-content';
 import type { HomepageKey } from '@/types/homepage-cms';
 import {authorizePreview} from '@/lib/preview';
 import {PreviewBanner} from '@/components/public/PreviewBanner';
@@ -24,7 +25,7 @@ export async function generateMetadata():Promise<Metadata>{return createPageMeta
 
 export default async function Home({searchParams}:{searchParams:Promise<{preview?:string}>}) {
   const preview=Boolean(await authorizePreview('homepage',(await searchParams).preview));
-  const [liveProperty, allRooms, allExperiences, allGallery, homepageCmsRaw, publishedHero, liveArticles, liveTransfers, navigation,language,globalContent] = await Promise.all([
+  const [liveProperty, allRooms, allExperiences, allGallery, homepageCmsRaw, publishedHero, liveArticles, liveTransfers, navigation,language,globalContent,contact] = await Promise.all([
     contentRepository.getProperty(),
     contentRepository.getRooms(),
     contentRepository.getExperiences(),
@@ -33,7 +34,7 @@ export default async function Home({searchParams}:{searchParams:Promise<{preview
     preview?Promise.resolve(null):getPublishedHomepageHero(),
     contentRepository.getArticles(),
     contentRepository.getTransfers(),
-    getNavigation('header'),getLanguageContext(),getSiteDocument('global'),
+    getNavigation('header'),getLanguageContext(),getSiteDocument('global'),getContactInfo(),
   ]);
   const homepageCms=await localizeHomepageCms(homepageCmsRaw);
   const section=(key:HomepageKey)=>homepageCms?.sections.find(item=>item.key===key);
@@ -113,7 +114,7 @@ export default async function Home({searchParams}:{searchParams:Promise<{preview
         </section>}
 
         {visible('location')&&<section style={{order:order('location',90)}} className="py-20 md:py-28">
-          <div className="shell grid gap-10 lg:grid-cols-2 lg:items-center"><div><p className="eyebrow">{locationSection?.eyebrow||'Koman, Albania'}</p><h2 className="mt-4 font-serif text-5xl text-lake md:text-6xl">{locationSection?.title||'At the edge of the water.'}</h2><p className="mt-6 max-w-lg leading-8 text-muted">{locationSection?.body||locationSection?.subtitle||'Borealis is set in Koman, a mountain gateway known for its lake journeys and dramatic northern Albanian landscape.'}</p><Link href={locationSection?.ctaLink||'/contact'} className="mt-7 inline-block rounded-full bg-lake px-7 py-4 text-sm font-bold text-white">{locationSection?.ctaLabel||'Contact & directions'}</Link></div><div className="relative min-h-[26rem] overflow-hidden rounded-[2rem] bg-green"><div className="absolute inset-5 rounded-[1.4rem] border border-white/20 bg-[radial-gradient(circle_at_70%_25%,rgba(232,222,208,.35),transparent_24%),linear-gradient(135deg,rgba(255,255,255,.08),transparent)]"/><div className="absolute inset-0 grid place-items-center text-center text-white"><div><BorealisLogo variant="light" className="mx-auto h-24 w-auto"/><p className="mt-4 font-serif text-3xl">Borealis · Koman</p>{locationSection?.settings.mapLink?<Link href={String(locationSection.settings.mapLink)} className="mt-3 inline-block border-b border-sand pb-1 text-sm font-semibold text-sand">Open map</Link>:<p className="mt-2 text-sm text-white/60">Map reference managed by Borealis</p>}</div></div></div></div>
+          <div className="shell grid gap-10 lg:grid-cols-2 lg:items-center"><div><p className="eyebrow">{locationSection?.eyebrow||'Koman, Albania'}</p><h2 className="mt-4 font-serif text-5xl text-lake md:text-6xl">{locationSection?.title||'At the edge of the water.'}</h2><p className="mt-6 max-w-lg leading-8 text-muted">{locationSection?.body||locationSection?.subtitle||'Borealis is set in Koman, a mountain gateway known for its lake journeys and dramatic northern Albanian landscape.'}</p><Link href={locationSection?.ctaLink||'/contact'} className="mt-7 inline-block rounded-full bg-lake px-7 py-4 text-sm font-bold text-white">{locationSection?.ctaLabel||'Contact & directions'}</Link></div><Suspense fallback={<MapFallback contact={contact} className="min-h-[26rem] rounded-[2rem]"/>}><MapPlaceholder contact={contact} className="min-h-[26rem] rounded-[2rem]"/></Suspense></div>
         </section>}
 
         {visible('final_cta')&&<section style={{order:order('final_cta',100)}} className="relative min-h-[34rem] text-white"><Image src={finalSection?.backgroundMediaId?homepageCms?.mediaUrls[finalSection.backgroundMediaId]||liveProperty.heroImage:liveProperty.heroImage} alt={String(finalSection?.settings.imageAlt||'Mountain lake in Koman')} fill sizes="100vw" className="object-cover"/><div className="absolute inset-0 bg-lake/65"/><div className="shell relative flex min-h-[34rem] flex-col items-center justify-center py-20 text-center"><p className="eyebrow text-sand">{finalSection?.eyebrow||'Book direct'}</p><h2 className="mt-4 max-w-3xl font-serif text-5xl leading-none md:text-7xl">{finalSection?.title||'Your stay in Koman starts here.'}</h2>{finalSection?.body&&<p className="mt-5 max-w-xl text-white/75">{finalSection.body}</p>}<Link href={finalSection?.ctaLink||'/book'} className="mt-8 rounded-full bg-sand px-8 py-4 text-sm font-bold uppercase tracking-widest text-lake">{finalSection?.ctaLabel||'Check availability'}</Link></div></section>}

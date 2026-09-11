@@ -1,5 +1,6 @@
 import type { PropertySettings, SettingsFormState } from '@/types/settings';
 import { isSupportedCurrency } from '../currencies.ts';
+import { isGoogleMapsUrl } from '../google-maps.ts';
 
 const text = (data: FormData, key: string) => String(data.get(key) || '').trim();
 const number = (data: FormData, key: string, fallback = 0) => Number(text(data, key) || fallback);
@@ -21,6 +22,7 @@ export function validateSettings(data: FormData): { data?: PropertySettings; sta
   const errors: Record<string, string> = {};
   if (!value.name) errors.name = 'Property name is required.';
   if (value.email && !/^\S+@\S+\.\S+$/.test(value.email)) errors.email = 'Enter a valid email.';
+  if (value.mapsUrl && !isGoogleMapsUrl(value.mapsUrl)) errors.mapsUrl = 'Please enter a valid Google Maps link.';
   if (value.notificationEmail && !/^\S+@\S+\.\S+$/.test(value.notificationEmail)) errors.notificationEmail = 'Enter a valid notification email.';
   const additional = value.additionalNotificationEmails.split(/[,;\n]+/).map(item => item.trim()).filter(Boolean);
   if (additional.some(email => !/^\S+@\S+\.\S+$/.test(email))) errors.additionalNotificationEmails = 'Separate valid email addresses with commas or new lines.';

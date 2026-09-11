@@ -26,11 +26,18 @@ export async function POST(request: Request) {
   const height = Number.isInteger(submittedHeight) && submittedHeight > 0 && submittedHeight <= 50_000 ? submittedHeight : null;
   const filenameBase = file.name.replace(/\.[^.]+$/, '').replace(/[^\p{L}\p{N}._ -]+/gu, '-').trim().slice(0, 240) || 'image';
   const filename = `${filenameBase}.${detected.ext}`;
-  const path = `${session.propertyId}/${crypto.randomUUID()}.${detected.ext}`;
+  const requestedUploadId = String(form.get('uploadId') || '');
+  const assetId = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestedUploadId)
+    ? requestedUploadId
+    : crypto.randomUUID();
+  const path = `${session.propertyId}/${assetId}.${detected.ext}`;
   const db = await createServerSupabaseClient();
+  const existing = await db.from('media_assets').select(columns).eq('id', assetId).eq('property_id', session.propertyId).maybeSingle();
+  if (existing.error) return NextResponse.json({ error: existing.error.message }, { status: 500 });
+  if (existing.data) return NextResponse.json({ asset: { ...existing.data, publicUrl: resolvePublicMediaUrl(existing.data.file_path, existing.data.storage_bucket), referencedByPublishedContent: false } });
   const upload = await db.storage.from(mediaBucket).upload(path, bytes, { contentType: detected.mime, cacheControl: '31536000', upsert: false });
   if (upload.error) return NextResponse.json({ error: upload.error.message }, { status: 400 });
-  const { data, error } = await db.from('media_assets').insert({ property_id: session.propertyId, storage_bucket: mediaBucket, file_path: path, filename, title: String(form.get('displayName') || filenameBase).trim().slice(0, 255), mime_type: detected.mime, file_type: detected.mime, size_bytes: file.size, width, height, alt_text: String(form.get('altText') || '').trim().slice(0, 500) || null, caption: String(form.get('caption') || '').trim().slice(0, 2000) || null, status: 'published', is_published: true, is_visible: true, placement: 'gallery', created_by: session.userId, updated_by: session.userId }).select(columns).single();
+  const { data, error } = await db.from('media_assets').insert({ id: assetId, property_id: session.propertyId, storage_bucket: mediaBucket, file_path: path, filename, title: String(form.get('displayName') || filenameBase).trim().slice(0, 255), mime_type: detected.mime, file_type: detected.mime, size_bytes: file.size, width, height, alt_text: String(form.get('altText') || '').trim().slice(0, 500) || null, caption: String(form.get('caption') || '').trim().slice(0, 2000) || null, status: 'published', is_published: true, is_visible: true, placement: 'gallery', created_by: session.userId, updated_by: session.userId }).select(columns).single();
   if (error) { await db.storage.from(mediaBucket).remove([path]); return NextResponse.json({ error: error.message }, { status: 400 }); }
   return NextResponse.json({ asset: { ...data, publicUrl: resolvePublicMediaUrl(path, mediaBucket), referencedByPublishedContent: false } }, { status: 201 });
 }

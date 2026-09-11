@@ -2,11 +2,50 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { MEDIA_UPLOAD_CONFIG, MEBIBYTE } from '../src/lib/media-upload-config.ts';
 import { fitImageDimensions, imageStorageSavings, optimizedImageFilename, prepareImageForUpload } from '../src/lib/media/optimize-image.ts';
+import { mediaFileValidationError, settleWithConcurrency } from '../src/lib/media/upload-queue.ts';
 
 test('media upload limits remain safe for the hosted request transport', () => {
   assert.equal(MEDIA_UPLOAD_CONFIG.maxUploadBytes, 4 * MEBIBYTE);
   assert.equal(MEDIA_UPLOAD_CONFIG.optimizationTriggerBytes, MEDIA_UPLOAD_CONFIG.maxUploadBytes);
   assert.ok(MEDIA_UPLOAD_CONFIG.targetImageBytes < MEDIA_UPLOAD_CONFIG.maxUploadBytes);
+  assert.equal(MEDIA_UPLOAD_CONFIG.concurrentUploads, 2);
+  assert.equal(MEDIA_UPLOAD_CONFIG.maxBatchFiles, 30);
+});
+
+test('the upload queue limits concurrency and isolates a failed image', async () => {
+  let active = 0;
+  let maximumActive = 0;
+  const started: number[] = [];
+  const results = await settleWithConcurrency([0, 1, 2, 3, 4], 2, async item => {
+    started.push(item);
+    active++;
+    maximumActive = Math.max(maximumActive, active);
+    await new Promise(resolve => setTimeout(resolve, 2));
+    active--;
+    if (item === 2) throw new Error('simulated network failure');
+    return item;
+  });
+
+  assert.equal(maximumActive, 2);
+  assert.deepEqual(started.sort((a, b) => a - b), [0, 1, 2, 3, 4]);
+  assert.equal(results.filter(result => result.status === 'fulfilled').length, 4);
+  assert.equal(results[2].status, 'rejected');
+});
+
+test('mixed batch validation rejects only unsupported or oversized files', () => {
+  const files = [
+    { name: 'room.jpg', type: 'image/jpeg', size: 2 * MEBIBYTE },
+    { name: 'lake.webp', type: 'image/webp', size: 12 * MEBIBYTE },
+    { name: 'phone.heic', type: 'image/heic', size: 3 * MEBIBYTE },
+    { name: 'broken.txt', type: 'text/plain', size: 10 },
+    { name: 'huge.png', type: 'image/png', size: 51 * MEBIBYTE },
+  ];
+  const errors = files.map(mediaFileValidationError);
+  assert.equal(errors[0], '');
+  assert.equal(errors[1], '');
+  assert.match(errors[2], /HEIC/);
+  assert.match(errors[3], /JPEG/);
+  assert.match(errors[4], /50 MB/);
 });
 
 test('large landscape and portrait images fit within 2560px without distortion', () => {

@@ -16,7 +16,6 @@ type SectionConfig = {
   imageAlt?: boolean;
   imageLabel?: boolean;
   bookingSearch?: boolean;
-  mapLink?: boolean;
   cta?: boolean;
   choices?: keyof Pick<HomepageEditorData, 'rooms' | 'experiences' | 'articles' | 'transfers' | 'media'>;
 };
@@ -30,7 +29,7 @@ const sectionConfigs: SectionConfig[] = [
   { key: 'transfers', label: '6. Guest transfers', description: 'Editorial introduction, link and selected transfer routes.', choices: 'transfers', cta: true },
   { key: 'gallery', label: '7. Gallery preview', description: 'Heading, link and Media Library images used in the homepage preview.', choices: 'media', cta: true },
   { key: 'reviews', label: '8. Guest notes', description: 'Section heading and the manually curated testimonials.' },
-  { key: 'location', label: '9. Koman location', description: 'Location message, directions link and map reference.', mapLink: true, cta: true },
+  { key: 'location', label: '9. Koman location', description: 'Location message and directions link. The map location is managed in Settings → Property.', cta: true },
   { key: 'final_cta', label: '10. Final booking call to action', description: 'The closing image, message and booking button.', media: true, imageAlt: true, cta: true },
 ];
 
@@ -84,7 +83,6 @@ function HomepageSectionEditor({ config, section, data }: { config: SectionConfi
       {config.imageAlt && <Field label="Image alternative text"><input name={`${config.key}_imageAlt`} defaultValue={String(section.settings.imageAlt || '')} className={input} /></Field>}
       {config.imageLabel && <Field label="Image caption"><input name={`${config.key}_imageLabel`} defaultValue={String(section.settings.imageLabel || '')} className={input} /></Field>}
       {config.cta ? <><Field label="Button label"><input name={`${config.key}_ctaLabel`} defaultValue={section.ctaLabel} className={input} /></Field><Field label="Button destination"><input name={`${config.key}_ctaLink`} defaultValue={section.ctaLink} placeholder="/book" className={input} /></Field></> : <><input type="hidden" name={`${config.key}_ctaLabel`} value={section.ctaLabel} /><input type="hidden" name={`${config.key}_ctaLink`} value={section.ctaLink} /></>}
-      {config.mapLink && <Field label="Map link"><input name={`${config.key}_mapLink`} defaultValue={String(section.settings.mapLink || '')} className={input} /></Field>}
       {config.bookingSearch && <><Field label="Booking search button label"><input name={`${config.key}_bookingCtaLabel`} defaultValue={String(section.settings.bookingCtaLabel || '')} placeholder="Check availability" className={input} /></Field><label className="flex min-h-12 items-center gap-3 rounded-xl bg-slate-50 px-4 text-sm font-semibold"><input name={`${config.key}_showBookingSearch`} type="checkbox" defaultChecked={section.settings.showBookingSearch !== false} /> Show booking search</label></>}
       <Field label="Section order"><input name={`${config.key}_order`} type="number" defaultValue={section.sortOrder} className={input} /></Field>
       <label className="flex min-h-12 items-center gap-3 rounded-xl bg-slate-50 px-4 text-sm font-semibold"><input name={`${config.key}_visible`} type="checkbox" defaultChecked={section.visible} /> Show this section publicly</label>

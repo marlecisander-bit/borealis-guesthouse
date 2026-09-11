@@ -7,7 +7,7 @@ import type {SiteContentState,SiteDocumentKey} from '@/types/site-content-cms';
 
 const fieldsByKey:Record<SiteDocumentKey,string[]>={
   about:['heroEyebrow','heroTitle','introduction','heroImage','heroImageAlt','storyEyebrow','storyHeading','storyText','storyImage','storyImageAlt','locationEyebrow','locationHeading','locationText','locationImage','locationImageAlt','philosophyEyebrow','philosophyHeading','philosophy','ctaLabel','ctaTarget'],
-  contact:['eyebrow','title','introduction','directHeading','directDescription','phone','whatsapp','email','instagram','addressLabel','address','mapsUrl','directionsText','journeyEyebrow','journeyHeading','journeyDescription','primaryCtaLabel','primaryCtaTarget','secondaryCtaLabel','secondaryCtaTarget'],
+  contact:['eyebrow','title','introduction','directHeading','directDescription','phone','whatsapp','email','instagram','addressLabel','directionsText','journeyEyebrow','journeyHeading','journeyDescription','primaryCtaLabel','primaryCtaTarget','secondaryCtaLabel','secondaryCtaTarget'],
   book:['eyebrow','heading','description'],
   global:['headerCtaLabel','mobileMenuCtaLabel','mobileBarCtaLabel','sharedCtaEyebrow','sharedCtaHeading','sharedCtaLabel','sharedCtaTarget'],
   footer:['description','exploreHeading','findUsHeading','bookingCtaLabel','bookingCtaTarget','copyright','privacyLabel','privacyUrl','bookingPolicyLabel','bookingPolicyUrl','termsLabel','termsUrl'],

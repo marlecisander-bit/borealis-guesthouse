@@ -15,8 +15,6 @@ const fields=[
   {name:'email',label:'Email',kind:'email' as const},
   {name:'instagram',label:'Instagram link',kind:'url' as const},
   {name:'addressLabel',label:'Address label'},
-  {name:'address',label:'Address',kind:'textarea' as const},
-  {name:'mapsUrl',label:'Google Maps link',kind:'url' as const},
   {name:'directionsText',label:'Directions text',kind:'textarea' as const},
   {name:'journeyEyebrow',label:'Journey section eyebrow'},
   {name:'journeyHeading',label:'Journey section heading'},
@@ -32,7 +30,7 @@ export default async function Page(){
   const document=await adminSiteContentRepository.document(session,'contact').catch(()=>null);
   if(!document)return <AdminEmptyState title="CMS database update required" description="Run database/migrations/20260902_007_site_content_cms.sql in Supabase, then reload."/>;
   return <div className="space-y-8">
-    <AdminPageHeader title="Contact page" description="Edit the visible page content and the contact information shared across the website." actions={<Link href="/contact" target="_blank" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold">Preview Website</Link>}/>
+    <AdminPageHeader title="Contact page" description="Edit visible page copy and contact channels. The property address and Google Maps link are managed in Settings → Property." actions={<Link href="/contact" target="_blank" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold">Preview Website</Link>}/>
     <SiteDocumentForm documentKey="contact" fields={fields} data={document.data}/>
   </div>;
 }

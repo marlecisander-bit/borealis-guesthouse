@@ -1,8 +1,9 @@
 'use client';
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import { saveSettings } from '@/app/admin/settings/actions';
 import type { SettingsDashboard, SettingsFormState } from '@/types/settings';
 import { CurrencySelect } from '@/components/admin/CurrencySelect';
+import { isGoogleMapsUrl } from '@/lib/google-maps';
 
 const initial: SettingsFormState = { ok: false, message: '' };
 const input = 'mt-2 min-h-12 w-full rounded-lg border border-slate-300 bg-white px-4';
@@ -10,6 +11,7 @@ const input = 'mt-2 min-h-12 w-full rounded-lg border border-slate-300 bg-white 
 export function SettingsForm({ data }: { data: SettingsDashboard }) {
   const [state, action, pending] = useActionState(saveSettings, initial);
   const s = data.settings;
+  const [mapsUrl, setMapsUrl] = useState(s.mapsUrl);
   const error = (key: string) => state.errors?.[key];
   return <form action={action} className="space-y-6">
     <Section title="Property">
@@ -24,7 +26,7 @@ export function SettingsForm({ data }: { data: SettingsDashboard }) {
       </div>
       <Field label="Short description"><textarea name="description" rows={3} defaultValue={s.description} className={`${input} py-3`}/></Field>
       <Field label="Address"><textarea name="address" rows={2} defaultValue={s.address} className={`${input} py-3`}/></Field>
-      <Field label="Google Maps link"><input name="mapsUrl" type="url" defaultValue={s.mapsUrl} className={input}/></Field>
+      <Field label="Google Maps location link" error={error('mapsUrl')} help="Paste the Google Maps share link for Borealis Guest House. This location will be used for the map shown on the public website."><input name="mapsUrl" type="url" inputMode="url" value={mapsUrl} onChange={event=>setMapsUrl(event.target.value)} placeholder="https://maps.app.goo.gl/..." className={input}/>{isGoogleMapsUrl(mapsUrl)&&<a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm font-semibold text-[#164b59] underline underline-offset-4">Preview map</a>}</Field>
       <div className="grid gap-5 sm:grid-cols-2"><Field label="Latitude (optional)" error={error('latitude')}><input name="latitude" type="number" step="0.000001" defaultValue={s.latitude} className={input}/></Field><Field label="Longitude (optional)" error={error('longitude')}><input name="longitude" type="number" step="0.000001" defaultValue={s.longitude} className={input}/></Field></div>
     </Section>
     <Section title="Stay settings">
@@ -57,5 +59,5 @@ export function SettingsForm({ data }: { data: SettingsDashboard }) {
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) { return <section className="space-y-5 rounded-2xl border border-slate-200 bg-white p-6"><h2 className="text-xl font-bold">{title}</h2>{children}</section>; }
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) { return <label className="block text-sm font-semibold">{label}{children}{error && <span className="mt-1 block text-xs text-red-700">{error}</span>}</label>; }
+function Field({ label, error, help, children }: { label: string; error?: string; help?: string; children: React.ReactNode }) { return <label className="block text-sm font-semibold">{label}{children}{help&&<span className="mt-2 block text-xs font-normal leading-5 text-slate-500">{help}</span>}{error && <span className="mt-1 block text-xs text-red-700">{error}</span>}</label>; }
 function Check({ name, label, checked, disabled = false }: { name: string; label: string; checked: boolean; disabled?: boolean }) { return <label className={`flex min-h-12 items-center gap-3 rounded-lg border border-slate-200 px-4 font-semibold ${disabled ? 'bg-slate-50 text-slate-400' : ''}`}>{disabled && checked && <input type="hidden" name={name} value="on"/>}<input name={name} type="checkbox" defaultChecked={checked} disabled={disabled}/>{label}</label>; }

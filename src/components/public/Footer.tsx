@@ -29,7 +29,7 @@ export async function Footer() {
             {contact.phone && <a href={`tel:${contact.phone}`}>Call us</a>}
             {contact.whatsapp && <a href={contact.whatsapp}>WhatsApp</a>}
             {contact.instagram && <a href={contact.instagram}>Instagram</a>}
-            {contact.mapsUrl && <a href={contact.mapsUrl}>Google Maps</a>}
+            {contact.mapsUrl && <a href={contact.mapsUrl} target="_blank" rel="noopener noreferrer">Google Maps</a>}
           </div>
         </div>
       </div>

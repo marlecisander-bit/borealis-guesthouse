@@ -7,6 +7,8 @@ export const MEDIA_UPLOAD_CONFIG = {
   optimizationTriggerBytes: 4 * MEBIBYTE,
   targetImageBytes: Math.floor(2.5 * MEBIBYTE),
   maxSourceImageBytes: 50 * MEBIBYTE,
+  maxBatchFiles: 30,
+  concurrentUploads: 2,
   maxImageDimension: 2560,
   minimumImageDimension: 1280,
   initialQuality: 0.88,
