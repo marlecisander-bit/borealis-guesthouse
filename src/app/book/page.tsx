@@ -4,6 +4,7 @@ import { PublicShell } from '@/components/public/PageShell';
 import { validateBookingSearch } from '@/lib/booking/search-criteria';
 import { createMetadata } from '@/lib/seo';
 import { contentRepository } from '@/services/content';
+import { getSiteDocument } from '@/services/site-content';
 import { Suspense } from 'react';
 
 export const metadata: Metadata = {
@@ -13,11 +14,12 @@ export const metadata: Metadata = {
 
 export default async function BookPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
+  const page = await getSiteDocument('book');
   const value = (key: string) => typeof params[key] === 'string' ? params[key] : undefined;
   const search = validateBookingSearch({ checkIn:value('checkIn'), checkOut:value('checkOut'), guests:value('guests') });
   return <PublicShell mobileBooking={false}>
     <section className="bg-ivory py-12 md:py-20">
-      <div className="shell"><p className="eyebrow">Book direct</p><h1 className="mt-4 max-w-3xl font-serif text-5xl leading-none text-lake md:text-7xl">Your Koman stay, made simple.</h1><p className="mt-5 max-w-xl leading-7 text-muted">Choose your room, add anything useful and review everything clearly before confirming.</p></div>
+      <div className="shell"><p className="eyebrow">{page.eyebrow||'Book direct'}</p><h1 className="mt-4 max-w-3xl font-serif text-5xl leading-none text-lake md:text-7xl">{page.heading||'Your Koman stay, made simple.'}</h1><p className="mt-5 max-w-xl leading-7 text-muted">{page.description||'Choose your room, add anything useful and review everything clearly before confirming.'}</p></div>
     </section>
     <section className="bg-[#fbfaf7] py-8 md:py-14"><div className="shell"><Suspense fallback={<BookingFlowSkeleton/>}><BookingConfigurator
       initialRoom={value('room')}

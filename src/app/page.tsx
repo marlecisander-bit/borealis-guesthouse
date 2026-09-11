@@ -10,11 +10,10 @@ import { Header } from '@/components/public/Header';
 import type { GalleryItem,Review } from '@/types/public';
 import { createPageMetadata } from '@/lib/seo';
 import { contentRepository } from '@/services/content';
-import { getPublishedPageContent } from '@/services/cms-content';
 import { getHomepageCms } from '@/services/homepage-cms';
 import{localizeHomepageCms}from'@/services/homepage-translations';
 import{getLanguageContext}from'@/services/translations';
-import { getNavigation } from '@/services/site-content';
+import { getNavigation, getSiteDocument } from '@/services/site-content';
 import type { HomepageKey } from '@/types/homepage-cms';
 import {authorizePreview} from '@/lib/preview';
 import {PreviewBanner} from '@/components/public/PreviewBanner';
@@ -25,17 +24,16 @@ export async function generateMetadata():Promise<Metadata>{return createPageMeta
 
 export default async function Home({searchParams}:{searchParams:Promise<{preview?:string}>}) {
   const preview=Boolean(await authorizePreview('homepage',(await searchParams).preview));
-  const [liveProperty, allRooms, allExperiences, allGallery, homepageContent, homepageCmsRaw, publishedHero, liveArticles, liveTransfers, navigation,language] = await Promise.all([
+  const [liveProperty, allRooms, allExperiences, allGallery, homepageCmsRaw, publishedHero, liveArticles, liveTransfers, navigation,language,globalContent] = await Promise.all([
     contentRepository.getProperty(),
     contentRepository.getRooms(),
     contentRepository.getExperiences(),
     contentRepository.getGallery(),
-    getPublishedPageContent('homepage'),
     getHomepageCms(preview),
     preview?Promise.resolve(null):getPublishedHomepageHero(),
     contentRepository.getArticles(),
     contentRepository.getTransfers(),
-    getNavigation('header'),getLanguageContext(),
+    getNavigation('header'),getLanguageContext(),getSiteDocument('global'),
   ]);
   const homepageCms=await localizeHomepageCms(homepageCmsRaw);
   const section=(key:HomepageKey)=>homepageCms?.sections.find(item=>item.key===key);
@@ -47,16 +45,16 @@ export default async function Home({searchParams}:{searchParams:Promise<{preview
   const bookingCtaLabel=(hero?.settings as Record<string,unknown>|undefined)?.bookingCtaLabel;
   return (
     <>
-      <Header overlay navigation={navigation} languages={language.enabled} selectedLanguage={language.selected?.code||''}/>
+      <Header overlay navigation={navigation} languages={language.enabled} selectedLanguage={language.selected?.code||''} bookingCtaLabel={globalContent.headerCtaLabel||'Book now'} mobileBookingCtaLabel={globalContent.mobileMenuCtaLabel||'Check availability'}/>
       <main className="flex flex-col">{preview&&<PreviewBanner label="Homepage draft preview"/>}
         {visible('hero')&&<section data-homepage-section="hero" style={{order:order('hero',0)}} className="hero-section relative z-30 min-h-[88svh] bg-lake text-white lg:min-h-[94svh]">
-          <Image src={!preview&&publishedHero?.imageUrl?publishedHero.imageUrl:hero?.backgroundMediaId?homepageCms?.mediaUrls[hero.backgroundMediaId]||liveProperty.heroImage:liveProperty.heroImage} alt="Koman Lake surrounded by mountain slopes" fill priority sizes="100vw" className="object-cover" />
+          <Image src={!preview&&publishedHero?.imageUrl?publishedHero.imageUrl:hero?.backgroundMediaId?homepageCms?.mediaUrls[hero.backgroundMediaId]||liveProperty.heroImage:liveProperty.heroImage} alt={String((hero?.settings as Record<string,unknown>|undefined)?.imageAlt||'Koman Lake surrounded by mountain slopes')} fill priority sizes="100vw" className="object-cover" />
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,25,18,.58)_0%,rgba(10,25,18,.10)_38%,rgba(10,25,18,.72)_100%)]" />
           <div className="shell relative flex min-h-[88svh] flex-col justify-end pb-7 pt-28 lg:min-h-[94svh] lg:pb-0">
             <div className="max-w-3xl pb-7 md:pb-10">
-              <p className="text-[.68rem] font-bold uppercase tracking-[0.26em] text-sand">{hero?.eyebrow||homepageContent?.eyebrow||'Borealis Guest House · Koman, Albania'}</p>
-              <h1 className="mt-4 max-w-[12ch] font-serif text-[clamp(3rem,7vw,6.8rem)] font-medium leading-[.88] tracking-[-.045em]">{hero?.title||homepageContent?.heroHeading||'Wake up by the water.'}</h1>
-              <p className="mt-5 max-w-xl text-[.95rem] leading-7 text-white/80 md:text-lg">{hero?.subtitle||homepageContent?.heroCopy||'A lakeside stay in the heart of Koman.'}</p>
+              <p className="text-[.68rem] font-bold uppercase tracking-[0.26em] text-sand">{hero?.eyebrow||'Borealis Guest House · Koman, Albania'}</p>
+              <h1 className="mt-4 max-w-[12ch] font-serif text-[clamp(3rem,7vw,6.8rem)] font-medium leading-[.88] tracking-[-.045em]">{hero?.title||'Wake up by the water.'}</h1>
+              <p className="mt-5 max-w-xl text-[.95rem] leading-7 text-white/80 md:text-lg">{hero?.subtitle||'A lakeside stay in the heart of Koman.'}</p>
               {hero?.ctaLabel&&<Link href={hero.ctaLink||'/book'} className="mt-6 inline-block rounded-full bg-sand px-6 py-3 text-sm font-bold text-lake">{hero.ctaLabel}</Link>}
             </div>
             {hero?.settings.showBookingSearch!==false&&<div className="md:translate-y-1/2"><BookingSearch hero ctaLabel={(typeof bookingCtaLabel==='string'&&bookingCtaLabel)||'Check availability'} /></div>}
@@ -82,7 +80,7 @@ export default async function Home({searchParams}:{searchParams:Promise<{preview
           <div className="shell">
             <div className="flex items-end justify-between gap-6">
               <SectionHeader eyebrow={roomSection?.eyebrow||'Stay at Borealis'} title={roomSection?.title||'Our Rooms'} copy={roomSection?.subtitle||roomSection?.body||'Natural textures, quiet comfort and the lake always close by.'} />
-              <Link href="/rooms" className="hidden border-b-2 border-sand pb-1 text-sm font-bold text-lake md:block">See all rooms</Link>
+              <Link href={roomSection?.ctaLink||'/rooms'} className="hidden border-b-2 border-sand pb-1 text-sm font-bold text-lake md:block">{roomSection?.ctaLabel||'See all rooms'}</Link>
             </div>
             <div className="-mx-4 mt-12 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-5 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0">
               {liveRooms.map((room) => <RoomCard key={room.id} room={room} variant="featured"/>)}
@@ -107,21 +105,21 @@ export default async function Home({searchParams}:{searchParams:Promise<{preview
         </section>}
 
         {visible('gallery')&&<section style={{order:order('gallery',70)}} className="pb-20 md:pb-28">
-          <div className="shell"><div className="mb-10 flex items-end justify-between"><SectionHeader eyebrow={gallerySection?.eyebrow||'The visual story'} title={gallerySection?.title||'Life beside the lake.'}/><Link href={gallerySection?.ctaLink||'/gallery'} className="hidden border-b-2 border-sand pb-1 text-sm font-bold text-lake md:block">{gallerySection?.ctaLabel||'Open gallery'}</Link></div><div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-5">{liveGallery.slice(0,4).map((item,index)=><Photo key={item.id} item={item} className={index===0?'col-span-2 aspect-[16/11] md:row-span-2':index===3?'col-span-2 aspect-[16/8]':'aspect-square'}/>)}</div></div>
+          <div className="shell"><div className="mb-10 flex items-end justify-between"><SectionHeader eyebrow={gallerySection?.eyebrow||'The visual story'} title={gallerySection?.title||'Life beside the lake.'} copy={gallerySection?.body||gallerySection?.subtitle}/><Link href={gallerySection?.ctaLink||'/gallery'} className="hidden border-b-2 border-sand pb-1 text-sm font-bold text-lake md:block">{gallerySection?.ctaLabel||'Open gallery'}</Link></div><div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-5">{liveGallery.slice(0,4).map((item,index)=><Photo key={item.id} item={item} className={index===0?'col-span-2 aspect-[16/11] md:row-span-2':index===3?'col-span-2 aspect-[16/8]':'aspect-square'}/>)}</div></div>
         </section>}
 
         {visible('reviews')&&<section style={{order:order('reviews',80)}} className="bg-ivory py-20 md:py-28">
-          <div className="shell grid gap-10 lg:grid-cols-[.6fr_1.4fr]"><div><p className="eyebrow">{reviewSection?.eyebrow||'Guest notes'}</p><h2 className="mt-4 font-serif text-5xl text-lake">{reviewSection?.title||'The feeling stays with you.'}</h2><p className="mt-4 text-xs leading-5 text-muted">{reviewSection?.subtitle||'Manual testimonial content supplied by Borealis.'}</p></div><div className="grid gap-5 md:grid-cols-2">{liveReviews.map(review=><blockquote key={review.id} className="rounded-[1.75rem] bg-white p-7 shadow-sm"><span className="font-serif text-5xl leading-none text-green/30">“</span><p className="mt-3 font-serif text-3xl leading-snug text-lake">{review.quote}</p><footer className="mt-7 text-xs font-bold uppercase tracking-widest text-muted">{('author' in review&&review.author)||'Guest testimonial'} · {review.origin}</footer></blockquote>)}</div></div>
+          <div className="shell grid gap-10 lg:grid-cols-[.6fr_1.4fr]"><div><p className="eyebrow">{reviewSection?.eyebrow||'Guest notes'}</p><h2 className="mt-4 font-serif text-5xl text-lake">{reviewSection?.title||'The feeling stays with you.'}</h2><p className="mt-4 text-xs leading-5 text-muted">{reviewSection?.body||reviewSection?.subtitle||'Manual testimonial content supplied by Borealis.'}</p></div><div className="grid gap-5 md:grid-cols-2">{liveReviews.map(review=><blockquote key={review.id} className="rounded-[1.75rem] bg-white p-7 shadow-sm"><span className="font-serif text-5xl leading-none text-green/30">“</span><p className="mt-3 font-serif text-3xl leading-snug text-lake">{review.quote}</p><footer className="mt-7 text-xs font-bold uppercase tracking-widest text-muted">{('author' in review&&review.author)||'Guest testimonial'} · {review.origin}</footer></blockquote>)}</div></div>
         </section>}
 
         {visible('location')&&<section style={{order:order('location',90)}} className="py-20 md:py-28">
-          <div className="shell grid gap-10 lg:grid-cols-2 lg:items-center"><div><p className="eyebrow">{locationSection?.eyebrow||'Koman, Albania'}</p><h2 className="mt-4 font-serif text-5xl text-lake md:text-6xl">{locationSection?.title||'At the edge of the water.'}</h2><p className="mt-6 max-w-lg leading-8 text-muted">{locationSection?.body||locationSection?.subtitle||'Borealis is set in Koman, a mountain gateway known for its lake journeys and dramatic northern Albanian landscape.'}</p><Link href={locationSection?.ctaLink||'/contact'} className="mt-7 inline-block rounded-full bg-lake px-7 py-4 text-sm font-bold text-white">{locationSection?.ctaLabel||'Contact & directions'}</Link></div><div className="relative min-h-[26rem] overflow-hidden rounded-[2rem] bg-green"><div className="absolute inset-5 rounded-[1.4rem] border border-white/20 bg-[radial-gradient(circle_at_70%_25%,rgba(232,222,208,.35),transparent_24%),linear-gradient(135deg,rgba(255,255,255,.08),transparent)]"/><div className="absolute inset-0 grid place-items-center text-center text-white"><div><BorealisLogo variant="light" className="mx-auto h-24 w-auto"/><p className="mt-4 font-serif text-3xl">Borealis · Koman</p><p className="mt-2 text-sm text-white/60">{locationSection?.settings.mapLink?'Open map from the directions link':'Map reference managed by Borealis'}</p></div></div></div></div>
+          <div className="shell grid gap-10 lg:grid-cols-2 lg:items-center"><div><p className="eyebrow">{locationSection?.eyebrow||'Koman, Albania'}</p><h2 className="mt-4 font-serif text-5xl text-lake md:text-6xl">{locationSection?.title||'At the edge of the water.'}</h2><p className="mt-6 max-w-lg leading-8 text-muted">{locationSection?.body||locationSection?.subtitle||'Borealis is set in Koman, a mountain gateway known for its lake journeys and dramatic northern Albanian landscape.'}</p><Link href={locationSection?.ctaLink||'/contact'} className="mt-7 inline-block rounded-full bg-lake px-7 py-4 text-sm font-bold text-white">{locationSection?.ctaLabel||'Contact & directions'}</Link></div><div className="relative min-h-[26rem] overflow-hidden rounded-[2rem] bg-green"><div className="absolute inset-5 rounded-[1.4rem] border border-white/20 bg-[radial-gradient(circle_at_70%_25%,rgba(232,222,208,.35),transparent_24%),linear-gradient(135deg,rgba(255,255,255,.08),transparent)]"/><div className="absolute inset-0 grid place-items-center text-center text-white"><div><BorealisLogo variant="light" className="mx-auto h-24 w-auto"/><p className="mt-4 font-serif text-3xl">Borealis · Koman</p>{locationSection?.settings.mapLink?<Link href={String(locationSection.settings.mapLink)} className="mt-3 inline-block border-b border-sand pb-1 text-sm font-semibold text-sand">Open map</Link>:<p className="mt-2 text-sm text-white/60">Map reference managed by Borealis</p>}</div></div></div></div>
         </section>}
 
-        {visible('final_cta')&&<section style={{order:order('final_cta',100)}} className="relative min-h-[34rem] text-white"><Image src={finalSection?.backgroundMediaId?homepageCms?.mediaUrls[finalSection.backgroundMediaId]||liveProperty.heroImage:liveProperty.heroImage} alt="Mountain lake in Koman" fill sizes="100vw" className="object-cover"/><div className="absolute inset-0 bg-lake/65"/><div className="shell relative flex min-h-[34rem] flex-col items-center justify-center py-20 text-center"><p className="eyebrow text-sand">{finalSection?.eyebrow||'Book direct'}</p><h2 className="mt-4 max-w-3xl font-serif text-5xl leading-none md:text-7xl">{finalSection?.title||'Your stay in Koman starts here.'}</h2>{finalSection?.body&&<p className="mt-5 max-w-xl text-white/75">{finalSection.body}</p>}<Link href={finalSection?.ctaLink||'/book'} className="mt-8 rounded-full bg-sand px-8 py-4 text-sm font-bold uppercase tracking-widest text-lake">{finalSection?.ctaLabel||'Check availability'}</Link></div></section>}
+        {visible('final_cta')&&<section style={{order:order('final_cta',100)}} className="relative min-h-[34rem] text-white"><Image src={finalSection?.backgroundMediaId?homepageCms?.mediaUrls[finalSection.backgroundMediaId]||liveProperty.heroImage:liveProperty.heroImage} alt={String(finalSection?.settings.imageAlt||'Mountain lake in Koman')} fill sizes="100vw" className="object-cover"/><div className="absolute inset-0 bg-lake/65"/><div className="shell relative flex min-h-[34rem] flex-col items-center justify-center py-20 text-center"><p className="eyebrow text-sand">{finalSection?.eyebrow||'Book direct'}</p><h2 className="mt-4 max-w-3xl font-serif text-5xl leading-none md:text-7xl">{finalSection?.title||'Your stay in Koman starts here.'}</h2>{finalSection?.body&&<p className="mt-5 max-w-xl text-white/75">{finalSection.body}</p>}<Link href={finalSection?.ctaLink||'/book'} className="mt-8 rounded-full bg-sand px-8 py-4 text-sm font-bold uppercase tracking-widest text-lake">{finalSection?.ctaLabel||'Check availability'}</Link></div></section>}
       </main>
       <Footer />
-      <MobileBookingBar />
+      <MobileBookingBar label={globalContent.mobileBarCtaLabel||'Check availability'} />
     </>
   );
 }

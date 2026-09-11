@@ -7,8 +7,10 @@ import type {SiteContentState,SiteDocumentKey} from '@/types/site-content-cms';
 
 const fieldsByKey:Record<SiteDocumentKey,string[]>={
   about:['heroEyebrow','heroTitle','introduction','heroImage','heroImageAlt','storyEyebrow','storyHeading','storyText','storyImage','storyImageAlt','locationEyebrow','locationHeading','locationText','locationImage','locationImageAlt','philosophyEyebrow','philosophyHeading','philosophy','ctaLabel','ctaTarget'],
-  contact:['eyebrow','title','introduction','phone','whatsapp','email','instagram','address','mapsUrl','directionsText','journeyEyebrow','journeyHeading','journeyDescription','primaryCtaLabel','primaryCtaTarget','secondaryCtaLabel','secondaryCtaTarget'],
-  footer:['description','copyright','privacyLabel','privacyUrl','bookingPolicyLabel','bookingPolicyUrl','termsLabel','termsUrl'],
+  contact:['eyebrow','title','introduction','directHeading','directDescription','phone','whatsapp','email','instagram','addressLabel','address','mapsUrl','directionsText','journeyEyebrow','journeyHeading','journeyDescription','primaryCtaLabel','primaryCtaTarget','secondaryCtaLabel','secondaryCtaTarget'],
+  book:['eyebrow','heading','description'],
+  global:['headerCtaLabel','mobileMenuCtaLabel','mobileBarCtaLabel','sharedCtaEyebrow','sharedCtaHeading','sharedCtaLabel','sharedCtaTarget'],
+  footer:['description','exploreHeading','findUsHeading','bookingCtaLabel','bookingCtaTarget','copyright','privacyLabel','privacyUrl','bookingPolicyLabel','bookingPolicyUrl','termsLabel','termsUrl'],
   rooms:landingPageFieldNames.rooms,
   experiences:landingPageFieldNames.experiences,
   transfers:landingPageFieldNames.transfers,
@@ -24,6 +26,8 @@ export async function saveSiteDocument(key:SiteDocumentKey,_:SiteContentState,fo
   if(!['draft','published'].includes(status))return{ok:false,message:'Choose draft or publish.'};
   if(key==='contact'&&data.email&&!/^\S+@\S+\.\S+$/.test(data.email))return{ok:false,message:'Enter a valid contact email.'};
   if(key==='contact'&&['primaryCtaTarget','secondaryCtaTarget'].some(field=>data[field]&&!/^\/(?:[a-z0-9-]+\/?)*$/i.test(data[field])))return{ok:false,message:'CTA destinations must use a safe internal path.'};
+  if(key==='global'&&data.sharedCtaTarget&&!/^\/(?:[a-z0-9-]+\/?)*$/i.test(data.sharedCtaTarget))return{ok:false,message:'The shared CTA destination must use a safe internal path.'};
+  if(key==='footer'&&data.bookingCtaTarget&&!/^\/(?:[a-z0-9-]+\/?)*$/i.test(data.bookingCtaTarget))return{ok:false,message:'The footer CTA destination must use a safe internal path.'};
   if(isLandingPageKey(key)&&status==='published'){
     if(data.eyebrow.length<2||data.heading.length<3||data.description.length<10)return{ok:false,message:'Add the eyebrow, heading and description before publishing.'};
     if(data.heroImageId&&!/^[0-9a-f-]{36}$/i.test(data.heroImageId))return{ok:false,message:'Choose a valid image from the Media Library.'};
@@ -35,7 +39,7 @@ export async function saveSiteDocument(key:SiteDocumentKey,_:SiteContentState,fo
     revalidatePath('/admin/content');
     revalidatePath(`/admin/content/${key}`);
     revalidatePath(`/${key}`);
-    if(key==='contact'||key==='footer')revalidatePath('/');
+    if(key==='contact'||key==='footer'||key==='global')revalidatePath('/');
     return{ok:true,message:status==='published'?'Changes published.':'Draft saved. The public website is unchanged.'};
   }catch(error){return{ok:false,message:error instanceof Error?error.message:'Could not save changes.'}}
 }

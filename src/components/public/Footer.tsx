@@ -15,14 +15,14 @@ export async function Footer() {
         <div className="lg:col-span-2">
           <HomeLink ariaLabel="Borealis Guest House — Home" className="inline-block"><BorealisLogo variant="light" className="h-32 w-auto" /></HomeLink>
           <p className="mt-4 max-w-sm text-sm leading-6 text-white/65">{cms.description || 'A boutique lakeside guesthouse for quiet stays, local journeys and unhurried time in Koman, Albania.'}</p>
-          <BookingLink href="/book" className="mt-7 min-h-12 rounded-full bg-sand px-6 py-3 text-xs font-bold uppercase tracking-[.12em] text-lake">Book your stay</BookingLink>
+          <BookingLink href={cms.bookingCtaTarget||'/book'} className="mt-7 min-h-12 rounded-full bg-sand px-6 py-3 text-xs font-bold uppercase tracking-[.12em] text-lake">{cms.bookingCtaLabel||'Book your stay'}</BookingLink>
         </div>
         <div>
-          <h2 className="text-xs font-bold uppercase tracking-widest text-sand">Explore</h2>
+          <h2 className="text-xs font-bold uppercase tracking-widest text-sand">{cms.exploreHeading||'Explore'}</h2>
           <nav className="mt-5 grid gap-3 text-sm text-white/70">{links.map(x => isHomeNavigationItem(x.label, x.href) ? <HomeLink key={`${x.href}-${x.label}`}>{x.label}</HomeLink> : <Link key={`${x.href}-${x.label}`} href={x.href}>{x.label}</Link>)}</nav>
         </div>
         <div>
-          <h2 className="text-xs font-bold uppercase tracking-widest text-sand">Find us</h2>
+          <h2 className="text-xs font-bold uppercase tracking-widest text-sand">{cms.findUsHeading||'Find us'}</h2>
           <div className="mt-5 grid gap-3 text-sm text-white/70">
             <p>{contact.address}</p>
             <a href={`mailto:${contact.email}`}>{contact.email}</a>

@@ -13,6 +13,7 @@ import { contentRepository } from '@/services/content';
 import { authorizePreview } from '@/lib/preview';
 import { PreviewBanner } from '@/components/public/PreviewBanner';
 import {formatMoney} from '@/lib/pricing/format';
+import { getLandingPageContent } from '@/services/site-content';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params; const item = await contentRepository.getExperience(slug);
@@ -22,7 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function ExperiencePage({ params,searchParams }: { params: Promise<{ slug: string }>;searchParams:Promise<{preview?:string}> }) {
   const { slug } = await params;
   const preview=await authorizePreview('experience',(await searchParams).preview);
-  const [item, rooms] = await Promise.all([contentRepository.getExperience(slug,preview?.id), contentRepository.getRooms()]);
+  const [item, rooms, page] = await Promise.all([contentRepository.getExperience(slug,preview?.id), contentRepository.getRooms(), getLandingPageContent('experiences')]);
   if (!item) notFound();
   const canBookIndependently=item.bookable&&item.bookIndependently===true;
   const productData: Record<string, unknown> = { '@context': 'https://schema.org', '@type': 'Product', name: item.title, description: item.description, image: item.gallery, category: item.category };
@@ -41,7 +42,7 @@ export default async function ExperiencePage({ params,searchParams }: { params: 
           <dl className="mt-10 grid grid-cols-2 gap-5 border-y border-lake/10 py-7 sm:grid-cols-3">
             <Fact label="Duration" value={item.duration}/><Fact label="Capacity" value={item.capacity}/><Fact label="Starting price" value={item.priceFrom===null?item.priceType:formatMoney(item.priceFrom,item.currency)} />
           </dl>
-          <section className="py-12"><p className="eyebrow">The experience</p><h2 className="mt-3 font-serif text-4xl text-lake">Time well spent in Koman.</h2><p className="mt-5 max-w-2xl text-lg leading-8 text-muted">{item.longDescription}</p></section>
+          <section className="py-12"><p className="eyebrow">{page.detailEyebrow}</p><h2 className="mt-3 font-serif text-4xl text-lake">{page.detailHeading}</h2><p className="mt-5 max-w-2xl text-lg leading-8 text-muted">{item.longDescription}</p></section>
           <section className="grid gap-10 border-t border-lake/10 py-12 md:grid-cols-2"><InfoList title="What's included" items={item.included}/><InfoList title="Booking requirements" items={item.bookingRequirements}/></section>
           <section className="rounded-[1.75rem] bg-ivory p-7 md:p-9"><p className="eyebrow">Practical information</p><dl className="mt-6 space-y-5"><InfoRow label="Availability" value={item.availability}/><InfoRow label="Meeting point" value={item.meetingPoint}/><InfoRow label="Price type" value={item.priceType}/></dl>{item.notes.length>0&&<div className="mt-7 border-t border-lake/10 pt-6"><InfoList title="Notes" items={item.notes}/></div>}</section>
         </div>
@@ -52,7 +53,7 @@ export default async function ExperiencePage({ params,searchParams }: { params: 
         </aside>
       </div>
     </section>
-    <section className="bg-ivory py-20 md:py-28"><div className="shell"><div className="grid gap-8 md:grid-cols-[1fr_auto] md:items-end"><div><p className="eyebrow">Make a stay of it</p><h2 className="mt-4 font-serif text-5xl text-lake md:text-6xl">Come back to comfort.</h2><p className="mt-4 max-w-xl leading-7 text-muted">Pair your time outside with a quiet room by the lake.</p></div><Link href="/rooms" className="border-b-2 border-sand pb-1 text-sm font-bold text-lake">Explore all rooms</Link></div><div className="mt-10 grid gap-10 md:grid-cols-2">{rooms.slice(0,2).map((room)=><RoomCard key={room.id} room={room}/>)}</div></div></section>
+    <section className="bg-ivory py-20 md:py-28"><div className="shell"><div className="grid gap-8 md:grid-cols-[1fr_auto] md:items-end"><div><p className="eyebrow">{page.relatedEyebrow}</p><h2 className="mt-4 font-serif text-5xl text-lake md:text-6xl">{page.relatedHeading}</h2><p className="mt-4 max-w-xl leading-7 text-muted">{page.relatedDescription}</p></div><Link href="/rooms" className="border-b-2 border-sand pb-1 text-sm font-bold text-lake">{page.relatedLinkLabel}</Link></div><div className="mt-10 grid gap-10 md:grid-cols-2">{rooms.slice(0,2).map((room)=><RoomCard key={room.id} room={room}/>)}</div></div></section>
     <ExperienceActions slug={item.slug} price={item.priceFrom} currency={item.currency} bookable={item.bookable} bookIndependently={canBookIndependently}/>
   </PublicShell>;
 }

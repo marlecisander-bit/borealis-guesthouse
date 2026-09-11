@@ -11,6 +11,8 @@ const sections=[
   ['About','about','Edit the property story and location content.'],
   ['Gallery','gallery','Manage the public image collection.'],
   ['Contact','contact','Edit contact details and visible page content.'],
+  ['Booking','book','Edit the introductory content above the booking flow.'],
+  ['Global sections','global','Edit shared public calls to action and booking labels.'],
   ['Footer','footer','Edit global footer content.'],
   ['Navigation','navigation','Edit public navigation labels and destinations.'],
 ] as const;

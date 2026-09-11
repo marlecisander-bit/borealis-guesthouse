@@ -11,4 +11,4 @@ export interface GalleryItem { id: string; src: string; alt: string; category: s
 export interface Review { id: string; quote: string; author: string; origin: string }
 export interface ContactInfo { email: string; phone: string; phoneLabel: string; whatsapp: string; whatsappLabel: string; instagram: string; instagramLabel: string; address: string; mapsUrl: string; placeholder: boolean }
 export interface AboutSection { id: string; eyebrow: string; title: string; copy: string; image: string; imageAlt: string }
-export interface AboutContent { heroEyebrow:string; heroTitle: string; heroCopy: string; heroImage: string; heroImageAlt:string; sections: AboutSection[]; philosophyEyebrow:string; philosophyHeading:string; philosophy: string[] }
+export interface AboutContent { heroEyebrow:string; heroTitle: string; heroCopy: string; heroImage: string; heroImageAlt:string; sections: AboutSection[]; philosophyEyebrow:string; philosophyHeading:string; philosophy: string[]; ctaLabel:string; ctaTarget:string }

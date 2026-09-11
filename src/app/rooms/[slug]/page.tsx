@@ -16,6 +16,7 @@ import { PreviewBanner } from '@/components/public/PreviewBanner';
 import { getAdminSession } from '@/lib/admin/auth';
 import { adminRoomsRepository } from '@/lib/repositories/admin/rooms';
 import {formatRoomRate} from '@/lib/pricing/format';
+import { getLandingPageContent } from '@/services/site-content';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params; const room = await contentRepository.getRoom(slug);
@@ -28,7 +29,7 @@ export default async function RoomPage({ params,searchParams }: { params: Promis
   const session=requested?null:await getAdminSession();
   const implicit=session?(await adminRoomsRepository.listRoomTypes(session)).find(item=>item.slug===slug&&item.status!=='published'):null;
   const preview=await authorizePreview('room',requested||implicit?.id);
-  const [room, allRooms, experiences] = await Promise.all([contentRepository.getRoom(slug,preview?.id), contentRepository.getRooms(preview?.id), contentRepository.getExperiences()]);
+  const [room, allRooms, experiences, page] = await Promise.all([contentRepository.getRoom(slug,preview?.id), contentRepository.getRooms(preview?.id), contentRepository.getExperiences(), getLandingPageContent('rooms')]);
   if (!room) notFound();
   const otherRooms = allRooms.filter((item) => item.id !== room.id).slice(0, 2);
   return <PublicShell mobileBooking={false}>{preview&&<PreviewBanner label="Room draft preview"/>}
@@ -47,7 +48,7 @@ export default async function RoomPage({ params,searchParams }: { params: Promis
             <div><dt className="text-xs uppercase tracking-widest text-muted">Beds</dt><dd className="mt-2 font-serif text-2xl text-lake">{room.beds}</dd></div>
             <div><dt className="text-xs uppercase tracking-widest text-muted">Size</dt><dd className="mt-2 font-serif text-2xl text-lake">{room.size}</dd></div>
           </dl>
-          <section className="py-12"><p className="eyebrow">The room</p><h2 className="mt-3 font-serif text-4xl text-lake">A calm place to come back to.</h2><p className="mt-5 max-w-2xl text-lg leading-8 text-muted">{room.longDescription}</p></section>
+          <section className="py-12"><p className="eyebrow">{page.detailEyebrow}</p><h2 className="mt-3 font-serif text-4xl text-lake">{page.detailHeading}</h2><p className="mt-5 max-w-2xl text-lg leading-8 text-muted">{room.longDescription}</p></section>
           <section className="border-t border-lake/10 pt-12"><p className="eyebrow">Included</p><h2 className="mt-3 font-serif text-4xl text-lake">Room amenities</h2><div className="mt-7"><Amenities items={room.amenities} /></div></section>
         </div>
         <aside className="h-fit rounded-[1.75rem] bg-ivory p-7 lg:sticky lg:top-6">
@@ -61,7 +62,7 @@ export default async function RoomPage({ params,searchParams }: { params: Promis
 
     <section className="bg-lake py-20 text-white md:py-28"><div className="shell"><div className="max-w-2xl"><p className="eyebrow text-sand">Beyond the room</p><h2 className="mt-4 font-serif text-5xl md:text-6xl">Experience the lake.</h2></div><div className="mt-10 grid gap-5 md:grid-cols-3">{experiences.map((item) => <ExperienceCard key={item.id} item={item} />)}</div></div></section>
 
-    <section className="shell py-20 md:py-28"><div className="flex items-end justify-between gap-5"><div><p className="eyebrow">More ways to stay</p><h2 className="mt-4 font-serif text-5xl text-lake">Other rooms at Borealis.</h2></div><Link href="/rooms" className="hidden border-b-2 border-sand pb-1 text-sm font-bold text-lake md:block">View all rooms</Link></div><div className="mt-10 grid gap-10 md:grid-cols-2">{otherRooms.map((item) => <RoomCard key={item.id} room={item} />)}</div></section>
+    <section className="shell py-20 md:py-28"><div className="flex items-end justify-between gap-5"><div><p className="eyebrow">{page.relatedEyebrow}</p><h2 className="mt-4 font-serif text-5xl text-lake">{page.relatedHeading}</h2></div><Link href="/rooms" className="hidden border-b-2 border-sand pb-1 text-sm font-bold text-lake md:block">{page.relatedLinkLabel}</Link></div><div className="mt-10 grid gap-10 md:grid-cols-2">{otherRooms.map((item) => <RoomCard key={item.id} room={item} />)}</div></section>
     <RoomBookingBar slug={room.slug} price={room.priceFrom} currency={room.currency}/>
   </PublicShell>;
 }

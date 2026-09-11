@@ -35,10 +35,20 @@ const process:Field[]=[
   {name:'processStep3Title',label:'Step 3 title'},
   {name:'processStep3Description',label:'Step 3 description',kind:'textarea'},
 ];
+const detail:Field[]=[
+  {name:'detailEyebrow',label:'Detail page description eyebrow'},
+  {name:'detailHeading',label:'Detail page description heading'},
+];
+const related:Field[]=[
+  {name:'relatedEyebrow',label:'Detail page related-content eyebrow'},
+  {name:'relatedHeading',label:'Detail page related-content heading'},
+  {name:'relatedDescription',label:'Detail page related-content description',kind:'textarea'},
+  {name:'relatedLinkLabel',label:'Detail page related-content link label'},
+];
 const config={
-  rooms:{label:'Rooms',description:'Edit the visible Rooms hero and introduction. Individual rooms remain in Admin → Rooms.',fields:common},
-  experiences:{label:'Experiences',description:'Edit the landing-page presentation. Individual experiences remain in Admin → Experiences.',fields:[...common,...cta]},
-  transfers:{label:'Transfers',description:'Edit the landing-page presentation. Individual routes remain in Admin → Transfers.',fields:[...common,...process,...cta]},
+  rooms:{label:'Rooms',description:'Edit the Rooms landing page and shared room-detail headings. Individual rooms remain in Admin → Rooms.',fields:[...common,...detail,...related.filter(field=>field.name!=='relatedDescription')]},
+  experiences:{label:'Experiences',description:'Edit the Experiences landing page and shared detail-page sections. Individual experiences remain in Admin → Experiences.',fields:[...common,...cta,...detail,...related]},
+  transfers:{label:'Transfers',description:'Edit the Transfers landing page and shared route-detail headings. Individual routes remain in Admin → Transfers.',fields:[...common,...process,...cta,...detail]},
   'explore-koman':{label:'Explore Koman',description:'Edit the guide landing-page hero and introduction. Articles remain in the Explore Koman CMS.',fields:common},
   gallery:{label:'Gallery',description:'Edit the Gallery landing-page presentation. Individual photographs remain in the Media Library.',fields:common},
 } as const;
