@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Borealis Guest House web application
 
-## Getting Started
+Next.js public website, booking flow and property administration platform.
 
-First, run the development server:
+## Local development
+
+Install dependencies and start the development server from this directory:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). Local Supabase values must be present in `.env.local`; use `.env.local.example` as the key-name reference and never commit secrets.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Automated browser testing
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The Playwright suite starts a separate Next.js development server automatically on `127.0.0.1:3100`. Its build output uses `.next-playwright`, so it does not collide with the normal development server.
 
-## Learn More
+Install the Chromium browser once after `npm install`:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run test:e2e:install
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Run all mobile Chromium profiles:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run test:e2e
+```
 
-## Deploy on Vercel
+Run with a visible browser or Playwright's interactive UI:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run test:e2e:headed
+npm run test:e2e:ui
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+To test an already-running or deployed instance, provide its origin:
+
+```powershell
+$env:PLAYWRIGHT_BASE_URL='https://example.netlify.app'
+npm run test:e2e
+```
+
+The exact viewport matrix covers 320×568, 360×800, 375×812, 390×844, 393×852, 430×932 and 768×1024, with additional iPhone 13, Pixel 7 and iPad Mini projects. Named visual captures are written to `test-results/screenshots/<project>/`. Failure traces, screenshots and videos are written to `test-results/playwright-artifacts/`; the HTML report is written to `playwright-report/`.
+
+## Project checks
+
+```bash
+npm test
+npm run lint
+npx tsc --noEmit
+npm run build
+```

@@ -15,10 +15,11 @@ function preferredScrollBehavior(): ScrollBehavior {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
 }
 
-export function HomeLink({ children, className, ariaLabel, onActivate }: {
+export function HomeLink({ children, className, ariaLabel, ariaCurrent, onActivate }: {
   children: ReactNode;
   className?: string;
   ariaLabel?: string;
+  ariaCurrent?: 'page';
   onActivate?: () => void;
 }) {
   const pathname = usePathname();
@@ -33,13 +34,14 @@ export function HomeLink({ children, className, ariaLabel, onActivate }: {
     href="/"
     scroll
     aria-label={ariaLabel}
+    aria-current={ariaCurrent}
     className={className}
     onNavigate={(event) => {
       onActivate?.();
       const alreadyOnCleanHomepage = isCleanHomepageLocation(pathname, window.location.search, window.location.hash);
       if (alreadyOnCleanHomepage) {
         event.preventDefault();
-        scrollToHomepageTop(preferredScrollBehavior());
+        window.requestAnimationFrame(() => scrollToHomepageTop(preferredScrollBehavior()));
         return;
       }
       sessionStorage.setItem(pendingHomeScrollKey, '1');

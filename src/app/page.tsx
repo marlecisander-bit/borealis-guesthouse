@@ -55,11 +55,11 @@ export default async function Home({searchParams}:{searchParams:Promise<{preview
   const bookingCtaLabel=(hero?.settings as Record<string,unknown>|undefined)?.bookingCtaLabel;
   return (
     <>
+      <Header overlay navigation={navigation} languages={language.enabled} selectedLanguage={language.selected?.code||''}/>
       <main className="flex flex-col">{preview&&<PreviewBanner label="Homepage draft preview"/>}
         {visible('hero')&&<section style={{order:order('hero',0)}} className="hero-section relative z-30 min-h-[88svh] bg-lake text-white lg:min-h-[94svh]">
           <Image src={!preview&&publishedHero?.imageUrl?publishedHero.imageUrl:hero?.backgroundMediaId?homepageCms?.mediaUrls[hero.backgroundMediaId]||liveProperty.heroImage:liveProperty.heroImage} alt="Koman Lake surrounded by mountain slopes" fill priority sizes="100vw" className="object-cover" />
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,25,18,.58)_0%,rgba(10,25,18,.10)_38%,rgba(10,25,18,.72)_100%)]" />
-          <Header overlay navigation={navigation} languages={language.enabled} selectedLanguage={language.selected?.code||''}/>
           <div className="shell relative flex min-h-[88svh] flex-col justify-end pb-7 pt-28 lg:min-h-[94svh] lg:pb-0">
             <div className="max-w-3xl pb-7 md:pb-10">
               <p className="text-[.68rem] font-bold uppercase tracking-[0.26em] text-sand">{hero?.eyebrow||homepageContent?.eyebrow||'Borealis Guest House · Koman, Albania'}</p>
