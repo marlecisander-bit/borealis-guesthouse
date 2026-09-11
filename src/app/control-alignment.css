@@ -1,0 +1,32 @@
+/* Keep labels optically centered inside public CTAs and fixed-height actions. */
+:is(a,button).rounded-full,
+:is(a,button):is(.min-h-10,.min-h-11,.min-h-12,.min-h-14),
+.booking-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Admin tabular lists: headings and values share the same alignment rules. */
+[data-admin-shell] table th,
+[data-admin-shell] table td {
+  vertical-align: middle;
+}
+
+[data-admin-shell] table thead th {
+  white-space: nowrap;
+}
+
+[data-admin-shell] table thead th:empty::after {
+  content: "Actions";
+}
+
+@media (min-width: 768px) {
+  /* Room types use separate header and row grids. A fixed action track keeps
+     every preceding column on the exact same grid line in both elements. */
+  [data-admin-shell] .admin-room-type-grid {
+    grid-template-columns: 5rem minmax(0, 1.4fr) minmax(0, .7fr) minmax(0, .7fr) minmax(0, .6fr) 18rem;
+  }
+}

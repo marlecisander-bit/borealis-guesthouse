@@ -1,4 +1,5 @@
-export interface SiteDocument{id:string;key:'about'|'contact'|'footer';data:Record<string,string>;status:'draft'|'published'}
+export type SiteDocumentKey='rooms'|'experiences'|'transfers'|'explore-koman'|'about'|'gallery'|'contact'|'footer';
+export interface SiteDocument{id:string;key:SiteDocumentKey;data:Record<string,string>;status:'draft'|'published'}
 export interface NavigationItem{id:string;label:string;href:string;location:'header'|'footer';visible:boolean;sortOrder:number;status:'published'|'archived'}
 export interface SiteContentState{ok:boolean;message:string}
-
+export interface LandingPageContent{eyebrow:string;heading:string;description:string;heroImage:string;heroImageAlt:string;introEyebrow:string;introHeading:string;introDescription:string;ctaEyebrow:string;ctaHeading:string;ctaDescription:string;ctaLabel:string;ctaTarget:string;processEyebrow?:string;processHeading?:string;processStep1Title?:string;processStep1Description?:string;processStep2Title?:string;processStep2Description?:string;processStep3Title?:string;processStep3Description?:string}

@@ -1,1 +1,9 @@
-import type{Metadata}from'next';import{ArticleCard,SectionHeader}from'@/components/public/Cards';import{PageHero,PublicShell}from'@/components/public/PageShell';import{articles,images}from'@/data/public-content';import{createMetadata}from'@/lib/seo';export const metadata:Metadata=createMetadata({title:'Explore Koman',description:'A thoughtful travel guide to Koman Lake, Albania.'},'/explore-koman');export default function Page(){return <PublicShell><PageHero eyebrow="The local guide" title="Koman is more than a crossing." copy="Practical notes and slower stories for travellers who want to understand this remarkable corner of Albania." image={images.lakeBlue}/><section className="shell py-20 md:py-28"><SectionHeader eyebrow="Field notes" title="Know before you go."/><div className="mt-12 grid gap-10 md:grid-cols-3">{articles.map(x=><ArticleCard key={x.id} article={x}/>)}</div></section></PublicShell>}
+import type {Metadata} from 'next';
+import {ArticleCard,SectionHeader} from '@/components/public/Cards';
+import {PageHero,PublicShell} from '@/components/public/PageShell';
+import {publicContentRepository} from '@/lib/repositories/public/content';
+import {createPageMetadata} from '@/lib/seo';
+import {getLandingPageContent} from '@/services/site-content';
+export async function generateMetadata():Promise<Metadata>{return createPageMetadata('explore-koman')}
+export const dynamic='force-dynamic';
+export default async function Page(){const[articles,property,page]=await Promise.all([publicContentRepository.getExploreArticles(),publicContentRepository.getProperty(),getLandingPageContent('explore-koman')]),fallback=articles[0]?.image||property.heroImage;return <PublicShell><PageHero eyebrow={page.eyebrow} title={page.heading} copy={page.description} image={page.heroImage||fallback} fallbackImage={fallback} imageAlt={page.heroImageAlt}/><section className="shell py-20 md:py-28"><SectionHeader eyebrow={page.introEyebrow} title={page.introHeading} copy={page.introDescription}/><div className="mt-12 grid gap-10 md:grid-cols-3">{articles.map(item=><ArticleCard key={item.id} article={item}/>)}</div></section></PublicShell>}

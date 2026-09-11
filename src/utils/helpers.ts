@@ -27,7 +27,7 @@ export function calculateNights(checkIn: string, checkOut: string): number {
  */
 export function formatCurrency(
   value: number,
-  currency: string = 'USD',
+  currency: string = 'EUR',
   locale: string = 'en-US'
 ): string {
   return new Intl.NumberFormat(locale, {

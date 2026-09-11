@@ -1,25 +1,2 @@
-import Link from 'next/link';
-
-export default function TransfersPage() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Transfers</h1>
-          <p className="text-slate-600 mt-1">Manage transportation services</p>
-        </div>
-        <Link
-          href="/admin/transfers/new"
-          className="px-4 py-2 bg-slate-900 text-white font-medium rounded-lg hover:bg-slate-800 transition"
-        >
-          + Add Transfer
-        </Link>
-      </div>
-
-      <div className="bg-white rounded-lg border border-slate-200 p-12 text-center">
-        <p className="text-slate-600">Transfers coming in Phase 4</p>
-        <p className="text-sm text-slate-500 mt-1">This page is under development</p>
-      </div>
-    </div>
-  );
-}
+import Image from'next/image';import Link from'next/link';import{AdminEmptyState,AdminPageHeader,StatusBadge}from'@/components/admin/ui';import{ConfirmAction}from'@/components/admin/ConfirmAction';import{archiveTransfer,duplicateTransfer,restoreTransfer,unpublishTransfer}from'./actions';import{requireAdmin}from'@/lib/admin/auth';import{adminTransfersRepository}from'@/lib/repositories/admin/transfers';
+export default async function Page({searchParams}:{searchParams:Promise<{status?:string}>}){const session=await requireAdmin(['owner']),{status='active'}=await searchParams,items=await adminTransfersRepository.list(session).catch(()=>[]),filtered=items.filter(item=>status==='archived'?item.status==='archived':item.status!=='archived');return <div className="space-y-8"><AdminPageHeader title="Transfers" description="Manage guest-facing routes, pricing, booking availability and search metadata." actions={<Link href="/admin/transfers/new" className="inline-flex min-h-11 items-center justify-center rounded-lg text-center bg-slate-950 px-4 text-sm font-semibold text-white">Add transfer</Link>}/><form className="rounded-xl border border-slate-200 bg-white p-4"><label className="text-xs font-bold text-slate-600">Status <select name="status" defaultValue={status} className="ml-2 min-h-10 rounded-lg border border-slate-300 px-3"><option value="active">Active</option><option value="archived">Archived</option></select></label><button className="ml-3 min-h-10 rounded-lg bg-slate-100 px-4 text-sm font-bold">Apply</button></form>{filtered.length?<div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">{filtered.map(item=><article key={item.id} className="grid gap-4 border-b border-slate-100 p-5 last:border-0 md:grid-cols-[5rem_1.4fr_.65fr_.6fr_auto] md:items-center"><div className="relative aspect-square overflow-hidden rounded-lg bg-slate-100">{item.imageUrl&&<Image src={item.imageUrl} alt="" fill sizes="80px" className="object-cover"/>}</div><div><Link href={`/admin/transfers/${item.id}`} className="font-bold hover:underline">{item.origin} → {item.destination}</Link><p className="mt-1 text-xs text-slate-500">{item.slug}{item.featured?' · Featured':''}{item.bookable?' · Bookable':''}</p></div><p className="text-sm">{item.price===null?'On request':`${item.currency} ${item.price} · ${item.pricingMethod==='per_passenger'?'per passenger':'per vehicle'}`}</p><StatusBadge status={item.status}/><div className="flex flex-wrap gap-2"><Link href={`/admin/transfers/${item.id}`} className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 px-3 text-center text-xs font-bold leading-none">Edit</Link>{item.status==='archived'?<form action={restoreTransfer.bind(null,item.id)}><button className="inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-center text-xs font-bold leading-none text-emerald-700">Restore</button></form>:<><form action={duplicateTransfer.bind(null,item.id)}><button className="inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-center text-xs font-bold leading-none">Duplicate</button></form>{item.status==='published'&&<form action={unpublishTransfer.bind(null,item.id)}><button className="inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-center text-xs font-bold leading-none">Unpublish</button></form>}<ConfirmAction action={archiveTransfer.bind(null,item.id)} label="Archive" confirmMessage={`Archive the route from ${item.origin} to ${item.destination}?`}/></>}</div></article>)}</div>:<AdminEmptyState title="No transfers found" description="Create your first transfer route or change the status filter." action={<Link href="/admin/transfers/new" className="inline-flex min-h-11 items-center justify-center rounded-lg text-center bg-slate-950 px-4 text-sm font-semibold text-white">Add transfer</Link>}/>}</div>}

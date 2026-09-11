@@ -12,38 +12,41 @@ export interface AdminSession {
   propertyId: string;
 }
 
-export const getAdminSession = cache(async (): Promise<AdminSession | null> => {
+const adminRoles: AdminRole[] = ['owner', 'manager', 'editor', 'staff'];
+
+export const getCurrentAdmin = cache(async (): Promise<AdminSession | null> => {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user?.email) return null;
 
-  const { data: profile } = await supabase
+  const { data: profile, error } = await supabase
     .from('admin_profiles')
     .select('role,property_id')
     .eq('user_id', user.id)
     .eq('is_active', true)
+    .order('created_at', { ascending: true })
+    .limit(1)
     .maybeSingle();
-  const { data: legacyAdmin } = profile
-    ? { data: null }
-    : await supabase
-        .from('admin_users')
-        .select('role,property_id')
-        .ilike('email', user.email)
-        .maybeSingle();
-  const admin = profile || legacyAdmin;
-  if (!admin?.property_id) return null;
+  if (error || !profile?.property_id || !adminRoles.includes(profile.role as AdminRole)) return null;
 
   return {
     userId: user.id,
     email: user.email,
-    role: (admin.role || 'staff') as AdminRole,
-    propertyId: admin.property_id,
+    role: profile.role as AdminRole,
+    propertyId: profile.property_id,
   };
 });
 
+// Compatibility name used by preview and existing server components.
+export const getAdminSession = getCurrentAdmin;
+
 export async function requireAdmin(roles?: AdminRole[]): Promise<AdminSession> {
-  const session = await getAdminSession();
-  if (!session) redirect('/admin/login');
+  const session = await getCurrentAdmin();
+  if (!session) redirect('/admin/login?error=not-authorized');
   if (roles && !roles.includes(session.role)) redirect('/admin/dashboard?error=forbidden');
   return session;
+}
+
+export async function requireRole(...roles: AdminRole[]): Promise<AdminSession> {
+  return requireAdmin(roles);
 }

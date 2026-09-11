@@ -1,0 +1,5 @@
+export type ManagedBookingStatus='held'|'pending'|'awaiting_payment'|'confirmed'|'cancelled'|'checked_in'|'completed';
+export type ManagedPaymentStatus='pending'|'authorized'|'paid'|'failed'|'refunded'|'partially_refunded';
+export interface BookingListRow{id:string;reference:string;status:ManagedBookingStatus;paymentStatus:ManagedPaymentStatus;source:string;checkIn:string|null;checkOut:string|null;serviceDate:string|null;serviceTime:string|null;bookingType:string;quantity:number;adults:number;children:number;guestName:string;email:string;room:string;total:number;currency:string;createdAt:string}
+export interface BookingDetail extends BookingListRow{phone:string;country:string;guestCount:number;roomSubtotal:number;addonsSubtotal:number;taxes:number;discount:number;paymentMethod:string;notes:string;internalNote:string;holdExpiresAt:string;items:{id:string;type:string;title:string;quantity:number;unitPrice:number;totalPrice:number;serviceDate:string;serviceTime:string;status:string;requestedQuantity:number}[]}
+export interface ManualBookingRoom{id:string;name:string;capacity:number}

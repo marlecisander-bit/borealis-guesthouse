@@ -1,6 +1,8 @@
 import { cache } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { fetchSupabase } from '@/lib/supabase/fetch';
 import type { MediaAsset } from '@/types/media';
+const createClient=(url:string,key:string,options:Parameters<typeof createSupabaseClient>[2])=>createSupabaseClient(url,key,{...options,global:{...options?.global,fetch:fetchSupabase}});
 
 export interface PublicMediaAsset extends MediaAsset {
   publicUrl: string;

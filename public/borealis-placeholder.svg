@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-label="Borealis image placeholder">
+  <rect width="1600" height="1000" fill="#edf0e8"/>
+  <path d="M0 760 330 390l210 250 240-360 310 410 210-260 300 330v240H0Z" fill="#315747" opacity=".32"/>
+  <path d="M0 790c260-100 470 100 760 0s510 90 840-30v240H0Z" fill="#173c35" opacity=".78"/>
+  <text x="800" y="875" text-anchor="middle" fill="#fff" font-family="Georgia,serif" font-size="54">Borealis Guest House</text>
+</svg>

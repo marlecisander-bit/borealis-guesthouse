@@ -1,15 +1,21 @@
-export default function SettingsPage() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">Settings</h1>
-        <p className="text-slate-600 mt-1">Manage property information and preferences</p>
-      </div>
+import { SettingsForm } from '@/components/admin/SettingsForm';
+import { AdminPageHeader } from '@/components/admin/ui';
+import { requireAdmin } from '@/lib/admin/auth';
+import { adminSettingsRepository } from '@/lib/repositories/admin/settings';
+import { PropertyPublication } from '@/components/admin/PropertyPublication';
 
-      <div className="bg-white rounded-lg border border-slate-200 p-12 text-center">
-        <p className="text-slate-600">Settings coming in Phase 2</p>
-        <p className="text-sm text-slate-500 mt-1">This page is under development</p>
-      </div>
+export default async function SettingsPage() {
+  const session = await requireAdmin(['owner', 'manager']);
+  const data = await adminSettingsRepository.get(session);
+
+  return (
+    <div className="space-y-8">
+      <AdminPageHeader
+        title="Borealis settings"
+        description="Manage property details and operational defaults. Secret credentials remain server-environment configuration only."
+      />
+      <PropertyPublication published={data.propertyPublished} />
+      <SettingsForm data={data} />
     </div>
   );
 }

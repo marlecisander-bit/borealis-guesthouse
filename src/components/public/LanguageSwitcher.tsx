@@ -1,0 +1,4 @@
+'use client';
+import{usePathname,useRouter,useSearchParams}from'next/navigation';
+import type{LanguageRecord}from'@/types/languages';
+export function LanguageSwitcher({languages,selectedCode,tone='dark'}:{languages:LanguageRecord[];selectedCode:string;tone?:'light'|'dark'}){const router=useRouter(),pathname=usePathname(),search=useSearchParams();if(languages.length<2)return null;return <select aria-label="Language" value={selectedCode} onChange={event=>{const params=new URLSearchParams(search.toString());params.set('lang',event.target.value);router.replace(`${pathname}?${params}`)}} className={`min-h-10 rounded-full border bg-transparent px-2 text-xs font-bold uppercase ${tone==='light'?'border-white/40 text-white':'border-lake/20 text-lake'}`}>{languages.map(language=><option key={language.id} value={language.code} className="text-slate-950">{language.nativeName}</option>)}</select>}

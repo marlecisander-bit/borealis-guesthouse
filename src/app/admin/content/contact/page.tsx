@@ -1,3 +1,35 @@
-import Link from'next/link';import{AdminEmptyState,AdminPageHeader}from'@/components/admin/ui';import{SiteDocumentForm}from'@/components/admin/SiteDocumentForm';import{requireAdmin}from'@/lib/admin/auth';import{adminSiteContentRepository}from'@/lib/repositories/admin/site-content';
-const fields=[{name:'title',label:'Page title'},{name:'introduction',label:'Contact page introduction',kind:'textarea' as const},{name:'phone',label:'Phone number'},{name:'whatsapp',label:'WhatsApp link',kind:'url' as const},{name:'email',label:'Email',kind:'email' as const},{name:'instagram',label:'Instagram link',kind:'url' as const},{name:'address',label:'Address',kind:'textarea' as const},{name:'mapsUrl',label:'Google Maps link',kind:'url' as const},{name:'directionsText',label:'Directions text',kind:'textarea' as const}];
-export default async function Page(){const session=await requireAdmin(['owner','manager','editor']);const doc=await adminSiteContentRepository.document(session,'contact').catch(()=>null);if(!doc)return <AdminEmptyState title="CMS database update required" description="Run database/migrations/20260902_007_site_content_cms.sql in Supabase, then reload."/>;return <div className="space-y-8"><AdminPageHeader title="Contact information" description="This single record is used by the Contact page and Footer." actions={<Link href="/contact" target="_blank" className="rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-semibold">Preview Website</Link>}/><SiteDocumentForm documentKey="contact" fields={fields} data={doc.data}/></div>}
+import Link from 'next/link';
+import {AdminEmptyState,AdminPageHeader} from '@/components/admin/ui';
+import {SiteDocumentForm} from '@/components/admin/SiteDocumentForm';
+import {requireAdmin} from '@/lib/admin/auth';
+import {adminSiteContentRepository} from '@/lib/repositories/admin/site-content';
+
+const fields=[
+  {name:'eyebrow',label:'Hero eyebrow'},
+  {name:'title',label:'Page title'},
+  {name:'introduction',label:'Page introduction',kind:'textarea' as const},
+  {name:'phone',label:'Phone number'},
+  {name:'whatsapp',label:'WhatsApp link',kind:'url' as const},
+  {name:'email',label:'Email',kind:'email' as const},
+  {name:'instagram',label:'Instagram link',kind:'url' as const},
+  {name:'address',label:'Address',kind:'textarea' as const},
+  {name:'mapsUrl',label:'Google Maps link',kind:'url' as const},
+  {name:'directionsText',label:'Directions text',kind:'textarea' as const},
+  {name:'journeyEyebrow',label:'Journey section eyebrow'},
+  {name:'journeyHeading',label:'Journey section heading'},
+  {name:'journeyDescription',label:'Journey section description',kind:'textarea' as const},
+  {name:'primaryCtaLabel',label:'Primary CTA label'},
+  {name:'primaryCtaTarget',label:'Primary CTA destination',help:'Use an internal path such as /transfers.'},
+  {name:'secondaryCtaLabel',label:'Secondary CTA label'},
+  {name:'secondaryCtaTarget',label:'Secondary CTA destination',help:'Use an internal path such as /book.'},
+];
+
+export default async function Page(){
+  const session=await requireAdmin(['owner','manager','editor']);
+  const document=await adminSiteContentRepository.document(session,'contact').catch(()=>null);
+  if(!document)return <AdminEmptyState title="CMS database update required" description="Run database/migrations/20260902_007_site_content_cms.sql in Supabase, then reload."/>;
+  return <div className="space-y-8">
+    <AdminPageHeader title="Contact page" description="Edit the visible page content and the contact information shared across the website." actions={<Link href="/contact" target="_blank" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold">Preview Website</Link>}/>
+    <SiteDocumentForm documentKey="contact" fields={fields} data={document.data}/>
+  </div>;
+}

@@ -1,23 +1,8 @@
-import { experiences, rooms } from '@/data/public-content';
-import type { AvailableRoom, BookingAddon, BookingConfirmation, BookingService, StaySearch } from '@/types/booking';
+import type { AvailableRoom, BookingConfirmation, BookingService } from '@/types/booking';
 
-function nightsBetween(checkIn: string, checkOut: string) { return Math.ceil((new Date(`${checkOut}T12:00:00`).getTime() - new Date(`${checkIn}T12:00:00`).getTime()) / 86400000); }
-function rateFor(roomId: string, search: StaySearch): AvailableRoom {
-  const room = rooms.find((item) => item.id === roomId); if (!room) throw new Error('Room not found.');
-  const nights = nightsBetween(search.checkIn, search.checkOut); if (nights < 1) throw new Error('Check-out must be after check-in.');
-  return { room, nightlyRate: room.priceFrom, nights, subtotal: room.priceFrom * nights };
-}
-const pause = () => new Promise((resolve) => setTimeout(resolve, 450));
-
-export const mockBookingService: BookingService = {
-  async searchAvailability(search) { await pause(); return rooms.filter((room) => room.capacity >= search.guests).map((room) => rateFor(room.id, search)); },
-  async getRoomRate(roomId, search) { await pause(); return rateFor(roomId, search); },
-  async createBookingHold() { await pause(); return { id: 'mock-hold', expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString() }; },
-  async createBooking(): Promise<BookingConfirmation> { await pause(); return { reference: 'BOREALIS-PREVIEW', status: 'placeholder-confirmed' }; },
+export const bookingService: BookingService = {
+  async searchAvailability(search) { const response=await fetch('/api/pricing',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(search)});const payload=await response.json();if(!response.ok)throw new Error(payload.error||'Pricing could not be loaded.');return payload.rooms as AvailableRoom[]; },
+  async getRoomRate(roomId, search) { const rooms=await this.searchAvailability(search);const room=rooms.find(item=>item.room.id===roomId);if(!room)throw new Error('Room is unavailable for these dates.');return room; },
+  async createBookingHold(selection) {const response=await fetch('/api/bookings/hold',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({search:selection.search,roomTypeId:selection.room?.room.id,addons:selection.addons,guest:selection.guest})}),payload=await response.json();if(!response.ok)throw new Error(payload.error||'The room could not be held.');return payload;},
+  async createBooking(_selection,hold): Promise<BookingConfirmation> {const response=await fetch('/api/bookings/confirm',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:hold.id,token:hold.token})}),payload=await response.json();if(!response.ok)throw new Error(payload.error||'The booking could not be created.');return payload;},
 };
-
-export const mockBookingAddons: BookingAddon[] = [
-  { id: 'kayak', type: 'experience', name: experiences[0].title, description: 'A quiet paddle on Koman Lake.', price: 18 },
-  { id: 'boat', type: 'experience', name: experiences[1].title, description: 'Explore remote shores from the water.', price: 35 },
-  { id: 'airport', type: 'transfer', name: 'Tirana Airport transfer', description: 'Arrival transfer enquiry for your party.', price: 45 },
-];

@@ -29,8 +29,11 @@ BEGIN
   LIMIT 1;
 
   IF target_property_id IS NULL THEN
-    INSERT INTO public.properties (name, location, currency)
-    VALUES ('Borealis Guest House', 'Koman', 'EUR')
+    -- The bootstrap creates the live Borealis property. Leaving it on the
+    -- schema's generic `draft` default makes every anonymous catalog and
+    -- booking query look unconfigured even though Admin works correctly.
+    INSERT INTO public.properties (name, location, currency, status)
+    VALUES ('Borealis Guest House', 'Koman', 'EUR', 'published')
     RETURNING id INTO target_property_id;
   END IF;
 

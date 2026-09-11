@@ -37,6 +37,11 @@ CREATE TABLE IF NOT EXISTS public.experience_images(
  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
  UNIQUE(experience_id,media_asset_id)
 );
+-- The canonical schema may have created this table first with is_featured.
+-- Keep this migration additive so cover selection works in either order.
+ALTER TABLE public.experience_images
+  ADD COLUMN IF NOT EXISTS is_cover BOOLEAN NOT NULL DEFAULT FALSE;
+UPDATE public.experience_images SET is_cover=is_featured WHERE is_featured AND NOT is_cover;
 ALTER TABLE public.experience_availability
   ADD COLUMN IF NOT EXISTS property_id UUID REFERENCES public.properties(id) ON DELETE CASCADE,
   ADD COLUMN IF NOT EXISTS availability_type TEXT NOT NULL DEFAULT 'specific_date',

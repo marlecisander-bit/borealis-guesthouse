@@ -4,6 +4,5 @@ export interface HomepageSection{id:string;key:HomepageKey;title:string;subtitle
 export interface HomepageHighlight{id:string;title:string;description:string;icon:string;visible:boolean;sortOrder:number;status:ContentStatus}
 export interface HomepageReview{id:string;author:string;origin:string;quote:string;visible:boolean;sortOrder:number;status:ContentStatus}
 export interface CmsOption{id:string;label:string;imageUrl?:string}
-export interface HomepageEditorData{sections:HomepageSection[];highlights:HomepageHighlight[];reviews:HomepageReview[];media:CmsOption[];rooms:CmsOption[];experiences:CmsOption[];articles:CmsOption[];transfers:CmsOption[]}
+export interface HomepageEditorData{sections:HomepageSection[];highlights:HomepageHighlight[];reviews:HomepageReview[];media:CmsOption[];rooms:CmsOption[];experiences:CmsOption[];articles:CmsOption[];transfers:CmsOption[];workflow?:{hasDraft:boolean;updatedAt:string;publishedAt:string}}
 export interface HomepageCmsState{ok:boolean;message:string;errors?:Record<string,string>}
-

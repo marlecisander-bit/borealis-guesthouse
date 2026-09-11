@@ -4,6 +4,9 @@ export interface MediaAsset {
   id: string;
   property_id: string;
   file_path: string;
+  filename?: string | null;
+  mime_type?: string | null;
+  storage_bucket?: string;
   alt_text: string | null;
   title: string | null;
   file_type: string | null;
@@ -17,4 +20,14 @@ export interface MediaAsset {
   is_visible?: boolean;
   sort_order?: number;
   created_at: string;
+  updated_at?: string;
+  width?: number | null;
+  height?: number | null;
+  focal_x?: number | null;
+  focal_y?: number | null;
+}
+
+export interface AdminMediaAsset extends MediaAsset {
+  publicUrl: string;
+  referencedByPublishedContent: boolean;
 }

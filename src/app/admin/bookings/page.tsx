@@ -1,15 +1,15 @@
-export default function BookingsPage() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">Bookings</h1>
-        <p className="text-slate-600 mt-1">Manage guest reservations</p>
-      </div>
+import Link from 'next/link';
+import { requireAdmin } from '@/lib/admin/auth';
+import { adminBookingsRepository } from '@/lib/repositories/admin/bookings';
+import { AdminEmptyState, AdminPageHeader, StatusBadge } from '@/components/admin/ui';
+import { formatMoney } from '@/lib/pricing/format';
 
-      <div className="bg-white rounded-lg border border-slate-200 p-12 text-center">
-        <p className="text-slate-600">No bookings yet</p>
-        <p className="text-sm text-slate-500 mt-1">Bookings will appear here when your website goes live (Phase 5)</p>
-      </div>
-    </div>
-  );
+const statuses=['','held','pending','awaiting_payment','confirmed','cancelled','checked_in','completed'];
+export default async function BookingsPage({searchParams}:{searchParams:Promise<{q?:string;status?:string;period?:string;room?:string;from?:string;to?:string}>}){
+  const session=await requireAdmin(['owner','manager','staff']),filters=await searchParams;
+  const[bookings,rooms]=await Promise.all([adminBookingsRepository.list(session,{query:filters.q,status:filters.status,period:filters.period,roomTypeId:filters.room,from:filters.from,to:filters.to}),adminBookingsRepository.rooms(session)]);
+  return <div className="space-y-7"><AdminPageHeader title="Bookings" description="Search room, package and standalone service bookings in one operational list." actions={<Link href="/admin/bookings/new" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-950 px-4 text-sm font-bold text-white">Add booking</Link>}/>
+    <nav className="flex flex-wrap gap-2">{[['','All'],['upcoming','Upcoming'],['current','Current'],['past','Past'],['cancelled','Cancelled']].map(([value,label])=><Link key={label} href={value?`/admin/bookings?period=${value}`:'/admin/bookings'} className={`rounded-full px-4 py-2 text-sm font-bold ${filters.period===value||(!filters.period&&!value)?'bg-cyan-900 text-white':'border border-slate-300 bg-white text-slate-700'}`}>{label}</Link>)}</nav>
+    <form className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-2 xl:grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto]"><input type="hidden" name="period" value={filters.period||''}/><input name="q" defaultValue={filters.q} placeholder="Reference, guest, email or booking content" className="min-h-11 rounded-lg border border-slate-300 px-3"/><select name="status" defaultValue={filters.status} className="min-h-11 rounded-lg border border-slate-300 px-3">{statuses.map(value=><option key={value} value={value}>{value?value.replaceAll('_',' '):'All statuses'}</option>)}</select><select name="room" defaultValue={filters.room} className="min-h-11 rounded-lg border border-slate-300 px-3"><option value="">All rooms</option>{rooms.map(room=><option key={room.id} value={room.id}>{room.name}</option>)}</select><input name="from" type="date" defaultValue={filters.from} aria-label="Service date from" className="min-h-11 rounded-lg border border-slate-300 px-3"/><input name="to" type="date" defaultValue={filters.to} aria-label="Service date to" className="min-h-11 rounded-lg border border-slate-300 px-3"/><button className="rounded-lg bg-cyan-900 px-5 font-bold text-white">Filter</button></form>
+    {bookings.length?<div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white"><table className="w-full min-w-[1120px] text-left text-sm"><thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="p-4">Reference</th><th className="p-4">Guest</th><th className="p-4">Type</th><th className="p-4">Booking content</th><th className="p-4">Date / time</th><th className="p-4">Quantity</th><th className="p-4">Total</th><th className="p-4">Status</th><th className="p-4">Source</th><th/></tr></thead><tbody>{bookings.map(booking=><tr key={booking.id} className="border-t border-slate-100"><td className="p-4 font-bold">{booking.reference}</td><td className="p-4">{booking.guestName}<span className="block text-xs text-slate-500">{booking.email}</span></td><td className="p-4 font-semibold">{booking.bookingType}</td><td className="p-4">{booking.room}</td><td className="p-4">{booking.checkIn&&booking.checkOut?`${booking.checkIn} → ${booking.checkOut}`:<>{booking.serviceDate||'Not scheduled'}{booking.serviceTime&&<span className="block text-xs text-slate-500">{booking.serviceTime}</span>}</>}</td><td className="p-4">{booking.quantity||booking.adults+booking.children}</td><td className="p-4 font-semibold">{formatMoney(booking.total,booking.currency)}</td><td className="p-4"><StatusBadge status={booking.status}/></td><td className="p-4 capitalize">{booking.source}</td><td className="p-4"><Link href={`/admin/bookings/${booking.id}`} className="font-bold underline">Open</Link></td></tr>)}</tbody></table></div>:<AdminEmptyState title="No matching bookings" description="New website reservations and manual bookings will appear here." action={<Link href="/admin/bookings/new" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-950 px-4 text-sm font-bold text-white">Add booking</Link>}/>}</div>;
 }

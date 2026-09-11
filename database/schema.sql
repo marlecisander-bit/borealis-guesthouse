@@ -15,7 +15,7 @@ CREATE TABLE properties (
   location VARCHAR(255),
   check_in_time TIME DEFAULT '14:00',
   check_out_time TIME DEFAULT '11:00',
-  currency VARCHAR(3) DEFAULT 'USD',
+  currency VARCHAR(3) DEFAULT 'EUR',
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -72,7 +72,7 @@ CREATE TABLE rates (
   property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
   room_type_id UUID NOT NULL REFERENCES room_types(id) ON DELETE CASCADE,
   base_price DECIMAL(10, 2) NOT NULL,
-  currency VARCHAR(3) DEFAULT 'USD',
+  currency VARCHAR(3) DEFAULT 'EUR',
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -132,7 +132,7 @@ CREATE TABLE bookings (
   check_out DATE NOT NULL,
   status VARCHAR(50) DEFAULT 'pending', -- 'pending', 'confirmed', 'checked_in', 'completed', 'cancelled'
   total_amount DECIMAL(10, 2) NOT NULL,
-  currency VARCHAR(3) DEFAULT 'USD',
+  currency VARCHAR(3) DEFAULT 'EUR',
   payment_status VARCHAR(50) DEFAULT 'pending', -- 'pending', 'paid', 'failed'
   notes TEXT,
   created_at TIMESTAMP DEFAULT NOW(),
@@ -164,7 +164,7 @@ CREATE TABLE experiences (
   name VARCHAR(255) NOT NULL,
   description TEXT,
   price DECIMAL(10, 2) NOT NULL,
-  currency VARCHAR(3) DEFAULT 'USD',
+  currency VARCHAR(3) DEFAULT 'EUR',
   duration_minutes INTEGER,
   max_capacity INTEGER,
   created_at TIMESTAMP DEFAULT NOW(),
@@ -188,7 +188,7 @@ CREATE TABLE transfers (
   route_name VARCHAR(255) NOT NULL,
   description TEXT,
   price DECIMAL(10, 2) NOT NULL,
-  currency VARCHAR(3) DEFAULT 'USD',
+  currency VARCHAR(3) DEFAULT 'EUR',
   capacity INTEGER NOT NULL,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
