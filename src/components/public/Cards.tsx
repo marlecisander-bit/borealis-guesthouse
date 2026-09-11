@@ -1,4 +1,5 @@
 import Image from 'next/image';import Link from 'next/link';import type{Experience,Room,TourismArticle}from'@/types/public';import{formatRoomRate}from'@/lib/pricing/format';
+import {BookingLink} from './BookingLink';
 export function SectionHeader({eyebrow,title,copy}:{eyebrow:string;title:string;copy?:string}){return <div className="max-w-2xl"><p className="eyebrow">{eyebrow}</p><h2 className="mt-3 font-serif text-4xl leading-tight text-lake md:text-6xl">{title}</h2>{copy&&<p className="mt-5 leading-7 text-muted">{copy}</p>}</div>}
 export function RoomCard({room,variant='standard'}:{room:Room;variant?:'standard'|'featured'}){
   const featured=variant==='featured';
@@ -18,7 +19,7 @@ export function RoomCard({room,variant='standard'}:{room:Room;variant?:'standard
         </div>
         <p className="shrink-0 whitespace-nowrap text-right text-xs text-muted">{room.priceFrom===null?'Pricing':'From'}<br/><strong className="text-lg text-lake">{formatRoomRate(room.priceFrom,room.currency)}</strong></p>
       </div>
-      {featured&&<div className="mt-auto grid grid-cols-2 gap-2 pt-5"><Link href={`/rooms/${room.slug}`} className="rounded-xl bg-white px-4 py-3 text-center text-sm font-bold text-lake">View room</Link><Link href={`/book?room=${room.slug}`} className="rounded-xl bg-lake px-4 py-3 text-center text-sm font-bold text-white">Check availability</Link></div>}
+      {featured&&<div className="mt-auto grid grid-cols-2 gap-2 pt-5"><Link href={`/rooms/${room.slug}`} className="rounded-xl bg-white px-4 py-3 text-center text-sm font-bold text-lake">View room</Link><BookingLink href={`/book?room=${room.slug}`} pendingLabel="Opening…" className="public-primary-cta rounded-xl px-4 py-3 text-center text-sm font-bold">Check availability</BookingLink></div>}
     </div>
   </article>
 }

@@ -40,6 +40,7 @@ export default defineConfig({
   },
   expect: { timeout: 8_000 },
   projects: [
+    { name: 'desktop-chromium', use: { browserName: 'chromium', viewport: { width: 1440, height: 900 } } },
     ...exactMobileProjects,
     { name: 'iphone-13', use: { ...devices['iPhone 13'], browserName: 'chromium' } },
     { name: 'pixel-7', use: { ...devices['Pixel 7'] } },

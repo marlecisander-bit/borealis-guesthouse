@@ -1,5 +1,7 @@
 'use client';
+import Form from 'next/form';
 import { useCallback, useState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { DateRangeCalendar } from '@/components/public/DateRangeCalendar';
 import { useDateRangePicker } from '@/hooks/useDateRangePicker';
 import { formatDateOnly, type DateRangeValue } from '@/lib/date-range';
@@ -12,14 +14,19 @@ export function BookingSearch({ hero = false, ctaLabel = 'Check availability' }:
   const picker = useDateRangePicker({ value: dates, onChange: changeDates });
   const validSearch = validateBookingSearch({ ...dates, guests });
   return <div className={`booking-search relative ${hero ? 'booking-search--hero' : ''}`}>
-    <form action="/book" aria-label="Check room availability" className="booking-form">
+    <Form action="/book" aria-label="Check room availability" className="booking-form">
       <input type="hidden" name="checkIn" value={dates.checkIn}/>
       <input type="hidden" name="checkOut" value={dates.checkOut}/>
       <button type="button" onClick={picker.openCheckInPicker} className="booking-field text-left" aria-haspopup="dialog" aria-expanded={picker.open} aria-label={`Check-in, ${formatDateOnly(dates.checkIn)}`}><span>Check-in</span><strong>{formatDateOnly(dates.checkIn)}</strong></button>
       <button type="button" onClick={picker.openCheckOutPicker} className="booking-field text-left" aria-haspopup="dialog" aria-expanded={picker.open} aria-label={`Check-out, ${formatDateOnly(dates.checkOut)}`}><span>Check-out</span><strong>{formatDateOnly(dates.checkOut)}</strong></button>
       <label className="booking-field"><span>Guests</span><select name="guests" value={guests} onChange={event=>setGuests(Number(event.target.value))} aria-label="Number of guests">{Array.from({length:MAX_BOOKING_GUESTS},(_,index)=>index+1).map(value=><option key={value} value={value}>{value} {value===1?'guest':'guests'}</option>)}</select></label>
-      <button disabled={!validSearch} className="booking-submit disabled:cursor-not-allowed disabled:opacity-50">{ctaLabel}</button>
-    </form>
+      <BookingSubmit valid={Boolean(validSearch)} label={ctaLabel}/>
+    </Form>
     <DateRangeCalendar value={dates} picker={picker}/>
   </div>;
+}
+
+function BookingSubmit({valid,label}:{valid:boolean;label:string}) {
+  const { pending } = useFormStatus();
+  return <button disabled={!valid||pending} aria-busy={pending||undefined} data-pending={pending||undefined} className="booking-submit disabled:cursor-not-allowed disabled:opacity-60"><span className="booking-link-content">{pending&&<span className="booking-link-spinner" aria-hidden="true"/>}<span>{pending?'Opening booking…':label}</span></span></button>;
 }

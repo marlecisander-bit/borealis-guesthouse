@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ExperienceActions } from '@/components/public/ExperienceActions';
+import { BookingLink } from '@/components/public/BookingLink';
 import { ExperienceGallery } from '@/components/public/ExperienceGallery';
 import { BreadcrumbJsonLd, JsonLd } from '@/components/public/JsonLd';
 import { Breadcrumbs, PublicShell } from '@/components/public/PageShell';
@@ -44,10 +45,10 @@ export default async function ExperiencePage({ params,searchParams }: { params: 
           <section className="grid gap-10 border-t border-lake/10 py-12 md:grid-cols-2"><InfoList title="What's included" items={item.included}/><InfoList title="Booking requirements" items={item.bookingRequirements}/></section>
           <section className="rounded-[1.75rem] bg-ivory p-7 md:p-9"><p className="eyebrow">Practical information</p><dl className="mt-6 space-y-5"><InfoRow label="Availability" value={item.availability}/><InfoRow label="Meeting point" value={item.meetingPoint}/><InfoRow label="Price type" value={item.priceType}/></dl>{item.notes.length>0&&<div className="mt-7 border-t border-lake/10 pt-6"><InfoList title="Notes" items={item.notes}/></div>}</section>
         </div>
-        <aside className="h-fit rounded-[1.75rem] bg-lake p-7 text-white lg:sticky lg:top-6">
+        <aside className="h-fit rounded-[1.75rem] bg-brand p-7 text-white lg:sticky lg:top-6">
           <p className="text-xs font-bold uppercase tracking-widest text-sand">Plan this experience</p><p className="mt-5 text-sm text-white/60">{item.priceFrom===null?item.priceType:'Starting from'}</p>{item.priceFrom!==null&&<p className="mt-1 font-serif text-4xl">{formatMoney(item.priceFrom,item.currency)}</p>}<p className="mt-5 text-sm leading-6 text-white/65">{item.bookingRequirements[0]||'Contact Borealis for current availability.'}</p>
-          {canBookIndependently&&<Link href={`/book/experience/${item.slug}`} className="mt-6 block min-h-14 rounded-xl bg-sand px-5 py-4 text-center text-sm font-bold text-lake">Book now</Link>}
-          {item.bookable&&<Link href={`/book?addon=${item.slug}`} className="mt-3 block min-h-14 rounded-xl border border-white/25 px-5 py-4 text-center text-sm font-bold text-white">Add to a room stay</Link>}
+          {canBookIndependently&&<BookingLink href={`/book/experience/${item.slug}`} className="mt-6 flex min-h-14 w-full rounded-xl bg-sand px-5 py-4 text-center text-sm font-bold text-lake">Book now</BookingLink>}
+          {item.bookable&&<BookingLink href={`/book?addon=${item.slug}`} className="mt-3 flex min-h-14 w-full rounded-xl border border-white/25 px-5 py-4 text-center text-sm font-bold text-white">Add to a room stay</BookingLink>}
         </aside>
       </div>
     </section>

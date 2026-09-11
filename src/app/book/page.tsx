@@ -4,6 +4,7 @@ import { PublicShell } from '@/components/public/PageShell';
 import { validateBookingSearch } from '@/lib/booking/search-criteria';
 import { createMetadata } from '@/lib/seo';
 import { contentRepository } from '@/services/content';
+import { Suspense } from 'react';
 
 export const metadata: Metadata = {
   ...createMetadata({ title:'Book your stay', description:'Check live availability and send a direct reservation request to Borealis Guest House.' }, '/book'),
@@ -14,6 +15,21 @@ export default async function BookPage({ searchParams }: { searchParams: Promise
   const params = await searchParams;
   const value = (key: string) => typeof params[key] === 'string' ? params[key] : undefined;
   const search = validateBookingSearch({ checkIn:value('checkIn'), checkOut:value('checkOut'), guests:value('guests') });
+  return <PublicShell mobileBooking={false}>
+    <section className="bg-ivory py-12 md:py-20">
+      <div className="shell"><p className="eyebrow">Book direct</p><h1 className="mt-4 max-w-3xl font-serif text-5xl leading-none text-lake md:text-7xl">Your Koman stay, made simple.</h1><p className="mt-5 max-w-xl leading-7 text-muted">Choose your room, add anything useful and review everything clearly before confirming.</p></div>
+    </section>
+    <section className="bg-[#fbfaf7] py-8 md:py-14"><div className="shell"><Suspense fallback={<BookingFlowSkeleton/>}><BookingConfigurator
+      initialRoom={value('room')}
+      initialTransfer={value('transfer')}
+      initialExperience={value('experience')||value('addon')}
+      bookingMode={value('mode')}
+      search={search}
+    /></Suspense></div></section>
+  </PublicShell>;
+}
+
+async function BookingConfigurator({initialRoom,initialTransfer,initialExperience,bookingMode,search}:{initialRoom?:string;initialTransfer?:string;initialExperience?:string;bookingMode?:string;search:ReturnType<typeof validateBookingSearch>}) {
   const guests = search?.guests || 2;
   const [experiences, transfers] = await Promise.all([contentRepository.getExperiences(), contentRepository.getTransfers()]);
   const experienceAddons = experiences.filter(item=>item.bookable).map(item=>({
@@ -35,20 +51,17 @@ export default async function BookPage({ searchParams }: { searchParams: Promise
     };
   });
 
-  return <PublicShell mobileBooking={false}>
-    <section className="bg-ivory py-12 md:py-20">
-      <div className="shell"><p className="eyebrow">Book direct</p><h1 className="mt-4 max-w-3xl font-serif text-5xl leading-none text-lake md:text-7xl">Your Koman stay, made simple.</h1><p className="mt-5 max-w-xl leading-7 text-muted">Choose your room, add anything useful and review everything clearly before confirming.</p></div>
-    </section>
-    <section className="bg-[#fbfaf7] py-8 md:py-14"><div className="shell"><BookingFlow
-      initialRoom={value('room')}
+  return <BookingFlow
+      initialRoom={initialRoom}
       initialCheckIn={search?.checkIn}
       initialCheckOut={search?.checkOut}
       initialGuests={search?.guests}
-      initialTransfer={value('transfer')}
-      initialExperience={value('experience')||value('addon')}
-      bookingMode={value('mode')}
+      initialTransfer={initialTransfer}
+      initialExperience={initialExperience}
+      bookingMode={bookingMode}
       autoSearch={Boolean(search)}
       addons={[...experienceAddons,...transferAddons]}
-    /></div></section>
-  </PublicShell>;
+    />;
 }
+
+function BookingFlowSkeleton(){return <div aria-label="Preparing booking options" aria-busy="true" className="grid animate-pulse gap-10 lg:grid-cols-[1fr_23rem]"><div className="rounded-[1.5rem] bg-white p-5 shadow-sm md:p-8"><div className="h-8 w-52 rounded-full bg-brand-soft"/><div className="mt-7 grid gap-3 sm:grid-cols-2">{Array.from({length:4},(_,index)=><div key={index} className="h-16 rounded-xl bg-ivory"/>)}</div></div><div className="hidden h-72 rounded-[1.75rem] bg-brand-soft lg:block"/></div>}

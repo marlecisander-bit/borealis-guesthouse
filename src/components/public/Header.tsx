@@ -8,11 +8,13 @@ import { HomeLink } from './HomeLink';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import type { LanguageRecord } from '@/types/languages';
 import { isHomeNavigationItem } from '@/lib/navigation/home';
+import { BookingLink, useBookingRoutePrefetch } from './BookingLink';
 
 const fallbackLinks = [['Home', '/'], ['Rooms', '/rooms'], ['Experiences', '/experiences'], ['Explore Koman', '/explore-koman'], ['Transfers', '/transfers'], ['Gallery', '/gallery'], ['About', '/about'], ['Contact', '/contact']];
 const mobileFocusable = 'a[href],button:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
 export function Header({ overlay = false, navigation, languages = [], selectedLanguage = '' }: { overlay?: boolean; navigation?: { label: string; href: string }[]; languages?: LanguageRecord[]; selectedLanguage?: string }) {
+  useBookingRoutePrefetch();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -128,7 +130,7 @@ export function Header({ overlay = false, navigation, languages = [], selectedLa
         <span className={scrolledOverlay ? '[&_select]:border-white/40 [&_select]:text-white lg:[&_select]:border-lake/20 lg:[&_select]:text-lake' : ''}>
           <LanguageSwitcher languages={languages} selectedCode={selectedLanguage} tone={transparent ? 'light' : 'dark'} />
         </span>
-        <Link href="/book" className={`min-h-11 rounded-full px-3 py-2.5 text-[.62rem] font-bold uppercase tracking-[.13em] min-[360px]:px-4 min-[360px]:text-[.65rem] sm:px-5 ${transparent ? 'bg-white text-lake' : scrolledOverlay ? 'bg-white text-lake lg:bg-lake lg:text-white' : 'bg-lake text-white'}`}>Book now</Link>
+        <BookingLink href="/book" pendingLabel="Opening…" className="public-primary-cta inline-flex min-h-11 min-w-[5.8rem] items-center justify-center rounded-full px-3 py-2.5 text-[.62rem] font-bold uppercase tracking-[.13em] min-[360px]:min-w-[6.5rem] min-[360px]:px-4 min-[360px]:text-[.65rem] sm:px-5">Book now</BookingLink>
         <button
           ref={menuButton}
           type="button"
@@ -170,7 +172,7 @@ export function Header({ overlay = false, navigation, languages = [], selectedLa
           return href === '/' ? <HomeLink onActivate={closeMenu} key={`${label}-${href}`} ariaCurrent={current ? 'page' : undefined} className={className}><span>{label}</span>{marker}</HomeLink> : <Link onClick={closeMenu} key={`${label}-${href}`} href={href} aria-current={current ? 'page' : undefined} className={className}><span>{label}</span>{marker}</Link>;
         })}
       </nav>
-      <Link onClick={closeMenu} href="/book" className="mt-auto min-h-14 shrink-0 rounded-full bg-sand px-6 py-4 text-center text-sm font-bold uppercase tracking-[.12em] text-lake">Check availability</Link>
+      <BookingLink onClick={closeMenu} href="/book" className="mt-auto inline-flex min-h-14 shrink-0 items-center justify-center rounded-full bg-sand px-6 py-4 text-center text-sm font-bold uppercase tracking-[.12em] text-lake">Check availability</BookingLink>
     </div>
   </header>;
 }

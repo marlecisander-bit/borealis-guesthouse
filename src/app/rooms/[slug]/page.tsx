@@ -6,6 +6,7 @@ import { ExperienceCard, RoomCard } from '@/components/public/Cards';
 import { BreadcrumbJsonLd, JsonLd } from '@/components/public/JsonLd';
 import { Breadcrumbs, PublicShell } from '@/components/public/PageShell';
 import { RoomBookingBar } from '@/components/public/RoomBookingBar';
+import { BookingLink } from '@/components/public/BookingLink';
 import { RoomGallery } from '@/components/public/RoomGallery';
 import { createLocalizedMetadata } from '@/lib/seo';
 export const dynamic = 'force-dynamic';
@@ -52,7 +53,7 @@ export default async function RoomPage({ params,searchParams }: { params: Promis
         <aside className="h-fit rounded-[1.75rem] bg-ivory p-7 lg:sticky lg:top-6">
           <p className="eyebrow">Book direct</p><div className="mt-5 flex items-baseline justify-between"><p className="text-sm text-muted">{room.priceFrom===null?'Pricing':'From'}</p><p className="font-serif text-4xl text-lake">{formatRoomRate(room.priceFrom,room.currency)}{room.priceFrom!==null&&<span className="font-sans text-xs text-muted"> / night</span>}</p></div>
           <div className="my-6 h-px bg-lake/10"/><p className="text-sm leading-6 text-muted">Choose your dates to preview availability. Rates shown are placeholder starting prices until live inventory is connected.</p>
-          <Link href={`/book?room=${room.slug}`} className="mt-6 block min-h-14 rounded-xl bg-lake px-6 py-4 text-center text-sm font-bold text-white">Check availability</Link>
+          <BookingLink href={`/book?room=${room.slug}`} pendingLabel="Opening…" className="public-primary-cta mt-6 flex min-h-14 w-full rounded-xl px-6 py-4 text-center text-sm font-bold">Check availability</BookingLink>
           <p className="mt-4 text-center text-xs text-muted">Direct enquiry · No payment taken</p>
         </aside>
       </div>
