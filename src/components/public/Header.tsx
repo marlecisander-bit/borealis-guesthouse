@@ -42,7 +42,9 @@ export function Header({ overlay = false, navigation, languages = [], selectedLa
 
   return <header className={`${overlay ? 'fixed' : 'relative'} inset-x-0 top-0 z-40 transition-all duration-300 ${transparent ? 'bg-transparent' : 'bg-ivory/95 shadow-sm backdrop-blur-md'}`}>
     <div className={`shell flex h-[4.5rem] items-center justify-between border-b transition-colors ${transparent ? 'border-white/20' : 'border-lake/10'}`}>
-      <HomeLink ariaLabel="Borealis Guest House — Home" className="shrink-0"><BorealisLogo priority variant={transparent ? 'light' : 'dark'} className="h-14 w-auto" /></HomeLink>
+      <HomeLink ariaLabel="Borealis Guest House — Home" className="flex h-full shrink-0 items-center">
+        <BorealisLogo priority variant={transparent ? 'light' : 'dark'} className="block h-14 w-auto -translate-y-0.5 sm:translate-y-0" />
+      </HomeLink>
       <nav className={`hidden items-center gap-3 text-[.58rem] font-semibold uppercase tracking-[.1em] lg:flex xl:gap-5 xl:text-[.64rem] xl:tracking-[.13em] ${tone}`} aria-label="Main navigation">
         {links.map(([label, href]) => href === '/' ? <HomeLink key={`${label}-${href}`} className="transition-opacity hover:opacity-60">{label}</HomeLink> : <Link key={`${label}-${href}`} href={href} className="transition-opacity hover:opacity-60">{label}</Link>)}
       </nav>

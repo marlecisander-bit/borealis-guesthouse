@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useOutsideClick } from '@/hooks/useOutsideClick';
 import { adminNavigation } from '@/lib/admin/navigation';
 import { NotificationBell } from '@/components/admin/NotificationBell';
+import { AdminMobileNav } from '@/components/layout/AdminMobileNav';
 
 export default function AdminHeader() {
   const { user, signOut } = useAuth();
@@ -41,11 +42,14 @@ export default function AdminHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-[#c7dddb] bg-[#f9fcfb]/95 px-4 py-3 backdrop-blur sm:px-6">
-      <div className="flex min-h-12 items-center justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-[0.65rem] font-bold uppercase tracking-[0.16em] text-[#568087]">Borealis administration</p>
-          <p className="truncate text-base font-bold text-[#164b59]">{section}</p>
+    <header className="sticky top-0 z-30 border-b border-[#c7dddb] bg-[#f9fcfb]/95 px-3 py-2 backdrop-blur sm:px-6 sm:py-3">
+      <div className="flex min-h-11 items-center justify-between gap-2 sm:gap-4">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <AdminMobileNav />
+          <div className="min-w-0">
+            <p className="hidden text-[0.65rem] font-bold uppercase tracking-[0.16em] text-[#568087] sm:block">Borealis administration</p>
+            <p className="truncate text-base font-bold text-[#164b59]">{section}</p>
+          </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
         <NotificationBell />
@@ -55,7 +59,7 @@ export default function AdminHeader() {
             onClick={() => setShowMenu(current => !current)}
             aria-expanded={showMenu}
             aria-haspopup="menu"
-            className="flex min-h-11 items-center gap-3 rounded-xl border border-[#d3e4e2] bg-[#eaf4f3] px-3 text-left transition hover:bg-[#deeeec]"
+            className="flex min-h-11 min-w-11 items-center justify-center gap-3 rounded-xl border border-[#d3e4e2] bg-[#eaf4f3] px-1.5 text-left transition hover:bg-[#deeeec] sm:justify-start sm:px-3"
           >
             <span className="grid size-8 place-items-center rounded-full bg-[#257d86] text-sm font-bold text-white">
               {user?.email?.[0]?.toUpperCase() || 'A'}
@@ -64,7 +68,7 @@ export default function AdminHeader() {
               <span className="block max-w-40 truncate text-sm font-semibold text-slate-900">{accountName}</span>
               <span className="block text-xs text-slate-500">Admin account</span>
             </span>
-            <span aria-hidden="true" className={`text-xs text-[#568087] transition ${showMenu ? 'rotate-180' : ''}`}>▼</span>
+            <span aria-hidden="true" className={`hidden text-xs text-[#568087] transition sm:inline ${showMenu ? 'rotate-180' : ''}`}>▼</span>
           </button>
           {showMenu && (
             <div role="menu" className="absolute right-0 z-40 mt-2 w-64 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
