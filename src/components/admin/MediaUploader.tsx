@@ -14,13 +14,18 @@ function send(form: FormData, onProgress: (value: number) => void): Promise<Admi
       if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
     };
     request.onerror = () => reject(new Error('The upload was interrupted. Check your connection and try again.'));
+    request.onabort = () => reject(new Error('The upload was cancelled before it completed.'));
+    request.timeout = 120_000;
+    request.ontimeout = () => reject(new Error('The upload took too long. Check your connection and try again.'));
     request.onload = () => {
       let body: { asset?: AdminMediaAsset; error?: string } = {};
       try {
         body = JSON.parse(request.responseText);
       } catch {}
       if (request.status >= 200 && request.status < 300 && body.asset) resolve(body.asset);
-      else reject(new Error(body.error || 'The image could not be uploaded.'));
+      else if (request.status === 413) reject(new Error('The prepared image is still too large for the server. Please try a smaller image.'));
+      else if (request.status === 401 || request.status === 403) reject(new Error('Your Admin session has expired. Sign in again, then retry the upload.'));
+      else reject(new Error(body.error || `The image could not be uploaded${request.status ? ` (server response ${request.status})` : ''}.`));
     };
     request.send(form);
   });
@@ -105,6 +110,9 @@ export function MediaUploader({
         if (source.size > MEDIA_UPLOAD_CONFIG.optimizationTriggerBytes) setPhase('Optimizing image…');
         else setPhase('Preparing image…');
         const prepared = await prepareImageForUpload(source);
+        if (prepared.file.size > MEDIA_UPLOAD_CONFIG.maxUploadBytes) {
+          throw new Error(`We couldn't reduce ${source.name} enough for a reliable upload. Please try a smaller image.`);
+        }
         if (prepared.optimized) optimizedCount++;
         originalBytes += prepared.originalBytes;
         finalBytes += prepared.file.size;

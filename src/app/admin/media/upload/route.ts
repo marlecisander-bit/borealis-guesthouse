@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   const form = await request.formData();
   const file = form.get('file');
   if (!(file instanceof File)) return NextResponse.json({ error: 'Choose an image.' }, { status: 400 });
-  if (!file.size || file.size > MEDIA_UPLOAD_CONFIG.maxUploadBytes) return NextResponse.json({ error: 'Images must be between 1 byte and 10 MB.' }, { status: 400 });
+  if (!file.size || file.size > MEDIA_UPLOAD_CONFIG.maxUploadBytes) return NextResponse.json({ error: 'The prepared image must be between 1 byte and 4 MB.' }, { status: 400 });
   const bytes = new Uint8Array(await file.arrayBuffer());
   const detected = signatures.find(signature => signature.test(bytes));
   if (!detected) return NextResponse.json({ error: 'Only genuine JPEG, PNG, WebP, and AVIF images are accepted.' }, { status: 415 });
