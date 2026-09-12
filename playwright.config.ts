@@ -35,6 +35,20 @@ const exactDesktopProjects: Project[] = [
   },
 }));
 
+const landscapeProjects: Project[] = [
+  ['phone-landscape-844x390', 844, 390],
+  ['tablet-landscape-1024x768', 1024, 768],
+].map(([name, width, height]) => ({
+  name: String(name),
+  use: {
+    browserName: 'chromium' as const,
+    viewport: { width: Number(width), height: Number(height) },
+    deviceScaleFactor: 1,
+    hasTouch: true,
+    isMobile: true,
+  },
+}));
+
 export default defineConfig({
   testDir: './tests/e2e',
   outputDir: './test-results/playwright-artifacts',
@@ -55,6 +69,7 @@ export default defineConfig({
   projects: [
     ...exactDesktopProjects,
     ...exactMobileProjects,
+    ...landscapeProjects,
     { name: 'iphone-13', use: { ...devices['iPhone 13'], browserName: 'chromium' } },
     { name: 'pixel-7', use: { ...devices['Pixel 7'] } },
     { name: 'ipad-mini', use: { ...devices['iPad Mini'], browserName: 'chromium' } },

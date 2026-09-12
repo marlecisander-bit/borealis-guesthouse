@@ -20,15 +20,15 @@ export function QuickRoomRateForm({ roomId, roomName, price, currency, active }:
   const [state, action, pending] = useActionState(saveBaseRate, initial);
 
   return (
-    <details className="relative max-sm:w-full">
-      <summary className="inline-flex min-h-11 cursor-pointer list-none items-center justify-center rounded-lg border border-slate-300 px-3 text-xs font-bold">Price</summary>
-      <form action={action} className="mt-2 w-full rounded-xl border border-slate-200 bg-white p-4 text-left shadow-xl sm:absolute sm:right-0 sm:z-20 sm:w-76">
+    <details className="admin-quick-rate relative max-md:w-full">
+      <summary className="inline-flex min-h-11 w-full cursor-pointer list-none items-center justify-center rounded-lg border border-slate-300 px-3 text-xs font-bold md:w-auto">Price</summary>
+      <form action={action} className="mt-2 w-full rounded-xl border border-slate-200 bg-white p-4 text-left shadow-xl md:absolute md:right-0 md:z-20 md:w-76">
         <input type="hidden" name="roomTypeId" value={roomId}/>
         <input type="hidden" name="active" value={active ? 'on' : ''}/>
         <p className="font-bold text-slate-950">{roomName}</p>
         <p className="mt-1 text-xs text-slate-500">Standard nightly price</p>
         <div className="mt-4 grid grid-cols-[1fr_7rem] gap-2">
-          <label className="text-xs font-bold text-slate-600">Price<input name="price" required type="number" min="0" step="0.01" defaultValue={price ?? ''} className="mt-1 min-h-11 w-full rounded-lg border border-slate-300 px-3 text-base font-normal"/></label>
+          <label className="text-xs font-bold text-slate-600">Price<input name="price" required type="number" inputMode="decimal" min="0" step="0.01" defaultValue={price ?? ''} className="mt-1 min-h-11 w-full rounded-lg border border-slate-300 px-3 text-base font-normal"/></label>
           <label className="text-xs font-bold text-slate-600">Currency<CurrencySelect defaultValue={currency} className="mt-1 min-h-11 w-full rounded-lg border border-slate-300 px-2 text-sm font-normal"/></label>
         </div>
         {state.message && <p role="status" aria-live="polite" className={`mt-3 text-xs ${state.ok ? 'text-emerald-700' : 'text-red-700'}`}>{state.message}</p>}

@@ -1,7 +1,117 @@
-import Link from 'next/link';import {AdminEmptyState,AdminPageHeader} from '@/components/admin/ui';import {AvailabilityBlockForm} from '@/components/admin/AvailabilityBlockForm';import {ConfirmAction} from '@/components/admin/ConfirmAction';import {requireAdmin} from '@/lib/admin/auth';import {adminAvailabilityRepository} from '@/lib/repositories/admin/availability';import {reopenAvailability} from './actions';import type {AvailabilityBlock,AvailabilityBooking,AvailabilityRoom,DayStatus} from '@/types/availability-admin';
-export const metadata={title:'Availability | Borealis Admin'};const labels:Record<DayStatus,string>={available:'✓ Available',booked:'● Booked',blocked:'■ Blocked',pending_hold:'◷ Pending hold'};const tones:Record<DayStatus,string>={available:'bg-emerald-50 text-emerald-800',booked:'bg-blue-50 text-blue-800',blocked:'bg-red-50 text-red-800',pending_hold:'bg-amber-50 text-amber-800'};
-export default async function AvailabilityPage({searchParams}:{searchParams:Promise<{from?:string;view?:string}>}){const session=await requireAdmin(['owner','manager','staff']);const query=await searchParams,today=new Date().toISOString().slice(0,10),from=/^\d{4}-\d{2}-\d{2}$/.test(query.from||'')?query.from!:today,to=addDays(from,13),view=query.view==='type'?'type':'room';let rooms,blocks,bookings;try{rooms=await adminAvailabilityRepository.inventory(session);[blocks,bookings]=await Promise.all([adminAvailabilityRepository.blocks(session,from,to,rooms),adminAvailabilityRepository.bookings(session,from,addDays(to,1))])}catch{return <div className="space-y-6"><AdminPageHeader title="Calendar" description="View room availability and bookings."/><AdminEmptyState title="Calendar setup required" description="The availability system is not ready yet. Ask the site administrator to finish setup, then reload this page."/></div>}const dates=Array.from({length:14},(_,index)=>addDays(from,index));return <div className="space-y-8"><AdminPageHeader title="Calendar" description="See what is booked, available or blocked, then manage dates without changing the booking system."/><section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_390px]"><div className="min-w-0 rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="flex flex-col gap-4 border-b border-slate-100 p-5 lg:flex-row lg:items-end lg:justify-between"><div><h2 className="text-xl font-bold">Room calendar</h2><div className="mt-2 flex flex-wrap gap-2 text-xs">{(Object.keys(labels) as DayStatus[]).map(status=><span key={status} className={`rounded-md px-2 py-1 font-semibold ${tones[status]}`}>{labels[status]}</span>)}</div></div><div className="flex flex-wrap gap-2"><Link href={`/admin/availability?view=room&from=${from}`} className={`inline-flex min-h-11 items-center justify-center rounded-lg text-center px-3 text-sm font-semibold ${view==='room'?'bg-slate-950 text-white':'border border-slate-300'}`}>By unit</Link><Link href={`/admin/availability?view=type&from=${from}`} className={`inline-flex min-h-11 items-center justify-center rounded-lg text-center px-3 text-sm font-semibold ${view==='type'?'bg-slate-950 text-white':'border border-slate-300'}`}>By room</Link><form className="flex items-center gap-2"><input type="hidden" name="view" value={view}/><input aria-label="Calendar start date" name="from" type="date" defaultValue={from} className="min-h-11 rounded-lg border border-slate-300 px-3 text-sm"/><button className="min-h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold">Go</button></form></div></div>{rooms.length?<><DesktopTimeline view={view} rooms={rooms} dates={dates} blocks={blocks} bookings={bookings}/><MobileTimeline view={view} rooms={rooms} dates={dates} blocks={blocks} bookings={bookings}/></>:<div className="p-5"><AdminEmptyState title="No rooms yet" description="Add a room before managing its daily availability." action={<Link href="/admin/rooms/new" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-950 px-4 text-sm font-bold text-white">Add room</Link>}/></div>}</div><aside id="block-dates" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:sticky xl:top-6"><h2 className="text-xl font-bold">Block dates</h2><p className="mb-5 mt-1 text-sm leading-6 text-slate-500">Choose a room and date range. Existing bookings remain protected.</p><AvailabilityBlockForm rooms={rooms}/></aside></section><section className="rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="border-b border-slate-100 p-5"><h2 className="text-xl font-bold">Blocked dates</h2><p className="mt-1 text-sm text-slate-500">Reopen a manual closure when the room becomes available again.</p></div>{blocks.filter(block=>block.status!=='archived').length?<div className="divide-y divide-slate-100">{blocks.filter(block=>block.status!=='archived').map(block=><article key={block.id} className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between"><div><div className="flex flex-wrap items-center gap-2"><h3 className="font-bold">{block.targetName}</h3><span className="rounded-md bg-red-50 px-2 py-1 text-xs font-semibold capitalize text-red-800">■ {block.reasonCode.replaceAll('_',' ')}</span>{block.source!=='manual'&&<span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold">Connected calendar</span>}</div><p className="mt-1 text-sm text-slate-600">{block.startDate} → {block.endDate}{block.reason?` · ${block.reason}`:''}</p>{block.notes&&<p className="mt-1 text-xs text-slate-500">Private note: {block.notes}</p>}</div>{block.source==='manual'&&<ConfirmAction action={reopenAvailability.bind(null,block.id)} label="Reopen dates" confirmMessage={`Reopen ${block.targetName} from ${block.startDate} to ${block.endDate}?`}/>}</article>)}</div>:<div className="p-5"><AdminEmptyState title="No blocked dates in this period" description="All unbooked rooms remain open for guests."/></div>}</section></div>}
-function DesktopTimeline({view,rooms,dates,blocks,bookings}:{view:string;rooms:AvailabilityRoom[];dates:string[];blocks:AvailabilityBlock[];bookings:AvailabilityBooking[]}){const rows=view==='room'?rooms.map(room=>({id:room.id,name:room.name,rooms:[room]})):[...new Map(rooms.map(room=>[room.roomTypeId,{id:room.roomTypeId,name:room.roomTypeName,rooms:rooms.filter(item=>item.roomTypeId===room.roomTypeId)}])).values()];return <div className="hidden overflow-x-auto md:block"><div className="min-w-[1120px]"><div className="grid grid-cols-[190px_repeat(14,minmax(64px,1fr))] border-b border-slate-200 bg-slate-50"><div className="p-3 text-xs font-bold uppercase text-slate-500">{view==='room'?'Unit':'Room'}</div>{dates.map(date=><div key={date} className="border-l border-slate-200 p-2 text-center text-xs"><strong>{new Date(`${date}T00:00:00Z`).toLocaleDateString('en',{weekday:'short',timeZone:'UTC'})}</strong><br/>{date.slice(8)}</div>)}</div>{rows.map(row=><div key={row.id} className="grid grid-cols-[190px_repeat(14,minmax(64px,1fr))] border-b border-slate-100 last:border-0"><div className="p-3 text-sm font-semibold">{row.name}{view==='type'&&<span className="mt-1 block text-xs font-normal text-slate-500">{row.rooms.length} {row.rooms.length===1?'unit':'units'}</span>}</div>{dates.map(date=>{const statuses=row.rooms.map(room=>statusFor(room,date,blocks,bookings)),status=aggregate(statuses);return <div key={date} title={`${row.name}: ${labels[status]}`} className={`flex min-h-16 items-center justify-center border-l border-slate-100 p-1 text-center text-[10px] font-bold ${tones[status]}`}>{labels[status]}</div>})}</div>)}</div></div>}
-function MobileTimeline({view,rooms,dates,blocks,bookings}:{view:string;rooms:AvailabilityRoom[];dates:string[];blocks:AvailabilityBlock[];bookings:AvailabilityBooking[]}){return <div className="divide-y divide-slate-100 md:hidden">{dates.map(date=>{const statuses=rooms.map(room=>({room,status:statusFor(room,date,blocks,bookings)}));return <details key={date} className="group p-4"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between font-bold"><span>{new Date(`${date}T00:00:00Z`).toLocaleDateString('en',{weekday:'long',month:'short',day:'numeric',timeZone:'UTC'})}</span><span className="text-sm text-slate-500">{statuses.filter(item=>item.status==='available').length}/{rooms.length} available</span></summary><div className="mt-3 grid gap-2">{view==='room'?statuses.map(({room,status})=><div key={room.id} className={`flex items-center justify-between rounded-lg p-3 text-sm ${tones[status]}`}><span className="font-semibold">{room.name}</span><span>{labels[status]}</span></div>):[...new Set(rooms.map(room=>room.roomTypeId))].map(typeId=>{const group=statuses.filter(item=>item.room.roomTypeId===typeId),status=aggregate(group.map(item=>item.status));return <div key={typeId} className={`flex items-center justify-between rounded-lg p-3 text-sm ${tones[status]}`}><span className="font-semibold">{group[0]?.room.roomTypeName}</span><span>{labels[status]} · {group.length} rooms</span></div>})}</div></details>})}</div>}
-function statusFor(room:AvailabilityRoom,date:string,blocks:AvailabilityBlock[],bookings:AvailabilityBooking[]):DayStatus{if(blocks.some(block=>block.status==='published'&&block.startDate<=date&&block.endDate>=date&&(block.roomId===room.id||block.roomTypeId===room.roomTypeId)))return'blocked';const matches=bookings.filter(booking=>booking.checkIn<=date&&booking.checkOut>date&&(booking.roomIds.includes(room.id)||booking.roomTypeIds.includes(room.roomTypeId)));if(matches.some(item=>['pending','held'].includes(item.status)))return'pending_hold';if(matches.length)return'booked';return'available'}
-function aggregate(statuses:DayStatus[]):DayStatus{for(const status of ['blocked','booked','pending_hold','available'] as DayStatus[])if(statuses.includes(status))return status;return'available'}function addDays(date:string,amount:number){const value=new Date(`${date}T00:00:00Z`);value.setUTCDate(value.getUTCDate()+amount);return value.toISOString().slice(0,10)}
+import Link from 'next/link';
+import { AdminEmptyState, AdminPageHeader } from '@/components/admin/ui';
+import { AvailabilityBlockForm } from '@/components/admin/AvailabilityBlockForm';
+import { ConfirmAction } from '@/components/admin/ConfirmAction';
+import { requireAdmin } from '@/lib/admin/auth';
+import { adminAvailabilityRepository } from '@/lib/repositories/admin/availability';
+import { reopenAvailability } from './actions';
+import type { AvailabilityBlock, AvailabilityBooking, AvailabilityRoom, DayStatus } from '@/types/availability-admin';
+
+export const metadata = { title: 'Availability | Borealis Admin' };
+
+const labels: Record<DayStatus, string> = {
+  available: 'Available',
+  booked: 'Booked',
+  blocked: 'Blocked',
+  pending_hold: 'Pending hold',
+};
+const tones: Record<DayStatus, string> = {
+  available: 'bg-emerald-50 text-emerald-800',
+  booked: 'bg-blue-50 text-blue-800',
+  blocked: 'bg-red-50 text-red-800',
+  pending_hold: 'bg-amber-50 text-amber-800',
+};
+
+type CalendarQuery = { from?: string; view?: string; blockStart?: string; blockEnd?: string };
+
+export default async function AvailabilityPage({ searchParams }: { searchParams: Promise<CalendarQuery> }) {
+  const session = await requireAdmin(['owner', 'manager', 'staff']);
+  const query = await searchParams;
+  const today = new Date().toISOString().slice(0, 10);
+  const from = isDate(query.from) ? query.from : today;
+  const to = addDays(from, 13);
+  const view = query.view === 'type' ? 'type' : 'room';
+  const blockStart = isDate(query.blockStart) ? query.blockStart : undefined;
+  const blockEnd = isDate(query.blockEnd) ? query.blockEnd : blockStart;
+  let rooms: AvailabilityRoom[];
+  let blocks: AvailabilityBlock[];
+  let bookings: AvailabilityBooking[];
+
+  try {
+    rooms = await adminAvailabilityRepository.inventory(session);
+    [blocks, bookings] = await Promise.all([
+      adminAvailabilityRepository.blocks(session, from, to, rooms),
+      adminAvailabilityRepository.bookings(session, from, addDays(to, 1)),
+    ]);
+  } catch {
+    return <div className="space-y-6"><AdminPageHeader title="Calendar" description="View room availability and bookings."/><AdminEmptyState title="Calendar setup required" description="The availability system is not ready yet. Ask the site administrator to finish setup, then reload this page."/></div>;
+  }
+
+  const dates = Array.from({ length: 14 }, (_, index) => addDays(from, index));
+  const activeBlocks = blocks.filter((block) => block.status !== 'archived');
+  return (
+    <div className="space-y-8">
+      <AdminPageHeader title="Calendar" description="See what is booked, available or blocked, then manage dates without changing the booking system."/>
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_390px]">
+        <div className="min-w-0 rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <CalendarToolbar view={view} from={from}/>
+          {rooms.length ? (
+            <>
+              <DesktopTimeline view={view} rooms={rooms} dates={dates} blocks={blocks} bookings={bookings}/>
+              <MobileTimeline view={view} rooms={rooms} dates={dates} blocks={blocks} bookings={bookings}/>
+            </>
+          ) : <div className="p-5"><AdminEmptyState title="No rooms yet" description="Add a room before managing its daily availability." action={<Link href="/admin/rooms/new" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-950 px-4 text-sm font-bold text-white">Add room</Link>}/></div>}
+        </div>
+        <aside id="block-dates" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:sticky xl:top-6">
+          <h2 className="text-xl font-bold">Block dates</h2>
+          <p className="mb-5 mt-1 text-sm leading-6 text-slate-500">Choose a room and date range. Existing bookings remain protected.</p>
+          <AvailabilityBlockForm rooms={rooms} defaultStartDate={blockStart} defaultEndDate={blockEnd}/>
+        </aside>
+      </section>
+      <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-100 p-5"><h2 className="text-xl font-bold">Blocked dates</h2><p className="mt-1 text-sm text-slate-500">Reopen a manual closure when the room becomes available again.</p></div>
+        {activeBlocks.length ? <div className="divide-y divide-slate-100">{activeBlocks.map((block) => (
+          <article key={block.id} className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div><div className="flex flex-wrap items-center gap-2"><h3 className="font-bold">{block.targetName}</h3><span className="rounded-md bg-red-50 px-2 py-1 text-xs font-semibold capitalize text-red-800">{block.reasonCode.replaceAll('_', ' ')}</span>{block.source !== 'manual' && <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold">Connected calendar</span>}</div><p className="mt-1 text-sm text-slate-600">{block.startDate} → {block.endDate}{block.reason ? ` · ${block.reason}` : ''}</p>{block.notes && <p className="mt-1 text-xs text-slate-500">Private note: {block.notes}</p>}</div>
+            {block.source === 'manual' && (
+              <ConfirmAction action={reopenAvailability.bind(null, block.id)} label="Reopen dates" confirmMessage={`Reopen ${block.targetName} from ${block.startDate} to ${block.endDate}?`}/>
+            )}
+          </article>
+        ))}</div> : <div className="p-5"><AdminEmptyState title="No blocked dates in this period" description="All unbooked rooms remain open for guests."/></div>}
+      </section>
+    </div>
+  );
+}
+
+function CalendarToolbar({ view, from }: { view: string; from: string }) {
+  return (
+    <div className="flex flex-col gap-4 border-b border-slate-100 p-5 lg:flex-row lg:items-end lg:justify-between">
+      <div><h2 className="text-xl font-bold">Room calendar</h2><div className="mt-2 flex flex-wrap gap-2 text-xs">{(Object.keys(labels) as DayStatus[]).map((status) => <span key={status} className={`rounded-md px-2 py-1 font-semibold ${tones[status]}`}>{labels[status]}</span>)}</div></div>
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+        <Link href={`/admin/availability?view=room&from=${from}`} className={`inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-center text-sm font-semibold ${view === 'room' ? 'bg-slate-950 text-white' : 'border border-slate-300'}`}>By unit</Link>
+        <Link href={`/admin/availability?view=type&from=${from}`} className={`inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-center text-sm font-semibold ${view === 'type' ? 'bg-slate-950 text-white' : 'border border-slate-300'}`}>By room</Link>
+        <form className="col-span-2 grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:flex">
+          <input type="hidden" name="view" value={view}/><input aria-label="Calendar start date" name="from" type="date" defaultValue={from} className="min-h-11 min-w-0 rounded-lg border border-slate-300 px-3 text-sm"/><button className="min-h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold">Go</button>
+        </form>
+        <Link aria-label="Previous two weeks" href={`/admin/availability?view=${view}&from=${addDays(from, -14)}`} className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 px-3 text-sm font-semibold">Previous</Link>
+        <Link aria-label="Next two weeks" href={`/admin/availability?view=${view}&from=${addDays(from, 14)}`} className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 px-3 text-sm font-semibold">Next</Link>
+      </div>
+    </div>
+  );
+}
+
+function DesktopTimeline({ view, rooms, dates, blocks, bookings }: TimelineProps) {
+  const rows = view === 'room' ? rooms.map((room) => ({ id: room.id, name: room.name, rooms: [room] })) : [...new Map(rooms.map((room) => [room.roomTypeId, { id: room.roomTypeId, name: room.roomTypeName, rooms: rooms.filter((item) => item.roomTypeId === room.roomTypeId) }])).values()];
+  return <div className="hidden overflow-x-auto md:block"><div className="min-w-[1120px]"><div className="grid grid-cols-[190px_repeat(14,minmax(64px,1fr))] border-b border-slate-200 bg-slate-50"><div className="p-3 text-xs font-bold uppercase text-slate-500">{view === 'room' ? 'Unit' : 'Room'}</div>{dates.map((date) => <div key={date} className="border-l border-slate-200 p-2 text-center text-xs"><strong>{dateLabel(date, true)}</strong><br/>{date.slice(8)}</div>)}</div>{rows.map((row) => <div key={row.id} className="grid grid-cols-[190px_repeat(14,minmax(64px,1fr))] border-b border-slate-100 last:border-0"><div className="p-3 text-sm font-semibold">{row.name}{view === 'type' && <span className="mt-1 block text-xs font-normal text-slate-500">{row.rooms.length} {row.rooms.length === 1 ? 'unit' : 'units'}</span>}</div>{dates.map((date) => { const status = aggregate(row.rooms.map((room) => statusFor(room, date, blocks, bookings))); return <div key={date} title={`${row.name}: ${labels[status]}`} className={`flex min-h-16 items-center justify-center border-l border-slate-100 p-1 text-center text-[10px] font-bold ${tones[status]}`}>{labels[status]}</div>; })}</div>)}</div></div>;
+}
+
+function MobileTimeline({ view, rooms, dates, blocks, bookings }: TimelineProps) {
+  return <div className="divide-y divide-slate-100 md:hidden">{dates.map((date) => { const statuses = rooms.map((room) => ({ room, status: statusFor(room, date, blocks, bookings) })); return <details key={date} className="group p-4"><summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 font-bold"><span>{dateLabel(date)}</span><span className="shrink-0 text-sm text-slate-500">{statuses.filter((item) => item.status === 'available').length}/{rooms.length} available</span></summary><div className="mt-3 grid gap-2">{view === 'room' ? statuses.map(({ room, status }) => <div key={room.id} className={`flex min-h-11 items-center justify-between gap-2 rounded-lg p-3 text-sm ${tones[status]}`}><span className="font-semibold">{room.name}</span><span>{labels[status]}</span></div>) : [...new Set(rooms.map((room) => room.roomTypeId))].map((typeId) => { const group = statuses.filter((item) => item.room.roomTypeId === typeId); const status = aggregate(group.map((item) => item.status)); return <div key={typeId} className={`flex min-h-11 items-center justify-between gap-2 rounded-lg p-3 text-sm ${tones[status]}`}><span className="font-semibold">{group[0]?.room.roomTypeName}</span><span>{labels[status]} · {group.length} units</span></div>; })}<Link href={`/admin/availability?view=${view}&from=${dates[0]}&blockStart=${date}&blockEnd=${date}#block-dates`} className="mt-1 inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 px-3 text-sm font-bold">Block this date</Link></div></details>; })}</div>;
+}
+
+type TimelineProps = { view: string; rooms: AvailabilityRoom[]; dates: string[]; blocks: AvailabilityBlock[]; bookings: AvailabilityBooking[] };
+function statusFor(room: AvailabilityRoom, date: string, blocks: AvailabilityBlock[], bookings: AvailabilityBooking[]): DayStatus { if (blocks.some((block) => block.status === 'published' && block.startDate <= date && block.endDate >= date && (block.roomId === room.id || block.roomTypeId === room.roomTypeId))) return 'blocked'; const matches = bookings.filter((booking) => booking.checkIn <= date && booking.checkOut > date && (booking.roomIds.includes(room.id) || booking.roomTypeIds.includes(room.roomTypeId))); if (matches.some((item) => ['pending', 'held'].includes(item.status))) return 'pending_hold'; if (matches.length) return 'booked'; return 'available'; }
+function aggregate(statuses: DayStatus[]): DayStatus { for (const status of ['blocked', 'booked', 'pending_hold', 'available'] as DayStatus[]) if (statuses.includes(status)) return status; return 'available'; }
+function addDays(date: string, amount: number) { const value = new Date(`${date}T00:00:00Z`); value.setUTCDate(value.getUTCDate() + amount); return value.toISOString().slice(0, 10); }
+function isDate(value?: string): value is string { return Boolean(value && /^\d{4}-\d{2}-\d{2}$/.test(value)); }
+function dateLabel(date: string, short = false) { return new Date(`${date}T00:00:00Z`).toLocaleDateString('en', { weekday: short ? 'short' : 'long', month: short ? undefined : 'short', day: short ? undefined : 'numeric', timeZone: 'UTC' }); }
