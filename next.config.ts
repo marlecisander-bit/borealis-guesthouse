@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
     root: process.cwd(),
   },
   images: {
+    qualities: [75, 93], // Hero legacy images opt into 93; normal images still default to 75.
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       ...(supabaseHostname

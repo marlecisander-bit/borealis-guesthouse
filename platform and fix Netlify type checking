@@ -1,0 +1,35 @@
+database/migrations/20260904_022_frontend_readiness.sql:89: new blank line at EOF.
+docs/ical-channel-sync.md:8: new blank line at EOF.
+public/brand/borealis-logo-dark.svg:10: trailing whitespace.
+[32m+[m	[32m<font-face[m[41m [m
+public/brand/borealis-logo-light.svg:10: trailing whitespace.
+[32m+[m	[32m<font-face[m[41m [m
+public/brand/borealis-logo.svg:10: trailing whitespace.
+[32m+[m	[32m<font-face[m[41m [m
+src/app/admin/channels/actions.ts:18: new blank line at EOF.
+src/app/admin/channels/booking-com/page.tsx:4: new blank line at EOF.
+src/app/admin/channels/page.tsx:4: new blank line at EOF.
+src/app/admin/inquiries/actions.ts:13: new blank line at EOF.
+src/app/admin/inquiries/page.tsx:16: new blank line at EOF.
+src/app/admin/notifications/actions.ts:17: new blank line at EOF.
+src/app/admin/notifications/page.tsx:43: new blank line at EOF.
+src/app/admin/settings/publication-actions.ts:16: new blank line at EOF.
+src/app/api/contact/route.ts:54: new blank line at EOF.
+src/app/api/internal/calendars/sync/route.ts:16: new blank line at EOF.
+src/components/admin/CopyCalendarUrl.tsx:4: new blank line at EOF.
+src/components/admin/ExternalCalendarForm.tsx:12: new blank line at EOF.
+src/lib/admin/channel-validation.ts:20: new blank line at EOF.
+src/lib/booking/source-labels.ts:14: new blank line at EOF.
+src/lib/date-range.ts:56: new blank line at EOF.
+src/lib/ical/feed.ts:22: new blank line at EOF.
+src/lib/ical/fetch-feed.ts:36: new blank line at EOF.
+src/lib/notifications/resend-channel.ts:28: new blank line at EOF.
+src/lib/repositories/admin/channels.ts:51: new blank line at EOF.
+src/lib/repositories/admin/inquiries.ts:33: new blank line at EOF.
+src/lib/repositories/admin/notifications.ts:46: new blank line at EOF.
+src/services/ical-sync.ts:36: new blank line at EOF.
+src/types/channels-admin.ts:24: new blank line at EOF.
+src/types/notifications.ts:35: new blank line at EOF.
+tests/date-range.test.ts:48: new blank line at EOF.
+tests/fixtures/sample-external-calendar.ics:14: new blank line at EOF.
+tests/ical.test.ts:19: new blank line at EOF.

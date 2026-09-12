@@ -6,6 +6,7 @@ import {getGlobalSeo} from '@/services/global-seo';
 import{getLanguageContext}from'@/services/translations';
 import './globals.css';
 import './control-alignment.css';
+import './homepage-hero.css';
 const sans=Manrope({variable:'--font-manrope',subsets:['latin'],display:'swap'});
 const serif=Cormorant_Garamond({variable:'--font-cormorant',subsets:['latin'],weight:['400','500','600'],display:'swap'});
 export async function generateMetadata():Promise<Metadata>{const seo=await getGlobalSeo();return{metadataBase:new URL(process.env.NEXT_PUBLIC_SITE_URL||'http://localhost:3000'),title:{default:seo.defaultTitle,template:seo.titleTemplate},description:seo.defaultDescription,icons:{icon:[{url:'/brand/borealis-logo-dark.svg',type:'image/svg+xml'}]},openGraph:{type:'website',siteName:seo.siteName,images:seo.defaultOgUrl?[{url:seo.defaultOgUrl}]:[]},robots:{index:seo.robotsIndex,follow:seo.robotsFollow}}}

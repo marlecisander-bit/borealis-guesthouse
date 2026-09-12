@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from 'react';
 import { saveHomepageCms } from '@/app/admin/content/homepage/actions';
+import { HeroImageFields } from '@/components/admin/HeroImageFields';
 import { MediaPicker } from '@/components/admin/MediaPicker';
 import type { CmsOption, HomepageCmsState, HomepageEditorData, HomepageKey, HomepageReview, HomepageSection } from '@/types/homepage-cms';
 
@@ -81,10 +82,11 @@ function HomepageSectionEditor({ config, section, data }: { config: SectionConfi
     <div><p className="text-xs font-bold uppercase tracking-widest text-slate-500">Homepage</p><h2 className="mt-1 text-2xl font-bold text-slate-950">{config.label}</h2><p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">{config.description}</p></div>
     <div className="mt-6 grid gap-5 sm:grid-cols-2">
       <Field label="Eyebrow"><input name={`${config.key}_eyebrow`} defaultValue={section.eyebrow} className={input} /></Field>
-      <Field label="Heading"><input name={`${config.key}_title`} defaultValue={section.title} className={input} /></Field>
-      <Field label="Supporting text"><textarea name={`${config.key}_${config.key === 'hero' ? 'subtitle' : 'body'}`} defaultValue={config.key === 'hero' ? section.subtitle : section.body || section.subtitle} rows={3} className={`${input} py-3`} /></Field>
+      <Field label={config.key === 'hero' ? 'Hero Title' : 'Heading'}><input name={`${config.key}_title`} defaultValue={section.title} className={input} /></Field>
+      <Field label={config.key === 'hero' ? 'Hero Subtitle' : 'Supporting text'}><textarea name={`${config.key}_${config.key === 'hero' ? 'subtitle' : 'body'}`} defaultValue={config.key === 'hero' ? section.subtitle : section.body || section.subtitle} rows={3} className={`${input} py-3`} /></Field>
       {config.key === 'hero' ? <input type="hidden" name="hero_body" value={section.body} /> : <input type="hidden" name={`${config.key}_subtitle`} value="" />}
-      {config.media && <MediaPicker name={`${config.key}_media`} label="Section image" assets={data.media} defaultValue={section.backgroundMediaId} />}
+      {config.media && config.key !== 'hero' && <div><MediaPicker name={`${config.key}_media`} label="Section image" assets={data.media} defaultValue={section.backgroundMediaId} /></div>}
+      {config.key === 'hero' && <><HeroImageFields desktopAssetId={String(section.settings.desktopHeroAssetId || '')} mobileAssetId={String(section.settings.mobileHeroAssetId || '')} desktopAsset={data.heroAssets?.[String(section.settings.desktopHeroAssetId || '')]} mobileAsset={data.heroAssets?.[String(section.settings.mobileHeroAssetId || '')]} desktopLegacyId={section.backgroundMediaId} mobileLegacyId={String(section.settings.mobileMediaId || '')} desktopUrl={data.media.find(item => item.id === section.backgroundMediaId)?.imageUrl || ''} mobileUrl={data.media.find(item => item.id === section.settings.mobileMediaId)?.imageUrl || ''} desktopFocal={section.settings.desktopFocal} mobileFocal={section.settings.mobileFocal}/><Field label="Overlay Intensity"><input name="hero_overlayIntensity" type="number" min={0} max={100} step={1} defaultValue={Number(section.settings.overlayIntensity ?? 100)} className={input}/><span className="mt-2 block text-xs font-normal text-slate-500">0?100%. 100 preserves the original gradient overlay.</span></Field></>}
       {config.imageAlt && <Field label="Image alternative text"><input name={`${config.key}_imageAlt`} defaultValue={String(section.settings.imageAlt || '')} className={input} /></Field>}
       {config.imageLabel && <Field label="Image caption"><input name={`${config.key}_imageLabel`} defaultValue={String(section.settings.imageLabel || '')} className={input} /></Field>}
       {config.cta ? <><Field label="Button label"><input name={`${config.key}_ctaLabel`} defaultValue={section.ctaLabel} className={input} /></Field><CtaDestination name={`${config.key}_ctaLink`} value={section.ctaLink}/></> : <><input type="hidden" name={`${config.key}_ctaLabel`} value={section.ctaLabel} /><input type="hidden" name={`${config.key}_ctaLink`} value={section.ctaLink} /></>}

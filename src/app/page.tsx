@@ -1,6 +1,7 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Suspense } from 'react';
 import Image from 'next/image';
+import { HeroImage } from '@/components/public/HeroImage';
 import Link from 'next/link';
 import { BookingSearch } from '@/components/public/BookingSearch';
 import { MobileBookingBar } from '@/components/public/MobileBookingBar';
@@ -19,6 +20,8 @@ import type { HomepageKey } from '@/types/homepage-cms';
 import {authorizePreview} from '@/lib/preview';
 import {PreviewBanner} from '@/components/public/PreviewBanner';
 import {getPublishedHomepageHero} from '@/lib/repositories/public/homepage';
+
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover' };
 
 const reviews:Review[]=[];
 export async function generateMetadata():Promise<Metadata>{return createPageMetadata('homepage')}
@@ -43,22 +46,22 @@ export default async function Home({searchParams}:{searchParams:Promise<{preview
   const selected=<T extends {id:string}>(items:T[],key:HomepageKey)=>{const links=section(key)?.links||[];return links.length?links.flatMap(link=>{const item=items.find(candidate=>candidate.id===link.id);return item?[item]:[]}):items};
   const liveRooms=selected(allRooms,'featured_rooms'),featuredExperiences=allExperiences.filter(item=>item.featured),liveExperiences=featuredExperiences.length?featuredExperiences:selected(allExperiences,'featured_experiences'),featuredTransfers=liveTransfers.filter(item=>item.featured),homepageTransfers=featuredTransfers.length?featuredTransfers:selected(liveTransfers,'transfers'),liveGallery=selected(allGallery,'gallery'),liveReviews=homepageCms?.reviews.length?homepageCms.reviews:reviews;
   const draftHero=section('hero'),hero=preview?draftHero:publishedHero?{...draftHero,title:draftHero?.title||publishedHero.headline,subtitle:draftHero?.subtitle||publishedHero.subtitle,eyebrow:draftHero?.eyebrow||publishedHero.eyebrow,ctaLabel:draftHero?.ctaLabel||publishedHero.primaryCtaLabel,ctaLink:publishedHero.primaryCtaHref,visible:publishedHero.visible,sortOrder:publishedHero.sortOrder,settings:{...(draftHero?.settings||{}),showBookingSearch:publishedHero.bookingSearchVisible}}:undefined,intro=section('intro'),roomSection=section('featured_rooms'),experienceSection=section('featured_experiences'),exploreSection=section('explore_koman'),transferSection=section('transfers'),gallerySection=section('gallery'),reviewSection=section('reviews'),locationSection=section('location'),finalSection=section('final_cta');
+  const heroSettings = hero?.settings as Record<string, unknown> | undefined;
   const bookingCtaLabel=(hero?.settings as Record<string,unknown>|undefined)?.bookingCtaLabel;
   return (
     <>
       <Header overlay navigation={navigation} languages={language.enabled} selectedLanguage={language.selected?.code||''} bookingCtaLabel={globalContent.headerCtaLabel||'Book now'} mobileBookingCtaLabel={globalContent.mobileMenuCtaLabel||'Check availability'}/>
       <main className="flex flex-col">{preview&&<PreviewBanner label="Homepage draft preview"/>}
         {visible('hero')&&<section data-homepage-section="hero" style={{order:order('hero',0)}} className="hero-section relative z-30 min-h-[88svh] bg-lake text-white lg:min-h-[94svh]">
-          <Image src={!preview&&publishedHero?.imageUrl?publishedHero.imageUrl:hero?.backgroundMediaId?homepageCms?.mediaUrls[hero.backgroundMediaId]||liveProperty.heroImage:liveProperty.heroImage} alt={String((hero?.settings as Record<string,unknown>|undefined)?.imageAlt||'Koman Lake surrounded by mountain slopes')} fill priority sizes="100vw" className="object-cover" />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,25,18,.58)_0%,rgba(10,25,18,.10)_38%,rgba(10,25,18,.72)_100%)]" />
-          <div className="shell relative flex min-h-[88svh] flex-col justify-end pb-7 pt-28 lg:min-h-[94svh] lg:pb-0">
-            <div className="max-w-3xl pb-7 md:pb-10">
+          <HeroImage desktopAsset={homepageCms?.heroAssets[String(heroSettings?.desktopHeroAssetId || '')]} mobileAsset={homepageCms?.heroAssets[String(heroSettings?.mobileHeroAssetId || '')]} desktopFocal={heroSettings?.desktopFocal} mobileFocal={heroSettings?.mobileFocal} desktopImage={!preview&&publishedHero?.imageUrl?publishedHero.imageUrl:hero?.backgroundMediaId?homepageCms?.mediaUrls[hero.backgroundMediaId]||liveProperty.heroImage:liveProperty.heroImage} mobileImage={homepageCms?.mediaUrls[String(heroSettings?.mobileMediaId || '')]} alt={String(heroSettings?.imageAlt || hero?.title || 'Koman Lake surrounded by mountain slopes')} overlayIntensity={heroSettings?.overlayIntensity} />
+          <div className="hero-content shell relative flex min-h-[88svh] flex-col justify-end pb-7 pt-28 lg:min-h-[94svh] lg:pb-0">
+            <div className="hero-copy max-w-3xl pb-7 md:pb-10">
               <p className="text-[.68rem] font-bold uppercase tracking-[0.26em] text-sand">{hero?.eyebrow||'Borealis Guest House · Koman, Albania'}</p>
               <h1 className="mt-4 max-w-[12ch] font-serif text-[clamp(3rem,7vw,6.8rem)] font-medium leading-[.88] tracking-[-.045em]">{hero?.title||'Wake up by the water.'}</h1>
               <p className="mt-5 max-w-xl text-[.95rem] leading-7 text-white/80 md:text-lg">{hero?.subtitle||'A lakeside stay in the heart of Koman.'}</p>
               {hero?.ctaLabel&&<Link href={hero.ctaLink||'/book'} className="mt-6 inline-block rounded-full bg-sand px-6 py-3 text-sm font-bold text-lake">{hero.ctaLabel}</Link>}
             </div>
-            {hero?.settings.showBookingSearch!==false&&<div className="md:translate-y-1/2"><BookingSearch hero ctaLabel={(typeof bookingCtaLabel==='string'&&bookingCtaLabel)||'Check availability'} infantMaxAge={agePolicy.infantMaxAge} childMaxAge={agePolicy.childMaxAge}/></div>}
+            {hero?.settings.showBookingSearch!==false&&<div className="hero-booking md:translate-y-1/2"><BookingSearch hero ctaLabel={(typeof bookingCtaLabel==='string'&&bookingCtaLabel)||'Check availability'} infantMaxAge={agePolicy.infantMaxAge} childMaxAge={agePolicy.childMaxAge}/></div>}
           </div>
         </section>}
 

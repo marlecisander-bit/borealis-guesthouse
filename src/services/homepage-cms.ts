@@ -1,4 +1,6 @@
 import 'server-only';
+import { readHeroAssets } from '@/lib/hero-assets';
+import type { HeroAsset } from '@/lib/hero-image-config';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { getAdminSession } from '@/lib/admin/auth';
 import { fetchSupabase } from '@/lib/supabase/fetch';
@@ -14,6 +16,7 @@ export interface PublicHomepageCms {
   sections: HomepageSection[];
   reviews: HomepageReview[];
   mediaUrls: Record<string, string>;
+  heroAssets: Record<string, HeroAsset>;
 }
 
 export async function getHomepageCms(preview = false): Promise<PublicHomepageCms | null> {
@@ -31,12 +34,13 @@ export async function getHomepageCms(preview = false): Promise<PublicHomepageCms
     if (draft?.payload) {
       const payload = draft.payload as { sections: HomepageSection[]; reviews: HomepageReview[] };
       const sections = payload.sections.filter(section => section.key !== 'property_highlights');
-      const mediaIds = sections.flatMap(section => section.backgroundMediaId ? [section.backgroundMediaId] : []);
+      const mediaIds = sections.flatMap(section => [section.backgroundMediaId, typeof section.settings.mobileMediaId === 'string' ? section.settings.mobileMediaId : ''].filter(Boolean));
       const mediaResult = mediaIds.length
         ? await db.from('media_assets').select('id,file_path').in('id', mediaIds)
         : { data: [] as { id: string; file_path: string }[] };
       return {
         sections,
+        heroAssets: await readHeroAssets(db, sections),
         reviews: payload.reviews,
         mediaUrls: Object.fromEntries((mediaResult.data || []).map(item => [item.id, `${url}/storage/v1/object/public/public-media/${item.file_path}`])),
       };
@@ -53,7 +57,7 @@ export async function getHomepageCms(preview = false): Promise<PublicHomepageCms
   if (error || !sections?.length) return null;
 
   const sectionIds = sections.map(row => row.id);
-  const mediaIds = sections.flatMap(row => row.background_media_id ? [row.background_media_id] : []);
+  const mediaIds = sections.flatMap(row => [row.background_media_id, typeof row.settings?.mobileMediaId === 'string' ? row.settings.mobileMediaId : ''].filter(Boolean));
   const [links, reviews, media] = await Promise.all([
     db.from('homepage_section_links').select('section_id,entity_type,entity_id,sort_order').in('section_id', sectionIds).order('sort_order'),
     db.from('reviews').select('id,author_name,origin,quote,status,is_visible,sort_order').eq('source_label', 'homepage_manual').in('status', admin ? ['draft', 'published'] : ['published']).order('sort_order'),
@@ -82,6 +86,7 @@ export async function getHomepageCms(preview = false): Promise<PublicHomepageCms
   })) as HomepageSection[];
 
   return {
+    heroAssets: await readHeroAssets(db, mapped),
     sections: publicHomepageKeys.map(key => mapped.find(section => section.key === key)).filter(Boolean) as HomepageSection[],
     reviews: (reviews.data || []).filter(row => admin || row.is_visible).map(row => ({
       id: row.id,
