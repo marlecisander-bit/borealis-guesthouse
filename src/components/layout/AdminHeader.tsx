@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useOutsideClick } from '@/hooks/useOutsideClick';
-import { adminNavigation } from '@/lib/admin/navigation';
+import { adminNavigation, isAdminNavItemActive } from '@/lib/admin/navigation';
 import { NotificationBell } from '@/components/admin/NotificationBell';
 import { AdminMobileNav } from '@/components/layout/AdminMobileNav';
 
@@ -17,7 +17,7 @@ export default function AdminHeader() {
   const [showMenu, setShowMenu] = useState(false);
   const active = [...adminNavigation]
     .sort((a, b) => b.href.length - a.href.length)
-    .find(item => pathname === item.href || pathname.startsWith(`${item.href}/`));
+    .find(item => isAdminNavItemActive(pathname, item));
   const section = active?.label || 'Administration';
   const accountName = user?.email?.split('@')[0] || 'Administrator';
 
@@ -47,7 +47,7 @@ export default function AdminHeader() {
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <AdminMobileNav />
           <div className="min-w-0">
-            <p className="hidden text-[0.65rem] font-bold uppercase tracking-[0.16em] text-[#568087] sm:block">Borealis administration</p>
+            <p className="hidden text-[0.65rem] font-bold uppercase tracking-[0.16em] text-[#568087] sm:block">Borealis owner workspace</p>
             <p className="truncate text-base font-bold text-[#164b59]">{section}</p>
           </div>
         </div>
@@ -74,7 +74,7 @@ export default function AdminHeader() {
             <div role="menu" className="absolute right-0 z-40 mt-2 w-64 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
               <div className="border-b border-slate-100 p-4">
                 <p className="truncate text-sm font-semibold text-slate-900">{user?.email || 'Signed-in administrator'}</p>
-                <p className="mt-1 text-xs text-slate-500">Secure Borealis CMS session</p>
+                <p className="mt-1 text-xs text-slate-500">Secure Borealis workspace</p>
               </div>
               <div className="space-y-1 p-2">
                 <Link role="menuitem" href="/admin/settings" onClick={() => setShowMenu(false)} className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-[#e8f4f5] hover:text-[#164b59]">Settings</Link>

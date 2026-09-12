@@ -1,9 +1,9 @@
 'use server';
-import { revalidatePath } from 'next/cache';import { requireAdmin } from '@/lib/admin/auth';import { validatePhysicalRoom,validateRoomType } from '@/lib/admin/room-validation';import { adminRoomsRepository } from '@/lib/repositories/admin/rooms';import {createServerSupabaseClient}from '@/lib/supabase/server';import type { RoomFormState } from '@/types/rooms-admin';
+import { revalidatePath } from 'next/cache';import { requireAdmin } from '@/lib/admin/auth';import {ownerSafeError}from'@/lib/admin/owner-safe-error';import { validatePhysicalRoom,validateRoomType } from '@/lib/admin/room-validation';import { adminRoomsRepository } from '@/lib/repositories/admin/rooms';import {createServerSupabaseClient}from '@/lib/supabase/server';import type { RoomFormState } from '@/types/rooms-admin';
 const refresh=()=>{revalidatePath('/admin/rooms');revalidatePath('/rooms');revalidatePath('/')};
-const saveError=(error:unknown)=>{if(error&&typeof error==='object'&&'code'in error&&error.code==='23505')return'That URL slug is already used by another room. Choose a different slug.';if(error&&typeof error==='object'&&'message'in error&&typeof error.message==='string'&&error.message)return error.message;return'Room could not be saved.'};
+const saveError=(error:unknown)=>ownerSafeError(error,'Room could not be saved. Please review the details and try again.');
 export async function saveRoomType(_:RoomFormState,data:FormData):Promise<RoomFormState>{const session=await requireAdmin(['owner','manager','editor']);const validated=validateRoomType(data);if(!validated.data)return validated.state!;try{const id=await adminRoomsRepository.saveRoomType(session,String(data.get('id')||'')||null,validated.data);refresh();return{ok:true,message:validated.data.status==='published'?'Room saved and published. It is now visible on the public Rooms page.':'Room draft saved.',id}}catch(error){return{ok:false,message:saveError(error)}}}
-export async function savePhysicalRoom(_:RoomFormState,data:FormData):Promise<RoomFormState>{const session=await requireAdmin(['owner','manager']);const validated=validatePhysicalRoom(data);if(!validated.data)return validated.state!;try{const id=await adminRoomsRepository.savePhysicalRoom(session,String(data.get('id')||'')||null,validated.data);refresh();return{ok:true,message:'Physical room saved.',id}}catch(error){return{ok:false,message:error instanceof Error?error.message:'Physical room could not be saved.'}}}
+export async function savePhysicalRoom(_:RoomFormState,data:FormData):Promise<RoomFormState>{const session=await requireAdmin(['owner','manager']);const validated=validatePhysicalRoom(data);if(!validated.data)return validated.state!;try{const id=await adminRoomsRepository.savePhysicalRoom(session,String(data.get('id')||'')||null,validated.data);refresh();return{ok:true,message:'Room unit saved.',id}}catch(error){return{ok:false,message:ownerSafeError(error,'Room unit could not be saved. Please try again.')}}}
 export async function archiveRoomType(id:string){const session=await requireAdmin(['owner','manager','editor']);await adminRoomsRepository.setRoomTypeStatus(session,id,'archived');refresh()}
 export async function restoreRoomType(id:string){const session=await requireAdmin(['owner','manager','editor']);await adminRoomsRepository.setRoomTypeStatus(session,id,'draft');refresh()}
 export async function duplicateRoomType(id:string){const session=await requireAdmin(['owner','manager','editor']);await adminRoomsRepository.duplicateRoomType(session,id);refresh()}
@@ -22,12 +22,12 @@ export async function attachExistingRoomMedia(roomTypeId:string,_:RoomMediaState
   ]);
   if(roomResult.error||!roomResult.data)return{ok:false,message:'This room is no longer available.'};
   if(assetResult.error||!assetResult.data)return{ok:false,message:'This image is unavailable or belongs to another property.'};
-  if(countResult.error||existingResult.error)return{ok:false,message:countResult.error?.message||existingResult.error?.message||'Could not inspect the room gallery.'};
+  if(countResult.error||existingResult.error)return{ok:false,message:ownerSafeError(countResult.error||existingResult.error,'The room gallery could not be checked. Please try again.')};
   const values={status:'published' as const,is_visible:true,is_featured:(countResult.count||0)===0,sort_order:(countResult.count||0)*10,updated_by:session.userId};
   const result=existingResult.data
     ?await db.from('room_images').update(values).eq('id',existingResult.data.id).eq('property_id',session.propertyId)
     :await db.from('room_images').insert({property_id:session.propertyId,room_type_id:roomTypeId,media_asset_id:mediaAssetId,...values,created_by:session.userId});
-  if(result.error)return{ok:false,message:result.error.message};
+  if(result.error)return{ok:false,message:ownerSafeError(result.error,'The image could not be added. Please try again.')};
   revalidatePath(`/admin/rooms/${roomTypeId}`);
   revalidatePath(`/rooms/${roomResult.data.slug}`);
   refresh();

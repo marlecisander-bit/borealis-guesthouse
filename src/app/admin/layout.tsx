@@ -6,6 +6,7 @@ import AdminHeader from '@/components/layout/AdminHeader';
 import { SlugChangeGuard } from '@/components/admin/SlugChangeGuard';
 import { TranslationShortcut } from '@/components/admin/TranslationShortcut';
 import { AdminFormValueGuard } from '@/components/admin/AdminFormValueGuard';
+import { AdminWorkspaceNav } from '@/components/admin/AdminWorkspaceNav';
 
 export default function AdminLayout({
   children,
@@ -24,7 +25,7 @@ export default function AdminLayout({
       <div className="flex min-w-0 flex-1 flex-col">
         <AdminHeader />
         <main id="admin-main" className="flex-1 overflow-x-hidden" tabIndex={-1}>
-          <div className="mx-auto w-full max-w-[90rem] p-4 pb-24 sm:p-6 sm:pb-24 lg:p-8 lg:pb-12">{children}</div>
+          <div className="mx-auto w-full max-w-[90rem] p-4 pb-24 sm:p-6 sm:pb-24 lg:p-8 lg:pb-12"><AdminWorkspaceNav />{children}</div>
         </main>
       </div>
     </div>

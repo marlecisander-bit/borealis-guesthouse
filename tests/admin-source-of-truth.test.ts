@@ -7,9 +7,12 @@ const source = (path: string) => readFileSync(join(process.cwd(), path), 'utf8')
 
 test('Admin navigation groups owner tasks predictably', () => {
   const navigation = source('src/lib/admin/navigation.ts');
-  assert.match(navigation, /group: 'Activities'/);
-  assert.match(navigation, /label: 'Languages'.*group: 'Website'/);
-  assert.doesNotMatch(navigation, /group: 'Experiences'/);
+  for (const label of ['Dashboard', 'Bookings', 'Calendar', 'Rooms & Rates', 'Experiences & Transfers', 'Website', 'Media', 'Settings']) {
+    assert.match(navigation, new RegExp(`label: '${label.replace('&', '\\&')}'`));
+  }
+  assert.equal((navigation.match(/\{ label:/g) || []).length, 8);
+  assert.match(source('src/components/admin/AdminWorkspaceNav.tsx'), /Guest enquiries/);
+  assert.match(source('src/components/admin/AdminWorkspaceNav.tsx'), /Property & policies/);
 });
 
 test('Settings is the only editor for property-wide contact details', () => {
@@ -37,13 +40,25 @@ test('Public contact data prefers the canonical property record', () => {
   assert.match(service, /property\?\.facebook_url/);
 });
 
-test('Dashboard reads canonical booking and content fields', () => {
+test('Dashboard focuses on daily booking operations', () => {
   const repository = source('src/lib/repositories/admin/dashboard.ts');
   const page = source('src/app/admin/dashboard/page.tsx');
   assert.match(repository, /booking_status/);
-  assert.match(repository, /from\('content_pages'\)/);
-  assert.match(repository, /reference:item\.reference/);
-  assert.match(page, /href={`\/admin\/bookings\/\$\{item\.id\}`}/);
+  assert.match(repository, /\.eq\('check_in', date\)/);
+  assert.match(repository, /\.eq\('check_out', date\)/);
+  assert.match(repository, /\.limit\(5\)/);
+  assert.doesNotMatch(repository, /from\('content_pages'\)/);
+  assert.match(page, /Needs attention/);
+  assert.match(page, /href={`\/admin\/bookings\/\$\{booking\.id\}`}/);
+});
+
+test('Room editor keeps technical identifiers out of the owner workflow', () => {
+  const form = source('src/components/admin/RoomTypeForm.tsx');
+  const list = source('src/app/admin/rooms/page.tsx');
+  assert.match(form, /type="hidden" name="slug"/);
+  assert.match(form, /Guests & beds/);
+  assert.match(form, /Advanced/);
+  assert.match(list, /QuickRoomRateForm/);
 });
 
 test('Room gallery browser mutations remain explicitly property scoped', () => {

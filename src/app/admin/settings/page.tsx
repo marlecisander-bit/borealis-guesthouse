@@ -11,8 +11,8 @@ export default async function SettingsPage() {
   return (
     <div className="space-y-8">
       <AdminPageHeader
-        title="Borealis settings"
-        description="Manage property details and operational defaults. Secret credentials remain server-environment configuration only."
+        title="Settings"
+        description="Manage property information, booking policies and owner notifications."
       />
       <PropertyPublication published={data.propertyPublished} />
       <SettingsForm data={data} />

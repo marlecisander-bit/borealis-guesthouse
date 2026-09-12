@@ -15,10 +15,10 @@ export function ExperienceForm({item,media}:{item:AdminExperience|null;media:Exp
   useEffect(()=>{if(state.ok&&state.id&&!item)router.replace(`/admin/experiences/${state.id}`)},[state,item,router]);
   return <form action={action} className="space-y-6">
     <input type="hidden" name="id" value={item?.id||''}/>
+    <input type="hidden" name="slug" value={item?.slug||''}/>
+    <input type="hidden" name="sortOrder" value={item?.sortOrder||0}/>
     <Section title="General"><Grid>
       <Field label="Name" error={state.errors?.name}><input name="name" defaultValue={item?.name||''} className={input}/></Field>
-      <Field label="URL slug" error={state.errors?.slug} hint="Optional — leave blank to generate it from the name."><input name="slug" defaultValue={item?.slug||''} placeholder="Generated automatically when blank" autoComplete="off" className={input}/></Field>
-      <Field label="Sort order"><input name="sortOrder" type="number" defaultValue={item?.sortOrder||0} className={input}/></Field>
     </Grid></Section>
     <Section title="Description">
       <Field label="Short description" error={state.errors?.description}><textarea name="shortDescription" rows={3} defaultValue={item?.shortDescription||''} className={`${input} py-3`}/></Field>
@@ -59,7 +59,7 @@ export function ExperienceForm({item,media}:{item:AdminExperience|null;media:Exp
         <Field label="Slot interval (minutes)" hint="Leave blank for a flexible-time experience."><input name="slotIntervalMinutes" type="number" min="5" step="5" defaultValue={item?.slotIntervalMinutes||''} className={input}/></Field>
       </Grid>
     </Section>
-    <Section title="SEO"><Field label="SEO title"><input name="seoTitle" maxLength={70} defaultValue={item?.seoTitle||''} className={input}/></Field><Field label="Meta description"><textarea name="seoDescription" maxLength={180} rows={3} defaultValue={item?.seoDescription||''} className={`${input} py-3`}/></Field></Section>
+    <details className="rounded-2xl border border-slate-200 bg-white"><summary className="flex min-h-16 cursor-pointer list-none items-center justify-between px-6 text-xl font-bold">Advanced search settings <span aria-hidden="true" className="text-slate-400">⌄</span></summary><div className="space-y-5 border-t border-slate-100 p-6"><Field label="Search title"><input name="seoTitle" maxLength={70} defaultValue={item?.seoTitle||''} className={input}/></Field><Field label="Search description"><textarea name="seoDescription" maxLength={180} rows={3} defaultValue={item?.seoDescription||''} className={`${input} py-3`}/></Field></div></details>
     <Section title="Visibility"><div className="grid gap-4 sm:grid-cols-2"><Check name="active" label="Active" checked={item?.active??true}/><Check name="featured" label="Featured" checked={item?.featured??false}/></div></Section>
     <div className="sticky bottom-3 z-10 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white/95 p-4 shadow-xl backdrop-blur sm:flex-row sm:items-center sm:justify-between"><p role="status" className={state.ok?'text-sm text-emerald-700':'text-sm text-red-700'}>{state.message}</p><div className="flex gap-2"><button name="status" value="draft" disabled={pending} className="min-h-11 rounded-lg border border-slate-300 px-4 font-semibold">Save draft</button><button name="status" value="published" disabled={pending} className="min-h-11 rounded-lg bg-slate-950 px-4 font-semibold text-white">Save & publish</button></div></div>
   </form>;

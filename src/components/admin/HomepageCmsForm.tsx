@@ -7,6 +7,11 @@ import type { CmsOption, HomepageCmsState, HomepageEditorData, HomepageKey, Home
 
 const initial: HomepageCmsState = { ok: false, message: '' };
 const input = 'mt-2 min-h-12 w-full rounded-lg border border-slate-300 bg-white px-4 font-normal text-slate-900';
+const ctaDestinations = [
+  ['', 'No link'], ['/book', 'Book now'], ['/rooms', 'View rooms'], ['/experiences', 'View experiences'],
+  ['/transfers', 'View transfers'], ['/explore-koman', 'Explore Koman'], ['/gallery', 'Open gallery'],
+  ['/about', 'About Borealis'], ['/contact', 'Contact Borealis'],
+] as const;
 
 type SectionConfig = {
   key: Exclude<HomepageKey, 'property_highlights'>;
@@ -82,10 +87,10 @@ function HomepageSectionEditor({ config, section, data }: { config: SectionConfi
       {config.media && <MediaPicker name={`${config.key}_media`} label="Section image" assets={data.media} defaultValue={section.backgroundMediaId} />}
       {config.imageAlt && <Field label="Image alternative text"><input name={`${config.key}_imageAlt`} defaultValue={String(section.settings.imageAlt || '')} className={input} /></Field>}
       {config.imageLabel && <Field label="Image caption"><input name={`${config.key}_imageLabel`} defaultValue={String(section.settings.imageLabel || '')} className={input} /></Field>}
-      {config.cta ? <><Field label="Button label"><input name={`${config.key}_ctaLabel`} defaultValue={section.ctaLabel} className={input} /></Field><Field label="Button destination"><input name={`${config.key}_ctaLink`} defaultValue={section.ctaLink} placeholder="/book" className={input} /></Field></> : <><input type="hidden" name={`${config.key}_ctaLabel`} value={section.ctaLabel} /><input type="hidden" name={`${config.key}_ctaLink`} value={section.ctaLink} /></>}
-      {config.bookingSearch && <><Field label="Booking search button label"><input name={`${config.key}_bookingCtaLabel`} defaultValue={String(section.settings.bookingCtaLabel || '')} placeholder="Check availability" className={input} /></Field><label className="flex min-h-12 items-center gap-3 rounded-xl bg-slate-50 px-4 text-sm font-semibold"><input name={`${config.key}_showBookingSearch`} type="checkbox" defaultChecked={section.settings.showBookingSearch !== false} /> Show booking search</label></>}
-      <Field label="Section order"><input name={`${config.key}_order`} type="number" defaultValue={section.sortOrder} className={input} /></Field>
-      <label className="flex min-h-12 items-center gap-3 rounded-xl bg-slate-50 px-4 text-sm font-semibold"><input name={`${config.key}_visible`} type="checkbox" defaultChecked={section.visible} /> Show this section publicly</label>
+      {config.cta ? <><Field label="Button label"><input name={`${config.key}_ctaLabel`} defaultValue={section.ctaLabel} className={input} /></Field><CtaDestination name={`${config.key}_ctaLink`} value={section.ctaLink}/></> : <><input type="hidden" name={`${config.key}_ctaLabel`} value={section.ctaLabel} /><input type="hidden" name={`${config.key}_ctaLink`} value={section.ctaLink} /></>}
+      {config.bookingSearch && <><Field label="Booking search button label"><input name={`${config.key}_bookingCtaLabel`} defaultValue={String(section.settings.bookingCtaLabel || '')} placeholder="Check availability" className={input} /></Field><input name={`${config.key}_showBookingSearch`} type="hidden" value="on"/><p className="flex min-h-12 items-center rounded-xl bg-emerald-50 px-4 text-sm font-semibold text-emerald-900">Booking search stays visible to protect the guest journey.</p></>}
+      <input name={`${config.key}_order`} type="hidden" value={section.sortOrder}/>
+      {config.key === 'hero' || config.key === 'final_cta' ? <><input name={`${config.key}_visible`} type="hidden" value="on"/><p className="flex min-h-12 items-center rounded-xl bg-emerald-50 px-4 text-sm font-semibold text-emerald-900">This essential booking section stays visible.</p></> : <label className="flex min-h-12 items-center gap-3 rounded-xl bg-slate-50 px-4 text-sm font-semibold"><input name={`${config.key}_visible`} type="checkbox" defaultChecked={section.visible} /> Show this section publicly</label>}
     </div>
     {options.length > 0 && <div className="mt-6"><p className="text-sm font-semibold text-slate-800">Featured selections</p><p className="mt-1 text-xs text-slate-500">Select none to use all currently published items.</p><div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{options.map((option, index) => <Choice key={option.id} sectionKey={config.key} option={option} checked={selected.has(option.id)} order={section.links.find(link => link.id === option.id)?.sortOrder ?? index * 10} />)}</div></div>}
   </section>;
@@ -93,6 +98,11 @@ function HomepageSectionEditor({ config, section, data }: { config: SectionConfi
 
 function Choice({ sectionKey, option, checked, order }: { sectionKey: string; option: CmsOption; checked: boolean; order: number }) {
   return <label className="flex min-h-12 items-center gap-3 rounded-lg border border-slate-200 px-3 text-sm"><input name={`${sectionKey}_links`} value={option.id} type="checkbox" defaultChecked={checked} /><span className="min-w-0 flex-1 truncate">{option.label}</span><input name={`${sectionKey}_link_order_${option.id}`} type="number" defaultValue={order} aria-label={`${option.label} order`} className="w-16 rounded border border-slate-300 px-2 py-1" /></label>;
+}
+
+function CtaDestination({ name, value }: { name: string; value: string }) {
+  const known = ctaDestinations.some(([destination]) => destination === value);
+  return <Field label="Button destination"><select name={name} defaultValue={value} className={input}>{!known && value && <option value={value}>Keep current destination</option>}{ctaDestinations.map(([destination, label]) => <option key={destination || 'none'} value={destination}>{label}</option>)}</select></Field>;
 }
 
 function PreservedRetiredHighlights({ data }: { data: HomepageEditorData }) {
