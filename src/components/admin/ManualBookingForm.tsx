@@ -32,6 +32,7 @@ export function ManualBookingForm({rooms}:{rooms:ManualBookingRoom[]}) {
         <DateRangeCalendar value={dates} picker={picker}/>
         <Field label="Adults"><input name="adults" required type="number" min="1" defaultValue={v('adults','1')} className={input}/></Field>
         <Field label="Children"><input name="children" required type="number" min="0" defaultValue={v('children','0')} className={input}/></Field>
+        <Field label="Infants"><input name="infants" required type="number" min="0" defaultValue={v('infants','0')} className={input}/></Field>
       </div>
     </section>
     <section className="rounded-2xl border border-slate-200 bg-white p-6"><h2 className="text-xl font-bold">Primary guest</h2><div className="mt-5 grid gap-5 sm:grid-cols-2"><Field label="First name"><input name="firstName" required defaultValue={v('firstName')} className={input}/></Field><Field label="Last name"><input name="lastName" required defaultValue={v('lastName')} className={input}/></Field><Field label="Email"><input name="email" required type="email" defaultValue={v('email')} className={input}/></Field><Field label="Phone"><input name="phone" required type="tel" defaultValue={v('phone')} className={input}/></Field><Field label="Country (optional)"><input name="country" defaultValue={v('country')} className={input}/></Field></div><Field label="Guest notes (optional)"><textarea name="notes" rows={4} defaultValue={v('notes')} className={`${input} py-3`}/></Field></section>

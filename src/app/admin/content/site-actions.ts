@@ -7,7 +7,7 @@ import type {SiteContentState,SiteDocumentKey} from '@/types/site-content-cms';
 
 const fieldsByKey:Record<SiteDocumentKey,string[]>={
   about:['heroEyebrow','heroTitle','introduction','heroImage','heroImageAlt','storyEyebrow','storyHeading','storyText','storyImage','storyImageAlt','locationEyebrow','locationHeading','locationText','locationImage','locationImageAlt','philosophyEyebrow','philosophyHeading','philosophy','ctaLabel','ctaTarget'],
-  contact:['eyebrow','title','introduction','directHeading','directDescription','phone','whatsapp','email','instagram','addressLabel','directionsText','journeyEyebrow','journeyHeading','journeyDescription','primaryCtaLabel','primaryCtaTarget','secondaryCtaLabel','secondaryCtaTarget'],
+  contact:['eyebrow','title','introduction','directHeading','directDescription','addressLabel','directionsText','journeyEyebrow','journeyHeading','journeyDescription','primaryCtaLabel','primaryCtaTarget','secondaryCtaLabel','secondaryCtaTarget'],
   book:['eyebrow','heading','description'],
   global:['headerCtaLabel','mobileMenuCtaLabel','mobileBarCtaLabel','sharedCtaEyebrow','sharedCtaHeading','sharedCtaLabel','sharedCtaTarget'],
   footer:['description','exploreHeading','findUsHeading','bookingCtaLabel','bookingCtaTarget','copyright','privacyLabel','privacyUrl','bookingPolicyLabel','bookingPolicyUrl','termsLabel','termsUrl'],
@@ -24,7 +24,6 @@ export async function saveSiteDocument(key:SiteDocumentKey,_:SiteContentState,fo
   const status=text(formData,'status') as 'draft'|'published';
   const data=Object.fromEntries(fieldsByKey[key].map(field=>[field,text(formData,field)]));
   if(!['draft','published'].includes(status))return{ok:false,message:'Choose draft or publish.'};
-  if(key==='contact'&&data.email&&!/^\S+@\S+\.\S+$/.test(data.email))return{ok:false,message:'Enter a valid contact email.'};
   if(key==='contact'&&['primaryCtaTarget','secondaryCtaTarget'].some(field=>data[field]&&!/^\/(?:[a-z0-9-]+\/?)*$/i.test(data[field])))return{ok:false,message:'CTA destinations must use a safe internal path.'};
   if(key==='global'&&data.sharedCtaTarget&&!/^\/(?:[a-z0-9-]+\/?)*$/i.test(data.sharedCtaTarget))return{ok:false,message:'The shared CTA destination must use a safe internal path.'};
   if(key==='footer'&&data.bookingCtaTarget&&!/^\/(?:[a-z0-9-]+\/?)*$/i.test(data.bookingCtaTarget))return{ok:false,message:'The footer CTA destination must use a safe internal path.'};

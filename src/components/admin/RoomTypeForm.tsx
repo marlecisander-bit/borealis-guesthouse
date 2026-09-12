@@ -10,7 +10,7 @@ import type { AdminAmenity, AdminRoomType, RoomFormState } from '@/types/rooms-a
 const initial: RoomFormState = { ok: false, message: '' };
 const input = 'mt-2 min-h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-slate-900';
 
-export function RoomTypeForm({ room, amenities }: { room: AdminRoomType | null; amenities: AdminAmenity[] }) {
+export function RoomTypeForm({ room, amenities,agePolicy={infantMaxAge:2,childMaxAge:12} }: { room: AdminRoomType | null; amenities: AdminAmenity[];agePolicy?:{infantMaxAge:number;childMaxAge:number} }) {
   const [state, action, pending] = useActionState(saveRoomType, initial);
   const router = useRouter();
 
@@ -23,7 +23,7 @@ export function RoomTypeForm({ room, amenities }: { room: AdminRoomType | null; 
   return <form action={action} className="grid gap-6">
     <input type="hidden" name="id" value={room?.id || ''} />
     <nav className="flex gap-2 overflow-x-auto rounded-xl border border-slate-200 bg-white p-2 text-sm font-semibold">
-      {['General', 'Description', 'Capacity & Beds', 'Inventory', 'Amenities', 'Photos', 'Pricing', 'SEO', 'Visibility'].map(label => <a key={label} href={`#${label.toLowerCase().replaceAll(' ', '-').replace('&', 'and')}`} className="shrink-0 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100">{label}</a>)}
+      {['General', 'Description', 'Occupancy policy', 'Beds', 'Inventory', 'Amenities', 'Photos', 'Pricing', 'SEO', 'Visibility'].map(label => <a key={label} href={`#${label.toLowerCase().replaceAll(' ', '-').replace('&', 'and')}`} className="shrink-0 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100">{label}</a>)}
     </nav>
     <FormSection id="general" title="General">
       <div className="grid gap-5 sm:grid-cols-2">
@@ -43,12 +43,21 @@ export function RoomTypeForm({ room, amenities }: { room: AdminRoomType | null; 
       <Field label="Short description" error={error('shortDescription')}><textarea name="shortDescription" defaultValue={room?.shortDescription || ''} rows={3} className={`${input} py-3`} /></Field>
       <Field label="Long description" error={error('longDescription')}><textarea name="longDescription" defaultValue={room?.longDescription || ''} rows={7} className={`${input} py-3`} /></Field>
     </FormSection>
-    <FormSection id="capacity-and-beds" title="Capacity & Beds">
+    <FormSection id="occupancy-policy" title="Occupancy policy">
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        <NumberField label="Total capacity" name="capacity" value={room?.capacity || 2} error={error('capacity')} />
-        <NumberField label="Adults" name="adults" value={room?.adults || 2} error={error('adults')} />
-        <NumberField label="Children" name="children" value={room?.children || 0} />
+        <NumberField label="Maximum total guests" name="maxTotalOccupancy" value={room?.maxTotalOccupancy || room?.capacity || 2} error={error('maxTotalOccupancy')} min={1}/>
+        <NumberField label="Maximum adults" name="maxAdults" value={room?.maxAdults || room?.capacity || 2} error={error('maxAdults')} min={1}/>
+        <NumberField label="Maximum children" name="maxChildren" value={room?.maxChildren ?? 0} error={error('maxChildren')}/>
+        <NumberField label="Maximum infants" name="maxInfants" value={room?.maxInfants ?? 0} error={error('maxInfants')}/>
+        <NumberField label="Minimum adults" name="minAdults" value={room?.minAdults || 1} error={error('minAdults')} min={1}/>
         <NumberField label="Base occupancy" name="baseOccupancy" value={room?.baseOccupancy || 2} error={error('baseOccupancy')} />
+        <label className="flex min-h-12 items-center gap-3 rounded-lg border border-slate-200 px-4 text-sm font-semibold"><input name="infantsCountTowardCapacity" type="checkbox" defaultChecked={room?.infantsCountTowardCapacity??true}/>Infants count toward total capacity</label>
+      </div>
+      <p className="mt-4 text-sm leading-6 text-slate-500">Every booked room requires its minimum number of adults. Infants count toward the total by default; turn this off only when the property explicitly allows infants without using a normal capacity place.</p>
+      <div className="mt-4 rounded-lg bg-slate-50 p-4 text-sm text-slate-600"><strong className="text-slate-800">Property age policy:</strong> Infants 0–{agePolicy.infantMaxAge}, children {agePolicy.infantMaxAge+1}–{agePolicy.childMaxAge}, adults {agePolicy.childMaxAge+1}+. Change these bands in Admin Settings; the minimum legal booking-holder age remains a separate policy.</div>
+    </FormSection>
+    <FormSection id="beds" title="Beds and room details">
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <NumberField label="Total beds" name="beds" value={room?.beds || 1} error={error('beds')} min={1} />
         <Field label="Bed configuration" error={error('bedConfiguration')}><input name="bedConfiguration" defaultValue={room?.bedConfiguration || ''} placeholder="1 queen bed" className={input} /></Field>
         <Field label="Room size (m²)"><input name="sizeSqm" type="number" step="0.1" min="0" defaultValue={room?.sizeSqm || ''} className={input} /></Field>

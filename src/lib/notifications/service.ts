@@ -5,7 +5,7 @@ import { ResendEmailChannel } from './resend-channel';
 import type { NotificationChannel, NotificationType } from '@/types/notifications';
 
 type GuestRow = { first_name: string; last_name: string; email: string | null; phone: string | null; is_primary: boolean };
-type ItemRow = { item_type: string; title_snapshot: string | null; quantity: number; total_price: number | string; service_date: string | null; service_time: string | null; metadata?: { requestedQuantity?: number } | null };
+type ItemRow = { item_type: string; title_snapshot: string | null; quantity: number; total_price: number | string; service_date: string | null; service_time: string | null; metadata?: { requestedQuantity?: number;guestCount?:number;capacity?:number;occupancy?:{adults:number;children:number;infants:number} } | null };
 
 export class NotificationService {
   constructor(private readonly channels: NotificationChannel[] = [new ResendEmailChannel()]) {}
@@ -20,7 +20,7 @@ export class NotificationService {
       .select('id,type,booking_id').eq('booking_id', bookingId).eq('type', type).maybeSingle();
     if (notificationError || !notification) return;
     const [{ data: booking, error: bookingError }, { data: settings }, { data: deliveries }] = await Promise.all([
-      db.from('bookings').select('id,property_id,reference,booking_status,source,check_in,check_out,adults,children,total_amount,currency,booking_guests(first_name,last_name,email,phone,is_primary),booking_items(item_type,title_snapshot,quantity,total_price,service_date,service_time,metadata)').eq('id', bookingId).single(),
+      db.from('bookings').select('id,property_id,reference,booking_status,source,check_in,check_out,adults,children,infants,total_guests,total_amount,currency,booking_guests(first_name,last_name,email,phone,is_primary),booking_items(item_type,title_snapshot,quantity,total_price,service_date,service_time,metadata)').eq('id', bookingId).single(),
       db.from('site_settings').select('setting_key,value_text').eq('property_id', (await db.from('bookings').select('property_id').eq('id', bookingId).single()).data?.property_id || '').in('setting_key', ['reply_to_email']),
       db.from('notification_deliveries').select('id,channel,recipient,status').eq('notification_id', notification.id).eq('status', 'pending'),
     ]);
@@ -42,10 +42,12 @@ export class NotificationService {
       checkOut: booking.check_out,
       adults: Number(booking.adults || 0),
       children: Number(booking.children || 0),
+      infants: booking.infants==null?null:Number(booking.infants),
+      totalGuests: booking.total_guests==null?null:Number(booking.total_guests),
       total: Number(booking.total_amount || 0),
       currency: booking.currency || 'EUR',
       roomTitle: items.find(item => item.item_type === 'room')?.title_snapshot || undefined,
-      items: items.map(item => ({ type: item.item_type, title: item.title_snapshot || item.item_type, quantity: Number(item.metadata?.requestedQuantity || item.quantity), total: Number(item.total_price), date: item.service_date || undefined, time: item.service_time?.slice(0, 5) || undefined })),
+      items: items.map(item => ({ type: item.item_type, title: item.title_snapshot || item.item_type, quantity: Number(item.metadata?.requestedQuantity || item.quantity), total: Number(item.total_price), date: item.service_date || undefined, time: item.service_time?.slice(0, 5) || undefined,guestCount:item.metadata?.guestCount,capacity:item.metadata?.capacity,occupancy:item.metadata?.occupancy })),
       bookingUrl: `${appUrl}/admin/bookings/${booking.id}`,
       replyTo,
     });

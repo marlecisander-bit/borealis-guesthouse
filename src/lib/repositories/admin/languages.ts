@@ -11,7 +11,7 @@ const documentFields:Record<string,string[]>={
  'explore-koman':landingFields,
  gallery:landingFields,
  about:['heroEyebrow','heroTitle','introduction','heroImageAlt','storyEyebrow','storyHeading','storyText','storyImageAlt','locationEyebrow','locationHeading','locationText','locationImageAlt','philosophyEyebrow','philosophyHeading','philosophy','ctaLabel'],
- contact:['eyebrow','title','introduction','directHeading','directDescription','addressLabel','address','directionsText','journeyEyebrow','journeyHeading','journeyDescription','primaryCtaLabel','secondaryCtaLabel'],
+ contact:['eyebrow','title','introduction','directHeading','directDescription','addressLabel','directionsText','journeyEyebrow','journeyHeading','journeyDescription','primaryCtaLabel','secondaryCtaLabel'],
  book:['eyebrow','heading','description'],
  global:['headerCtaLabel','mobileMenuCtaLabel','mobileBarCtaLabel','sharedCtaEyebrow','sharedCtaHeading','sharedCtaLabel'],
  footer:['description','exploreHeading','findUsHeading','bookingCtaLabel','copyright','privacyLabel','bookingPolicyLabel','termsLabel'],

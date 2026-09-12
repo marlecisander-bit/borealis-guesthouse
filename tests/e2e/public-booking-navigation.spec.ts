@@ -55,10 +55,12 @@ test('homepage criteria use client navigation and remain pre-populated on /book'
   await search.getByRole('button', { name:/^Check-in,/ }).click();
   await page.getByRole('button', { name:dateLabel(checkIn), exact:true }).click();
   await page.getByRole('button', { name:dateLabel(checkOut), exact:true }).click();
-  await search.getByLabel('Number of guests').selectOption('3');
+  await search.getByRole('button',{name:/Guests/}).click();
+  await page.getByRole('button',{name:'Add adults'}).click();
+  await page.getByRole('button',{name:'Done'}).click();
   const submit = search.getByRole('button', { name:/Check availability/i });
   await submit.click();
-  await expect(page).toHaveURL(new RegExp(`/book\\?checkIn=${checkIn.toISOString().slice(0,10)}&checkOut=${checkOut.toISOString().slice(0,10)}&guests=3`));
+  await expect(page).toHaveURL(new RegExp(`/book\\?checkIn=${checkIn.toISOString().slice(0,10)}&checkOut=${checkOut.toISOString().slice(0,10)}&guests=3&adults=3&children=0&infants=0`));
   await expect(page.getByRole('button', { name:/Check-in/ })).toContainText(checkIn.toLocaleDateString('en-GB'));
   await expectNoHorizontalOverflow(page);
   await page.goBack();
@@ -66,6 +68,19 @@ test('homepage criteria use client navigation and remain pre-populated on /book'
   const restoredSubmit = page.getByRole('form', { name:'Check room availability' }).getByRole('button', { name:/Check availability/i });
   await expect(restoredSubmit).toBeVisible();
   await expect(restoredSubmit).not.toHaveAttribute('aria-busy', 'true');
+});
+
+test('mobile guest selector keeps categories clear and blocks a no-adult party',async({page},testInfo)=>{
+  runOnRepresentativeViewports(testInfo);
+  await page.goto('/');
+  const search=page.getByRole('form',{name:'Check room availability'});
+  await search.getByRole('button',{name:/Guests/}).click();
+  await page.getByRole('button',{name:'Remove adults'}).click();
+  await page.getByRole('button',{name:'Remove adults'}).click();
+  await page.getByRole('button',{name:'Add children'}).click();
+  await expect(page.getByRole('alert')).toHaveText('At least one adult is required for bookings with children or infants.');
+  await expect(search.getByRole('button',{name:/Check availability/i})).toBeDisabled();
+  await expectNoHorizontalOverflow(page);
 });
 
 test('room availability entry preserves its room selection', async ({ page }, testInfo) => {
@@ -78,4 +93,19 @@ test('room availability entry preserves its room selection', async ({ page }, te
   await expect(page).toHaveURL(new RegExp(`${href!.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`));
   await page.goBack();
   await expect(roomCta).toBeVisible();
+});
+
+test('multi-room accommodation is clear and responsive',async({page},testInfo)=>{
+  runOnRepresentativeViewports(testInfo);
+  const checkIn=futureDate(10).toISOString().slice(0,10),checkOut=futureDate(12).toISOString().slice(0,10);
+  const makeRoom=(id:string,name:string,capacity:number)=>({id,slug:id,name,eyebrow:'',description:'',longDescription:'',image:'/borealis-placeholder.svg',gallery:[],priceFrom:100,currency:'EUR',capacity,beds:String(capacity),size:'',viewType:'Lake view',amenities:[],seo:{title:name,description:''},occupancyPolicy:{maxAdults:capacity,maxChildren:capacity,maxInfants:capacity,maxTotalOccupancy:capacity,minAdults:1,infantsCountTowardCapacity:true}});
+  const family=makeRoom('family','Family Room',5),triple=makeRoom('triple','Triple Room',3);
+  await page.route('**/api/pricing',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({options:[{id:'family:5.0.0|triple:3.0.0',rooms:[{room:family,quantity:1,occupancies:[{adults:5,children:0,infants:0}],guestCounts:[5],subtotal:240,currency:'EUR'},{room:triple,quantity:1,occupancies:[{adults:3,children:0,infants:0}],guestCounts:[3],subtotal:160,currency:'EUR'}],requestedGuests:8,requestedOccupancy:{adults:8,children:0,infants:0},totalRooms:2,totalCapacity:8,unusedCapacity:0,subtotal:400,currency:'EUR',nights:2,minimumStay:1}]})}));
+  await page.goto(`/book?checkIn=${checkIn}&checkOut=${checkOut}&guests=8`);
+  await expect(page.getByText('Recommended',{exact:true})).toBeVisible();
+  await expect(page.getByText('2-room combination')).toBeVisible();
+  await expect(page.getByText('1 × Family Room')).toBeVisible();
+  await expect(page.getByText('1 × Triple Room')).toBeVisible();
+  await expect(page.getByText('8 adults · 2 nights')).toBeVisible();
+  await expectNoHorizontalOverflow(page);
 });

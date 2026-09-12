@@ -14,9 +14,12 @@ const publishable = {
   slug: '',
   shortDescription: 'A quiet double room overlooking the lake and surrounding mountains.',
   longDescription: 'A comfortable double room with a peaceful lake view, generous natural light, and everything needed for a relaxing stay.',
-  capacity: '2',
-  adults: '2',
-  children: '0',
+  maxAdults: '2',
+  maxChildren: '2',
+  maxInfants: '1',
+  maxTotalOccupancy: '2',
+  minAdults: '1',
+  infantsCountTowardCapacity: 'on',
   beds: '1',
   baseOccupancy: '2',
   inventoryCount: '1',
@@ -66,4 +69,16 @@ test('preserves the editable numeric bed count', () => {
 test('rejects an empty or excessive explicit inventory', () => {
   assert.equal(validateRoomType(form({ ...publishable, inventoryCount: '0' })).state?.errors?.inventoryCount, 'Inventory must be between 1 and 100.');
   assert.equal(validateRoomType(form({ ...publishable, inventoryCount: '101' })).state?.errors?.inventoryCount, 'Inventory must be between 1 and 100.');
+});
+
+test('rejects impossible room occupancy policies',()=>{
+  assert.equal(validateRoomType(form({...publishable,maxAdults:'3'})).state?.errors?.maxAdults,'Maximum adults cannot exceed maximum total guests.');
+  assert.equal(validateRoomType(form({...publishable,minAdults:'3'})).state?.errors?.minAdults,'Minimum adults cannot exceed maximum adults.');
+  assert.equal(validateRoomType(form({...publishable,maxInfants:'3'})).state?.errors?.maxInfants,'Maximum infants cannot exceed maximum total guests when infants count toward capacity.');
+});
+
+test('allows infants outside capacity only when the policy says so',()=>{
+  const result=validateRoomType(form({...publishable,maxInfants:'3',infantsCountTowardCapacity:''}));
+  assert.equal(result.state,undefined);
+  assert.equal(result.data?.infantsCountTowardCapacity,false);
 });

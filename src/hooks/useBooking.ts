@@ -1,9 +1,9 @@
 'use client';
 import { useReducer } from 'react';
-import type { AvailableRoom, BookingAddon, BookingConfirmation, BookingHold, GuestInformation, StaySearch } from '@/types/booking';
+import type { AccommodationOption, BookingAddon, BookingConfirmation, BookingHold, GuestInformation, StaySearch } from '@/types/booking';
 
-interface BookingState { step:1|2|3|4; search:StaySearch; rooms:AvailableRoom[]; selectedRoom:AvailableRoom|null; addons:BookingAddon[]; guest:GuestInformation; hold:BookingHold|null; confirmation:BookingConfirmation|null; status:'idle'|'loading'|'success'|'empty'|'error'; error:string|null }
-type Action = {type:'set-search';value:StaySearch}|{type:'searching'}|{type:'rooms';value:AvailableRoom[]}|{type:'error';value:string}|{type:'select-room';value:AvailableRoom}|{type:'toggle-addon';value:BookingAddon}|{type:'update-addon';value:BookingAddon}|{type:'set-guest';value:GuestInformation}|{type:'step';value:1|2|3|4}|{type:'holding'}|{type:'hold';value:BookingHold}|{type:'confirmed';value:BookingConfirmation};
+interface BookingState { step:1|2|3|4; search:StaySearch; options:AccommodationOption[]; selectedAccommodation:AccommodationOption|null; addons:BookingAddon[]; guest:GuestInformation; hold:BookingHold|null; confirmation:BookingConfirmation|null; status:'idle'|'loading'|'success'|'empty'|'error'; error:string|null }
+type Action = {type:'set-search';value:StaySearch}|{type:'searching'}|{type:'options';value:AccommodationOption[]}|{type:'error';value:string}|{type:'select-accommodation';value:AccommodationOption}|{type:'toggle-addon';value:BookingAddon}|{type:'update-addon';value:BookingAddon}|{type:'set-guest';value:GuestInformation}|{type:'step';value:1|2|3|4}|{type:'holding'}|{type:'hold';value:BookingHold}|{type:'confirmed';value:BookingConfirmation};
 
 function updateAddonForStay(item: BookingAddon, search: StaySearch) {
   if (item.type === 'transfer') {
@@ -17,15 +17,15 @@ function updateAddonForStay(item: BookingAddon, search: StaySearch) {
 function reducer(state: BookingState, action: Action): BookingState {
   switch (action.type) {
     case 'set-search': {
-      const changed = action.value.checkIn !== state.search.checkIn || action.value.checkOut !== state.search.checkOut || action.value.guests !== state.search.guests;
+      const changed = action.value.checkIn !== state.search.checkIn || action.value.checkOut !== state.search.checkOut || action.value.adults!==state.search.adults||action.value.children!==state.search.children||action.value.infants!==state.search.infants;
       if (!changed) return state;
       return {
         ...state,
         search: action.value,
-        rooms: [],
-        selectedRoom: null,
+        options: [],
+        selectedAccommodation: null,
         addons: state.addons.map(item => updateAddonForStay(item, action.value)),
-        guest: state.guest.adults + state.guest.children === action.value.guests ? state.guest : { ...state.guest, adults: action.value.guests, children: 0 },
+        guest: state.guest.adults===action.value.adults&&state.guest.children===action.value.children&&state.guest.infants===action.value.infants ? state.guest : { ...state.guest, adults: action.value.adults, children:action.value.children,infants:action.value.infants },
         hold: null,
         confirmation: null,
         status: 'idle',
@@ -34,12 +34,12 @@ function reducer(state: BookingState, action: Action): BookingState {
       };
     }
     case 'searching': return { ...state, status:'loading', error:null };
-    case 'rooms': {
-      const selected = state.selectedRoom ? action.value.find(item => item.room.id === state.selectedRoom?.room.id) || null : null;
-      return { ...state, rooms:action.value, selectedRoom:selected, hold:null, status:action.value.length ? 'success' : 'empty', step:1 };
+    case 'options': {
+      const selected = state.selectedAccommodation ? action.value.find(item => item.id === state.selectedAccommodation?.id) || null : null;
+      return { ...state, options:action.value, selectedAccommodation:selected, hold:null, status:action.value.length ? 'success' : 'empty', step:1 };
     }
     case 'error': return { ...state, status:'error', error:action.value };
-    case 'select-room': return { ...state, selectedRoom:action.value, hold:null, step:2 };
+    case 'select-accommodation': return { ...state, selectedAccommodation:action.value, hold:null, step:2 };
     case 'toggle-addon': {
       const key = (item: BookingAddon) => `${item.type}:${item.id}`;
       const exists = state.addons.some(item => key(item) === key(action.value));
@@ -56,11 +56,12 @@ function reducer(state: BookingState, action: Action): BookingState {
 
 export function useBooking(initial: Partial<StaySearch> = {}) {
   const initialGuests = initial.guests || 2;
+  const initialAdults=initial.adults??initialGuests,initialChildren=initial.children??0,initialInfants=initial.infants??0;
   const [state, dispatch] = useReducer(reducer, {
     step:1,
-    search:{ checkIn:initial.checkIn || '', checkOut:initial.checkOut || '', guests:initialGuests },
-    rooms:[], selectedRoom:null, addons:[],
-    guest:{ firstName:'', lastName:'', email:'', phone:'', country:'', adults:initialGuests, children:0, notes:'' },
+    search:{ checkIn:initial.checkIn || '', checkOut:initial.checkOut || '', guests:initialAdults+initialChildren+initialInfants,adults:initialAdults,children:initialChildren,infants:initialInfants },
+    options:[], selectedAccommodation:null, addons:[],
+    guest:{ firstName:'', lastName:'', email:'', phone:'', country:'', adults:initialAdults, children:initialChildren,infants:initialInfants, notes:'' },
     hold:null, confirmation:null, status:'idle', error:null,
   });
   return { state, dispatch };

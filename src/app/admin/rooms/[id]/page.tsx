@@ -1,2 +1,15 @@
-import Link from'next/link';import{notFound}from'next/navigation';import{AdminPageHeader}from'@/components/admin/ui';import{RoomImagesManager}from'@/components/admin/RoomImagesManager';import{RoomMediaSelector}from'@/components/admin/RoomMediaSelector';import{RoomTypeForm}from'@/components/admin/RoomTypeForm';import{requireAdmin}from'@/lib/admin/auth';import{adminRoomsRepository}from'@/lib/repositories/admin/rooms';
-export default async function EditRoomPage({params}:{params:Promise<{id:string}>}){const session=await requireAdmin(['owner','manager','editor']),{id}=await params;const[room,amenities]=await Promise.all([adminRoomsRepository.getRoomType(session,id),adminRoomsRepository.listAmenities(session)]);if(!room)notFound();return <div className="space-y-8"><AdminPageHeader title={`Edit Room: ${room.name}`} description="Manage the room, inventory, pricing, amenities, photos and search information in one place." actions={<><Link href={`/rooms/${room.slug}`} target="_blank" className="inline-flex min-h-11 items-center justify-center rounded-lg text-center border border-slate-300 bg-white px-4 text-sm font-semibold">Preview room</Link><Link href="/admin/rooms" className="inline-flex min-h-11 items-center justify-center rounded-lg text-center border border-slate-300 bg-white px-4 text-sm font-semibold">Back to rooms</Link></>}/><RoomTypeForm room={room} amenities={amenities}/><RoomMediaSelector roomTypeId={room.id}/><RoomImagesManager roomTypeId={room.id} initialImages={room.images}/></div>}
+import Link from 'next/link';
+import {notFound} from 'next/navigation';
+import {AdminPageHeader} from '@/components/admin/ui';
+import {RoomImagesManager} from '@/components/admin/RoomImagesManager';
+import {RoomMediaSelector} from '@/components/admin/RoomMediaSelector';
+import {RoomTypeForm} from '@/components/admin/RoomTypeForm';
+import {requireAdmin} from '@/lib/admin/auth';
+import {adminRoomsRepository} from '@/lib/repositories/admin/rooms';
+
+export default async function EditRoomPage({params}:{params:Promise<{id:string}>}){
+  const session=await requireAdmin(['owner','manager','editor']),{id}=await params;
+  const[room,amenities,agePolicy]=await Promise.all([adminRoomsRepository.getRoomType(session,id),adminRoomsRepository.listAmenities(session),adminRoomsRepository.getAgePolicy(session)]);
+  if(!room)notFound();
+  return <div className="space-y-8"><AdminPageHeader title={`Edit Room: ${room.name}`} description="Manage the room, occupancy, inventory, pricing, amenities, photos and search information in one place." actions={<><Link href={`/rooms/${room.slug}`} target="_blank" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-center text-sm font-semibold">Preview room</Link><Link href="/admin/rooms" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-center text-sm font-semibold">Back to rooms</Link></>}/><RoomTypeForm room={room} amenities={amenities} agePolicy={agePolicy}/><RoomMediaSelector roomTypeId={room.id}/><RoomImagesManager propertyId={session.propertyId} roomTypeId={room.id} initialImages={room.images}/></div>;
+}

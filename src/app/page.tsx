@@ -6,7 +6,7 @@ import { BookingSearch } from '@/components/public/BookingSearch';
 import { MobileBookingBar } from '@/components/public/MobileBookingBar';
 import { MapFallback, MapPlaceholder } from '@/components/public/MapPlaceholder';
 import { ExperienceCard, RoomCard, SectionHeader } from '@/components/public/Cards';
-import { Footer } from '@/components/public/Footer';
+import { HomepageFooter } from '@/components/public/Footer';
 import { Header } from '@/components/public/Header';
 import type { GalleryItem,Review } from '@/types/public';
 import { createPageMetadata } from '@/lib/seo';
@@ -14,7 +14,7 @@ import { contentRepository } from '@/services/content';
 import { getHomepageCms } from '@/services/homepage-cms';
 import{localizeHomepageCms}from'@/services/homepage-translations';
 import{getLanguageContext}from'@/services/translations';
-import { getContactInfo, getNavigation, getSiteDocument } from '@/services/site-content';
+import { getContactInfo, getNavigation, getOccupancyAgePolicy, getSiteDocument } from '@/services/site-content';
 import type { HomepageKey } from '@/types/homepage-cms';
 import {authorizePreview} from '@/lib/preview';
 import {PreviewBanner} from '@/components/public/PreviewBanner';
@@ -25,7 +25,7 @@ export async function generateMetadata():Promise<Metadata>{return createPageMeta
 
 export default async function Home({searchParams}:{searchParams:Promise<{preview?:string}>}) {
   const preview=Boolean(await authorizePreview('homepage',(await searchParams).preview));
-  const [liveProperty, allRooms, allExperiences, allGallery, homepageCmsRaw, publishedHero, liveArticles, liveTransfers, navigation,language,globalContent,contact] = await Promise.all([
+  const [liveProperty, allRooms, allExperiences, allGallery, homepageCmsRaw, publishedHero, liveArticles, liveTransfers, navigation,language,globalContent,contact,agePolicy] = await Promise.all([
     contentRepository.getProperty(),
     contentRepository.getRooms(),
     contentRepository.getExperiences(),
@@ -34,7 +34,7 @@ export default async function Home({searchParams}:{searchParams:Promise<{preview
     preview?Promise.resolve(null):getPublishedHomepageHero(),
     contentRepository.getArticles(),
     contentRepository.getTransfers(),
-    getNavigation('header'),getLanguageContext(),getSiteDocument('global'),getContactInfo(),
+    getNavigation('header'),getLanguageContext(),getSiteDocument('global'),getContactInfo(),getOccupancyAgePolicy(),
   ]);
   const homepageCms=await localizeHomepageCms(homepageCmsRaw);
   const section=(key:HomepageKey)=>homepageCms?.sections.find(item=>item.key===key);
@@ -58,7 +58,7 @@ export default async function Home({searchParams}:{searchParams:Promise<{preview
               <p className="mt-5 max-w-xl text-[.95rem] leading-7 text-white/80 md:text-lg">{hero?.subtitle||'A lakeside stay in the heart of Koman.'}</p>
               {hero?.ctaLabel&&<Link href={hero.ctaLink||'/book'} className="mt-6 inline-block rounded-full bg-sand px-6 py-3 text-sm font-bold text-lake">{hero.ctaLabel}</Link>}
             </div>
-            {hero?.settings.showBookingSearch!==false&&<div className="md:translate-y-1/2"><BookingSearch hero ctaLabel={(typeof bookingCtaLabel==='string'&&bookingCtaLabel)||'Check availability'} /></div>}
+            {hero?.settings.showBookingSearch!==false&&<div className="md:translate-y-1/2"><BookingSearch hero ctaLabel={(typeof bookingCtaLabel==='string'&&bookingCtaLabel)||'Check availability'} infantMaxAge={agePolicy.infantMaxAge} childMaxAge={agePolicy.childMaxAge}/></div>}
           </div>
         </section>}
 
@@ -117,9 +117,17 @@ export default async function Home({searchParams}:{searchParams:Promise<{preview
           <div className="shell grid gap-10 lg:grid-cols-2 lg:items-center"><div><p className="eyebrow">{locationSection?.eyebrow||'Koman, Albania'}</p><h2 className="mt-4 font-serif text-5xl text-lake md:text-6xl">{locationSection?.title||'At the edge of the water.'}</h2><p className="mt-6 max-w-lg leading-8 text-muted">{locationSection?.body||locationSection?.subtitle||'Borealis is set in Koman, a mountain gateway known for its lake journeys and dramatic northern Albanian landscape.'}</p><Link href={locationSection?.ctaLink||'/contact'} className="mt-7 inline-block rounded-full bg-lake px-7 py-4 text-sm font-bold text-white">{locationSection?.ctaLabel||'Contact & directions'}</Link></div><Suspense fallback={<MapFallback contact={contact} className="min-h-[26rem] rounded-[2rem]"/>}><MapPlaceholder contact={contact} className="min-h-[26rem] rounded-[2rem]"/></Suspense></div>
         </section>}
 
-        {visible('final_cta')&&<section style={{order:order('final_cta',100)}} className="relative min-h-[34rem] text-white"><Image src={finalSection?.backgroundMediaId?homepageCms?.mediaUrls[finalSection.backgroundMediaId]||liveProperty.heroImage:liveProperty.heroImage} alt={String(finalSection?.settings.imageAlt||'Mountain lake in Koman')} fill sizes="100vw" className="object-cover"/><div className="absolute inset-0 bg-lake/65"/><div className="shell relative flex min-h-[34rem] flex-col items-center justify-center py-20 text-center"><p className="eyebrow text-sand">{finalSection?.eyebrow||'Book direct'}</p><h2 className="mt-4 max-w-3xl font-serif text-5xl leading-none md:text-7xl">{finalSection?.title||'Your stay in Koman starts here.'}</h2>{finalSection?.body&&<p className="mt-5 max-w-xl text-white/75">{finalSection.body}</p>}<Link href={finalSection?.ctaLink||'/book'} className="mt-8 rounded-full bg-sand px-8 py-4 text-sm font-bold uppercase tracking-widest text-lake">{finalSection?.ctaLabel||'Check availability'}</Link></div></section>}
       </main>
-      <Footer />
+      <HomepageFooter
+        backgroundImage={finalSection?.backgroundMediaId ? homepageCms?.mediaUrls[finalSection.backgroundMediaId] || liveProperty.heroImage : liveProperty.heroImage}
+        backgroundAlt={String(finalSection?.settings.imageAlt || 'Borealis Guest House beside the lake in Koman')}
+        showCta={visible('final_cta')}
+        ctaEyebrow={finalSection?.eyebrow}
+        ctaTitle={finalSection?.title}
+        ctaBody={finalSection?.body || finalSection?.subtitle}
+        ctaLabel={finalSection?.ctaLabel}
+        ctaHref={finalSection?.ctaLink}
+      />
       <MobileBookingBar label={globalContent.mobileBarCtaLabel||'Check availability'} />
     </>
   );

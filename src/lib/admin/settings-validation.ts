@@ -13,9 +13,9 @@ export function validateSettings(data: FormData): { data?: PropertySettings; sta
     checkIn: text(data, 'checkIn'), checkOut: text(data, 'checkOut'), currency: text(data, 'currency').toUpperCase(), timezone: text(data, 'timezone'),
     maximumGuests: number(data, 'maximumGuests', 4), bookingNotice: text(data, 'bookingNotice'), bookingMode: text(data, 'bookingMode') === 'instant' ? 'instant' : 'request',
     holdMinutes: number(data, 'holdMinutes', 15), minimumAdvanceHours: number(data, 'minimumAdvanceHours', 24), maximumHorizonDays: number(data, 'maximumHorizonDays', 365),
+    infantMaxAge:number(data,'infantMaxAge',2),childMaxAge:number(data,'childMaxAge',12),minimumBookingHolderAge:number(data,'minimumBookingHolderAge',18),
     cancellationPolicy: text(data, 'cancellationPolicy'), payAtProperty: data.get('payAtProperty') === 'on', depositEnabled: data.get('depositEnabled') === 'on',
-    depositPercentage: number(data, 'depositPercentage'), onlinePaymentEnabled: data.get('onlinePaymentEnabled') === 'on', defaultLanguageId: text(data, 'defaultLanguageId'),
-    defaultSeoMediaId: text(data, 'defaultSeoMediaId'), defaultContactCta: text(data, 'defaultContactCta'), notificationEmail: text(data, 'notificationEmail'), additionalNotificationEmails: text(data, 'additionalNotificationEmails'),
+    depositPercentage: number(data, 'depositPercentage'), onlinePaymentEnabled: data.get('onlinePaymentEnabled') === 'on', notificationEmail: text(data, 'notificationEmail'), additionalNotificationEmails: text(data, 'additionalNotificationEmails'),
     replyToEmail: text(data, 'replyToEmail'), guestConfirmationEnabled: data.get('guestConfirmationEnabled') === 'on', ownerNotificationEnabled: data.get('ownerNotificationEnabled') === 'on',
     notifyBookingCreated: data.get('notifyBookingCreated') === 'on', notifyBookingCancelled: data.get('notifyBookingCancelled') === 'on', notifyBookingModified: data.get('notifyBookingModified') === 'on',
   };
@@ -33,5 +33,8 @@ export function validateSettings(data: FormData): { data?: PropertySettings; sta
   if (value.depositPercentage < 0 || value.depositPercentage > 100) errors.depositPercentage = 'Deposit percentage must be between 0 and 100.';
   if (value.maximumGuests < 1) errors.maximumGuests = 'Maximum guests must be at least 1.';
   if (value.holdMinutes < 1 || value.minimumAdvanceHours < 0 || value.maximumHorizonDays < 1) errors.booking = 'Enter valid booking limits.';
+  if(!Number.isInteger(value.infantMaxAge)||value.infantMaxAge<0)errors.infantMaxAge='Infant maximum age must be zero or higher.';
+  if(!Number.isInteger(value.childMaxAge)||value.childMaxAge<=value.infantMaxAge)errors.childMaxAge='Child maximum age must be greater than the infant maximum age.';
+  if(!Number.isInteger(value.minimumBookingHolderAge)||value.minimumBookingHolderAge<18)errors.minimumBookingHolderAge='Booking holders must be at least 18.';
   return Object.keys(errors).length ? { state: { ok: false, message: 'Review the highlighted settings.', errors } } : { data: value };
 }

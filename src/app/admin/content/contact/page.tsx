@@ -10,10 +10,6 @@ const fields=[
   {name:'introduction',label:'Page introduction',kind:'textarea' as const},
   {name:'directHeading',label:'Direct contact heading'},
   {name:'directDescription',label:'Direct contact description',kind:'textarea' as const},
-  {name:'phone',label:'Phone number'},
-  {name:'whatsapp',label:'WhatsApp link',kind:'url' as const},
-  {name:'email',label:'Email',kind:'email' as const},
-  {name:'instagram',label:'Instagram link',kind:'url' as const},
   {name:'addressLabel',label:'Address label'},
   {name:'directionsText',label:'Directions text',kind:'textarea' as const},
   {name:'journeyEyebrow',label:'Journey section eyebrow'},
@@ -30,7 +26,7 @@ export default async function Page(){
   const document=await adminSiteContentRepository.document(session,'contact').catch(()=>null);
   if(!document)return <AdminEmptyState title="CMS database update required" description="Run database/migrations/20260902_007_site_content_cms.sql in Supabase, then reload."/>;
   return <div className="space-y-8">
-    <AdminPageHeader title="Contact page" description="Edit visible page copy and contact channels. The property address and Google Maps link are managed in Settings → Property." actions={<Link href="/contact" target="_blank" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold">Preview Website</Link>}/>
+    <AdminPageHeader title="Contact page" description="Edit page copy and calls to action. Phone, email, social links, address and Google Maps are managed once in Settings → Property." actions={<><Link href="/admin/settings" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold">Property contact details</Link><Link href="/contact" target="_blank" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold">Preview website</Link></>}/>
     <SiteDocumentForm documentKey="contact" fields={fields} data={document.data}/>
   </div>;
 }

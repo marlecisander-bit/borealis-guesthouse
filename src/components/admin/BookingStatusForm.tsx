@@ -1,13 +1,14 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useActionState, useRef, useState } from 'react';
+import type { BookingMutationState } from '@/app/admin/bookings/actions';
 
 export function BookingStatusForm({
   action,
   allowed,
   reference,
 }: {
-  action: (data: FormData) => void | Promise<void>;
+  action: (previous: BookingMutationState, data: FormData) => Promise<BookingMutationState>;
   allowed: string[];
   reference: string;
 }) {
@@ -15,6 +16,7 @@ export function BookingStatusForm({
   const dialog = useRef<HTMLDialogElement>(null);
   const confirmed = useRef(false);
   const [status, setStatus] = useState(allowed[0] || '');
+  const [state, formAction, pending] = useActionState(action, { ok: false, message: '' });
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
     if (status !== 'cancelled' || confirmed.current) {
@@ -32,13 +34,14 @@ export function BookingStatusForm({
   }
 
   return <>
-    <form ref={form} action={action} onSubmit={submit} className="mt-4 space-y-3">
+    <form ref={form} action={formAction} onSubmit={submit} className="mt-4 space-y-3">
       <label className="block text-sm font-semibold text-slate-700">New status
         <select name="status" value={status} onChange={event => setStatus(event.target.value)} className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 px-3">
           {allowed.map(value => <option key={value} value={value}>{value.replaceAll('_', ' ')}</option>)}
         </select>
       </label>
-      <button className={`min-h-11 w-full rounded-lg px-4 font-bold text-white ${status === 'cancelled' ? 'bg-red-700' : 'bg-slate-950'}`}>Update status</button>
+      {state.message&&<p role="status" aria-live="polite" className={`text-sm ${state.ok?'text-emerald-700':'text-red-700'}`}>{state.message}</p>}
+      <button disabled={pending} className={`min-h-11 w-full rounded-lg px-4 font-bold text-white disabled:opacity-60 ${status === 'cancelled' ? 'bg-red-700' : 'bg-slate-950'}`}>{pending?'Updating…':'Update status'}</button>
     </form>
     <dialog ref={dialog} aria-labelledby="cancel-booking-title">
       <div className="p-5 sm:p-6">
