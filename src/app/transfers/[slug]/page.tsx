@@ -9,7 +9,6 @@ import {formatMoney} from '@/lib/pricing/format';
 import {contentRepository} from '@/services/content';
 import {getLandingPageContent} from '@/services/site-content';
 
-export const dynamic='force-dynamic';
 
 export async function generateMetadata({params}:{params:Promise<{slug:string}>}):Promise<Metadata>{const{slug}=await params,item=await contentRepository.getTransfer(slug);return item?createLocalizedMetadata({...item.seo,image:item.image},`/transfers/${slug}`):{title:'Transfer route not found'}}
 

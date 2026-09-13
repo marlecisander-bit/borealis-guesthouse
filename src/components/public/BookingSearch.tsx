@@ -2,7 +2,8 @@
 import Form from 'next/form';
 import { useCallback, useState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { DateRangeCalendar } from '@/components/public/DateRangeCalendar';
+import dynamic from 'next/dynamic';
+const DateRangeCalendar = dynamic(() => import('@/components/public/DateRangeCalendar').then(module => module.DateRangeCalendar));
 import { useDateRangePicker } from '@/hooks/useDateRangePicker';
 import { formatDateOnly, type DateRangeValue } from '@/lib/date-range';
 import { validateBookingSearch } from '@/lib/booking/search-criteria';
@@ -24,7 +25,7 @@ export function BookingSearch({ hero = false, ctaLabel = 'Check availability',in
       <GuestSelector value={party} onChange={setParty} infantMaxAge={infantMaxAge} childMaxAge={childMaxAge} submitNames fieldClassName="booking-field w-full text-left"/>
       <BookingSubmit valid={Boolean(validSearch)} label={ctaLabel}/>
     </Form>
-    <DateRangeCalendar value={dates} picker={picker}/>
+    {picker.open&&<DateRangeCalendar value={dates} picker={picker}/>}
   </div>;
 }
 

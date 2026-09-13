@@ -1,5 +1,5 @@
 'use server';
-import { revalidatePath } from 'next/cache';
+import { experiencesRevalidatePath as revalidatePath } from '@/lib/revalidate-public-content';
 import { requireAdmin } from '@/lib/admin/auth';
 import { ownerSafeError } from '@/lib/admin/owner-safe-error';
 import { validateExperience } from '@/lib/admin/experience-validation';

@@ -1,5 +1,5 @@
 'use server';
-import {revalidatePath} from 'next/cache';
+import { contentRevalidatePath as revalidatePath } from '@/lib/revalidate-public-content';
 import {requireAdmin} from '@/lib/admin/auth';
 import {isLandingPageKey,landingPageFieldNames} from '@/lib/landing-page-content';
 import {adminSiteContentRepository} from '@/lib/repositories/admin/site-content';

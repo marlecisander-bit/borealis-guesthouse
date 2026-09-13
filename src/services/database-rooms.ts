@@ -1,6 +1,6 @@
 import { cache } from 'react';
-import { createClient } from '@supabase/supabase-js';
-import { fetchSupabase } from '@/lib/supabase/fetch';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createPublicCmsClient } from '@/lib/supabase/public-cms';
 import { getRoomPriceFromMap } from '@/services/pricing';
 const images={room:'/borealis-placeholder.svg'};
 import type { Room } from '@/types/public';
@@ -13,7 +13,7 @@ export const getDatabaseRooms=cache(async(includeId?:string):Promise<Room[]>=>{
   const url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if(!url||!key)return[];
   try{
-    const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false},global:{fetch:fetchSupabase}});
+    const db=includeId?await createServerSupabaseClient():createPublicCmsClient();
     const[{data:types,error},{data:imageRows},{data:links},{data:amenities},{data:seo}]=await Promise.all([
       includeId?db.from('room_types').select('id,slug,name,short_description,long_description,capacity,max_adults,max_children,max_infants,max_total_occupancy,min_adults,infants_count_toward_capacity,bed_configuration,size_sqm,view_type,is_featured').or(`and(status.eq.published,is_visible.eq.true),id.eq.${includeId}`).order('is_featured',{ascending:false}).order('sort_order'):db.from('room_types').select('id,slug,name,short_description,long_description,capacity,max_adults,max_children,max_infants,max_total_occupancy,min_adults,infants_count_toward_capacity,bed_configuration,size_sqm,view_type,is_featured').eq('status','published').eq('is_visible',true).order('is_featured',{ascending:false}).order('sort_order'),
       db.from('room_images').select('room_type_id,sort_order,is_featured,media_assets(file_path)').eq('status','published').eq('is_visible',true).order('sort_order'),

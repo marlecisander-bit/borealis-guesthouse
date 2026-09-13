@@ -9,7 +9,6 @@ import { RoomBookingBar } from '@/components/public/RoomBookingBar';
 import { BookingLink } from '@/components/public/BookingLink';
 import { RoomGallery } from '@/components/public/RoomGallery';
 import { createLocalizedMetadata } from '@/lib/seo';
-export const dynamic = 'force-dynamic';
 import { contentRepository } from '@/services/content';
 import { authorizePreview } from '@/lib/preview';
 import { PreviewBanner } from '@/components/public/PreviewBanner';

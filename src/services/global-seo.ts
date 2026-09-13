@@ -1,6 +1,6 @@
+import { fetchPublicCms } from '@/lib/supabase/public-cms';
 import { cache } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { fetchSupabase } from '@/lib/supabase/fetch';
 import type { GlobalSeoSettings } from '@/types/seo-admin';
 
 const fallback: GlobalSeoSettings = {
@@ -13,7 +13,7 @@ export const getGlobalSeo = cache(async (): Promise<GlobalSeoSettings> => {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL, key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return fallback;
   try {
-    const db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false }, global: { fetch: fetchSupabase } });
+    const db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false }, global: { fetch: fetchPublicCms } });
     const { data, error } = await db.from('site_settings').select('setting_key,value_text,value_boolean,media_asset_id')
       .in('setting_key', ['seo_default_title','seo_title_template','seo_default_description','seo_default_og','seo_site_name','seo_robots_index','seo_robots_follow'])
       .eq('status', 'published').eq('is_public', true);

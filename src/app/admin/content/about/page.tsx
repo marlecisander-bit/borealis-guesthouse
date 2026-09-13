@@ -32,7 +32,7 @@ export default async function Page() {
   const session = await requireAdmin(['owner', 'manager', 'editor']);
   const [document, assets] = await Promise.all([
     adminSiteContentRepository.document(session, 'about').catch(() => null),
-    adminMediaRepository.list(session).catch(() => []),
+    adminMediaRepository.options(session).catch(() => []),
   ]);
   if (!document) {
     return <AdminEmptyState title="CMS database update required" description="Run database/migrations/20260902_007_site_content_cms.sql in Supabase, then reload." />;

@@ -6,6 +6,7 @@ export function fetchSupabase(
   init?: RequestInit,
 ): Promise<Response> {
   return fetch(input, {
+    cache: 'no-store', // Live/authenticated callers stay fresh; only the public CMS wrapper opts in.
     ...init,
     signal: init?.signal
       ? AbortSignal.any([init.signal, AbortSignal.timeout(DEFAULT_SUPABASE_TIMEOUT_MS)])

@@ -11,7 +11,7 @@ test('property map stays contained and provides a safe interactive or branded fa
   test.skip(!targetProjects.has(testInfo.project.name), 'Covered at the requested mobile and desktop widths.');
   const response = await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 90_000 });
   expect(response?.ok()).toBeTruthy();
-  const map = page.getByTestId('property-map');
+  const map = page.getByTestId('property-map').filter({visible:true});
   await expect(map).toBeVisible();
   const bounds = await map.boundingBox();
   expect(bounds).not.toBeNull();
@@ -20,6 +20,7 @@ test('property map stays contained and provides a safe interactive or branded fa
   expect(bounds!.height).toBeGreaterThanOrEqual(400);
 
   if (await map.getAttribute('data-map-state') === 'interactive') {
+    await map.scrollIntoViewIfNeeded();
     await expect(map.locator('iframe[loading="lazy"]')).toHaveAttribute('src', /^https:\/\/www\.google\.com\/maps\?/);
     await expect(map.getByRole('link', { name: 'View on Google Maps' })).toHaveAttribute('rel', 'noopener noreferrer');
   } else {

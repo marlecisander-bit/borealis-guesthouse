@@ -58,7 +58,7 @@ export default async function ContentSectionPage({params}:{params:Promise<{secti
   const{section}=await params;
   if(!isLandingPageKey(section))notFound();
   const page=config[section];
-  const[document,assets]=await Promise.all([adminSiteContentRepository.document(session,section),adminMediaRepository.list(session).catch(()=>[])]);
+  const[document,assets]=await Promise.all([adminSiteContentRepository.document(session,section),adminMediaRepository.options(session).catch(()=>[])]);
   const media=assets.filter(asset=>asset.status!=='archived').map(asset=>({id:asset.id,label:asset.title||asset.alt_text||asset.filename||'Untitled image',imageUrl:asset.publicUrl}));
   return <div className="space-y-8">
     <AdminPageHeader title={`${page.label} content`} description={page.description} actions={<Link href={`/${section}`} target="_blank" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold">Preview Website</Link>}/>

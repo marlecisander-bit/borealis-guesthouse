@@ -4,3 +4,9 @@
 
 [build.environment]
   NODE_VERSION = "20.19.5"
+
+# Fingerprinted framework assets are safe to retain indefinitely at the CDN.
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

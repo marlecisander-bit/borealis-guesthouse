@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import Image from 'next/image';
 import { HERO_IMAGE_CONFIG, heroFocalPoint, heroResolutionWarning, type HeroAsset, type HeroAssetKind, type HeroFocalPoint } from '@/lib/hero-image-config';
 
 type Selection = { asset?: HeroAsset; assetId?: string; legacyId: string; url: string; focal: HeroFocalPoint };
@@ -76,6 +76,7 @@ function HeroImageControl({ kind, value, onChange, fallback = '' }: { kind: Hero
       if (!id) {
         setMessage('Uploading original image…');
         const started = await heroRequest({ action: 'start', kind, filename: chosen.file.name, size: chosen.file.size, mime: chosen.file.type });
+        const {createClient}=await import('@/lib/supabase/client');
         const db = createClient();
         const uploaded = await db.storage.from('public-media').uploadToSignedUrl(started.path, started.token, chosen.file, { contentType: chosen.file.type, cacheControl: '31536000' });
         if (uploaded.error) throw new Error('Upload interrupted. Check your connection and retry.');
@@ -106,9 +107,8 @@ function HeroImageControl({ kind, value, onChange, fallback = '' }: { kind: Hero
     <input type="hidden" name={`hero_${prefix}Focal`} value={JSON.stringify(value.focal)} />
     <input type="hidden" name={`hero_${prefix}Uploading`} value={busy ? 'yes' : ''} />
     <div className={`relative mt-2 overflow-hidden rounded-xl bg-slate-100 ${frame}`}>
-      {/* Native images display already-prepared variants without recompression. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      {currentUrl ? <img src={currentUrl} alt={`${label} preview`} className="absolute inset-0 h-full w-full object-cover" style={{ objectPosition: `${value.focal.x}% ${value.focal.y}%` }} /> : <p className="p-5 text-slate-500">Using the website fallback image.</p>}
+      {/* Admin thumbnails avoid downloading the full Hero source; originals stay untouched. */}
+      {currentUrl ? <Image fill sizes="(max-width:640px) 90vw, 400px" src={currentUrl} alt={`${label} preview`} className="absolute inset-0 h-full w-full object-cover" style={{ objectPosition: `${value.focal.x}% ${value.focal.y}%` }} /> : <p className="p-5 text-slate-500">Using the website fallback image.</p>}
     </div>
     <div className="mt-3 flex flex-wrap gap-2">
       <button type="button" onClick={() => { setFocal(value.focal); setMessage(''); setOpen(true); }} className="min-h-11 rounded-lg border border-slate-300 px-4 font-semibold">Replace image</button>

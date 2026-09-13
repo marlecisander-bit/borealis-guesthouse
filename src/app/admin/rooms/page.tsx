@@ -1,3 +1,4 @@
+import Form from 'next/form';
 import Image from 'next/image';
 import Link from 'next/link';
 import { archiveRoomType,duplicateRoomType,restoreRoomType } from '@/app/admin/rooms/actions';
@@ -24,10 +25,10 @@ export default async function RoomsPage({searchParams}:{searchParams:Promise<{st
 }
 
 function RoomFilters({status}:{status:string}){
-  return <form className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 min-[430px]:flex min-[430px]:flex-wrap min-[430px]:items-center">
+  return <Form action="" className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 min-[430px]:flex min-[430px]:flex-wrap min-[430px]:items-center">
     <label className="text-xs font-bold text-slate-600">Status<select name="status" defaultValue={status} className="ml-2 min-h-10 rounded-lg border border-slate-300 px-3 text-sm font-medium"><option value="active">Active</option><option value="archived">Archived</option></select></label>
     <button className="inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-100 px-4 text-sm font-bold">Filter</button>
-  </form>;
+  </Form>;
 }
 
 function RoomList({rooms}:{rooms:AdminRoomType[]}){

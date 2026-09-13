@@ -18,7 +18,7 @@ const fields=[
 
 export default async function GalleryContentPage(){
   const session=await requireAdmin(['owner','manager','editor']);
-  const[document,assets]=await Promise.all([adminSiteContentRepository.document(session,'gallery'),adminMediaRepository.list(session).catch(()=>[])]);
+  const[document,assets]=await Promise.all([adminSiteContentRepository.document(session,'gallery'),adminMediaRepository.options(session).catch(()=>[])]);
   const media=assets.filter(asset=>asset.status!=='archived').map(asset=>({id:asset.id,label:asset.title||asset.alt_text||asset.filename||'Untitled image',imageUrl:asset.publicUrl}));
   return <div className="space-y-8">
     <AdminPageHeader title="Gallery content" description="Edit the Gallery page presentation. The public gallery itself continues to use published Media Library items." actions={<div className="flex flex-wrap gap-3"><Link href="/admin/media" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold">Manage gallery images</Link><Link href="/gallery" target="_blank" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold">Preview Website</Link></div>}/>

@@ -1,0 +1,30 @@
+{
+  "count": 289,
+  "byPath": {
+    "/rest/v1/navigation_items": 18,
+    "/rest/v1/languages": 30,
+    "/rest/v1/amenities": 6,
+    "/rest/v1/properties": 27,
+    "/rest/v1/seo_metadata": 15,
+    "/rest/v1/tourism_articles": 3,
+    "/rest/v1/room_types": 6,
+    "/rest/v1/cms_documents": 39,
+    "/rest/v1/experiences": 6,
+    "/rest/v1/room_images": 6,
+    "/rest/v1/gallery_items": 3,
+    "/rest/v1/homepage_sections": 4,
+    "/rest/v1/transfer_routes": 6,
+    "/rest/v1/room_type_amenities": 6,
+    "/rest/v1/site_settings": 39,
+    "/rest/v1/experience_images": 6,
+    "/rest/v1/media_assets": 9,
+    "/rest/v1/homepage_section_links": 3,
+    "/rest/v1/reviews": 3,
+    "/rest/v1/page_seo": 27,
+    "/rest/v1/seasonal_rate_room_types": 6,
+    "/rest/v1/rates": 6,
+    "/rest/v1/homepage_hero_assets": 3,
+    "/rest/v1/pricing_rules": 6,
+    "/rest/v1/seasonal_rate_periods": 6
+  }
+}

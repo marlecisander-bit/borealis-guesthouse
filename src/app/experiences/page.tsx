@@ -9,7 +9,6 @@ import {getLandingPageContent} from '@/services/site-content';
 import {formatMoney} from '@/lib/pricing/format';
 
 export async function generateMetadata():Promise<Metadata>{return createPageMetadata('experiences')}
-export const dynamic = 'force-dynamic';
 
 export default async function ExperiencesPage() {
   const [experiences,page] = await Promise.all([contentRepository.getExperiences(),getLandingPageContent('experiences')]);

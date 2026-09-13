@@ -12,7 +12,8 @@ export function useBookingRoutePrefetch() {
   useEffect(() => {
     if (bookingRoutePrefetched) return;
     bookingRoutePrefetched = true;
-    router.prefetch('/book');
+    const timer = window.setTimeout(() => router.prefetch('/book'), 2500);
+    return () => { window.clearTimeout(timer); bookingRoutePrefetched = false; };
   }, [router]);
 }
 
@@ -31,7 +32,7 @@ export function BookingLink({
 }) {
   return <Link
     href={href}
-    prefetch
+    prefetch={false}
     onClick={onClick}
     data-booking-link
     className={`booking-link ${className}`}

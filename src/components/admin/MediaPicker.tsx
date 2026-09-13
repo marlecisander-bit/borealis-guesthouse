@@ -4,7 +4,8 @@ import Image from 'next/image';
 import { useMemo, useState } from 'react';
 import type { CmsOption } from '@/types/homepage-cms';
 import type { AdminMediaAsset } from '@/types/media';
-import { MediaUploader } from './MediaUploader';
+import dynamic from 'next/dynamic';
+const MediaUploader=dynamic(()=>import('./MediaUploader').then(module=>module.MediaUploader));
 
 interface MediaPickerProps {
   name: string;

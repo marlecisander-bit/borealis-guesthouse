@@ -1,0 +1,53 @@
+[
+  {
+    "lcp": 1804,
+    "cls": 0,
+    "interaction": 96,
+    "fcp": 1804,
+    "ttfb": 1420.699999988079,
+    "jsBytes": 159397,
+    "jsRequests": 8,
+    "hero": {
+      "loaded": true,
+      "width": 389
+    },
+    "requests": 57,
+    "transferBytes": 2504490,
+    "observedMs": 5045.553400000001,
+    "navigationMs": 764.1140000000005
+  },
+  {
+    "lcp": 792,
+    "cls": 0,
+    "interaction": 32,
+    "fcp": 792,
+    "ttfb": 578.5,
+    "jsBytes": 159397,
+    "jsRequests": 8,
+    "hero": {
+      "loaded": true,
+      "width": 389
+    },
+    "requests": 57,
+    "transferBytes": 2510448,
+    "observedMs": 3974.0864999999994,
+    "navigationMs": 845.1992000000009
+  },
+  {
+    "lcp": 752,
+    "cls": 0,
+    "interaction": 32,
+    "fcp": 752,
+    "ttfb": 563.1999999880791,
+    "jsBytes": 159397,
+    "jsRequests": 8,
+    "hero": {
+      "loaded": true,
+      "width": 389
+    },
+    "requests": 57,
+    "transferBytes": 2505568,
+    "observedMs": 4030.5570000000007,
+    "navigationMs": 714.8983000000007
+  }
+]

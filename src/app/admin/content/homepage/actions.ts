@@ -2,7 +2,7 @@
 
 import { heroFocalPoint } from '@/lib/hero-image-config';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { revalidatePath } from 'next/cache';
+import { homepageRevalidatePath as revalidatePath } from '@/lib/revalidate-public-content';
 import { requireAdmin } from '@/lib/admin/auth';
 import { adminHomepageRepository, clearHomepageDraft, saveHomepageDraft } from '@/lib/repositories/admin/homepage';
 import { homepageKeys, type HomepageCmsState, type HomepageHighlight, type HomepageReview, type HomepageSection } from '@/types/homepage-cms';

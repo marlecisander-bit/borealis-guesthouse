@@ -1,5 +1,5 @@
 'use server';
-import { revalidatePath } from 'next/cache';
+import { homepageRevalidatePath as revalidatePath } from '@/lib/revalidate-public-content';
 import { requireAdmin } from '@/lib/admin/auth';
 import { validateCmsPage } from '@/lib/admin/validation';
 import { cmsPageRepository } from '@/lib/repositories/admin/cms-pages';

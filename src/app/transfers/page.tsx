@@ -11,7 +11,6 @@ import type {TransferRoute} from '@/types/public';
 
 const images={boat:'/borealis-placeholder.svg'};
 export async function generateMetadata():Promise<Metadata>{return createPageMetadata('transfers')}
-export const dynamic='force-dynamic';
 
 export default async function TransfersPage({searchParams}:{searchParams:Promise<{preview?:string}>}){
   const{preview}=await searchParams;

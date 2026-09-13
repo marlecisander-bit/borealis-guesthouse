@@ -8,7 +8,6 @@ import { BreadcrumbJsonLd, JsonLd } from '@/components/public/JsonLd';
 import { Breadcrumbs, PublicShell } from '@/components/public/PageShell';
 import { RoomCard } from '@/components/public/Cards';
 import { createLocalizedMetadata } from '@/lib/seo';
-export const dynamic = 'force-dynamic';
 import { contentRepository } from '@/services/content';
 import { authorizePreview } from '@/lib/preview';
 import { PreviewBanner } from '@/components/public/PreviewBanner';

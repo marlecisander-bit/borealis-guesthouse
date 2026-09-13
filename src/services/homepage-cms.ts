@@ -1,14 +1,15 @@
+import {cache} from 'react';
+import { fetchPublicCms } from '@/lib/supabase/public-cms';
 import 'server-only';
 import { readHeroAssets } from '@/lib/hero-assets';
 import type { HeroAsset } from '@/lib/hero-image-config';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { getAdminSession } from '@/lib/admin/auth';
-import { fetchSupabase } from '@/lib/supabase/fetch';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { homepageKeys, type HomepageReview, type HomepageSection } from '@/types/homepage-cms';
 
 const createClient = (url: string, key: string, options: Parameters<typeof createSupabaseClient>[2]) =>
-  createSupabaseClient(url, key, { ...options, global: { ...options?.global, fetch: fetchSupabase } });
+  createSupabaseClient(url, key, { ...options, global: { ...options?.global, fetch: fetchPublicCms } });
 
 const publicHomepageKeys = homepageKeys.filter(key => key !== 'property_highlights');
 
@@ -19,7 +20,7 @@ export interface PublicHomepageCms {
   heroAssets: Record<string, HeroAsset>;
 }
 
-export async function getHomepageCms(preview = false): Promise<PublicHomepageCms | null> {
+export const getHomepageCms = cache(async function getHomepageCms(preview = false): Promise<PublicHomepageCms | null> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return null;
@@ -99,4 +100,4 @@ export async function getHomepageCms(preview = false): Promise<PublicHomepageCms
     })),
     mediaUrls: Object.fromEntries((media.data || []).map(row => [row.id, `${url}/storage/v1/object/public/public-media/${row.file_path}`])),
   };
-}
+});

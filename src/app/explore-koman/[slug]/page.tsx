@@ -9,7 +9,6 @@ import{contentRepository}from'@/services/content';
 import{createLocalizedMetadata}from'@/lib/seo';
 import{getAdminSession}from'@/lib/admin/auth';
 
-export const dynamic='force-dynamic';
 export async function generateMetadata({params}:{params:Promise<{slug:string}>}):Promise<Metadata>{const{slug}=await params,item=await contentRepository.getArticle(slug);if(!item)return{title:'Article not found'};const metadata=await createLocalizedMetadata({title:item.seo.title,description:item.seo.description,image:item.seo.ogImage||item.image,canonical:item.seo.canonical,noindex:item.seo.noindex},`/explore-koman/${slug}`);return metadata}
 
 export default async function Page({params,searchParams}:{params:Promise<{slug:string}>;searchParams:Promise<{preview?:string}>}){

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import {DeferredMedia} from './DeferredMedia';
 import { BorealisLogo } from '@/components/brand/BorealisLogo';
 import { HomeLink } from './HomeLink';
 import { isHomeNavigationItem } from '@/lib/navigation/home';
@@ -136,7 +137,7 @@ export async function HomepageFooter({
 
 function ImageBackground({ src, alt }: { src: string; alt: string }) {
   return <>
-    <Image src={src} alt={alt} fill sizes="100vw" className="object-cover object-center" />
+    <DeferredMedia><Image src={src} alt={alt} fill sizes="100vw" className="object-cover object-center"/></DeferredMedia>
     <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(11,70,52,.78),rgba(11,70,52,.88))]" />
   </>;
 }

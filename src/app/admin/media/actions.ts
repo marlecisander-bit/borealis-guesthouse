@@ -1,5 +1,5 @@
 'use server';
-import { revalidatePath } from 'next/cache';
+import { mediaRevalidatePath as revalidatePath } from '@/lib/revalidate-public-content';
 import { requireAdmin } from '@/lib/admin/auth';
 import { adminMediaRepository } from '@/lib/repositories/admin/media';
 

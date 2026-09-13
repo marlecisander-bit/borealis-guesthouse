@@ -78,7 +78,7 @@ test('mobile guest selector keeps categories clear and blocks a no-adult party',
   await page.getByRole('button',{name:'Remove adults'}).click();
   await page.getByRole('button',{name:'Remove adults'}).click();
   await page.getByRole('button',{name:'Add children'}).click();
-  await expect(page.getByRole('alert')).toHaveText('At least one adult is required for bookings with children or infants.');
+  await expect(search.getByRole('alert')).toHaveText('At least one adult is required for bookings with children or infants.');
   await expect(search.getByRole('button',{name:/Check availability/i})).toBeDisabled();
   await expectNoHorizontalOverflow(page);
 });

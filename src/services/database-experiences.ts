@@ -1,16 +1,20 @@
+import {cache} from 'react';
+import {createPublicCmsClient} from '@/lib/supabase/public-cms';
 import {createServerSupabaseClient} from '@/lib/supabase/server';
 import type {Experience} from '@/types/public';
 type Row={id:string;slug:string;name:string;short_description:string|null;full_description:string|null;duration_label:string|null;max_capacity:number|null;minimum_quantity:number|null;maximum_quantity:number|null;price:number|string|null;currency:string|null;pricing_type:string;meeting_point:string|null;included_items:string[]|null;important_notes:string[]|null;booking_notice:string|null;availability_mode:string;is_featured:boolean;bookable:boolean;book_independently:boolean};
-export async function getDatabaseExperiences(includeId?:string):Promise<Experience[]>{
+export const getDatabaseExperiences = cache(async function getDatabaseExperiences(includeId?:string,limit?:number,selectedIds?:string[]):Promise<Experience[]>{
  try{
-  const db=await createServerSupabaseClient(),base=process.env.NEXT_PUBLIC_SUPABASE_URL||'';
+  const db=includeId?await createServerSupabaseClient():createPublicCmsClient(),base=process.env.NEXT_PUBLIC_SUPABASE_URL||'';
   let query=db.from('experiences').select('id,slug,name,short_description,full_description,duration_label,max_capacity,minimum_quantity,maximum_quantity,price,currency,pricing_type,meeting_point,included_items,important_notes,booking_notice,availability_mode,is_featured,bookable,book_independently').order('is_featured',{ascending:false}).order('sort_order');
   query=includeId?query.or(`and(status.eq.published,is_visible.eq.true,active.eq.true),id.eq.${includeId}`):query.eq('status','published').eq('is_visible',true).eq('active',true);
-  const{data,error}=await query;if(error||!data?.length)return[];const rows=data as Row[],ids=rows.map(row=>row.id);
+  if(limit)query=query.limit(limit);
+  let{data,error}=await query;
+  if(limit&&selectedIds?.length&&!data?.some(item=>item.is_featured)){const selected=await query.in('id',selectedIds).limit(selectedIds.length);data=selectedIds.flatMap(id=>{const row=selected.data?.find(item=>item.id===id);return row?[row]:[];}).slice(0,limit);error=selected.error;}if(error||!data?.length)return[];const rows=data as Row[],ids=rows.map(row=>row.id);
   const[imageResult,seoResult]=await Promise.all([db.from('experience_images').select('experience_id,media_asset_id,sort_order,is_cover,media_assets!inner(file_path,status,is_visible)').in('experience_id',ids).eq('status','published').eq('media_assets.status','published').eq('media_assets.is_visible',true).order('is_cover',{ascending:false}).order('sort_order'),db.from('seo_metadata').select('entity_id,title,meta_description').eq('entity_type','experience').eq('status','published').in('entity_id',ids)]);
   return rows.map(row=>{
    const imageRows=(imageResult.data||[]).filter(image=>image.experience_id===row.id),urls=imageRows.flatMap(image=>{const asset=Array.isArray(image.media_assets)?image.media_assets[0]:image.media_assets;return asset?[`${base}/storage/v1/object/public/public-media/${asset.file_path}`]:[]}),seo=(seoResult.data||[]).find(item=>item.entity_id===row.id),image=urls[0]||'/borealis-placeholder.svg';
    return{id:row.id,slug:row.slug,title:row.name,description:row.short_description||'',longDescription:row.full_description||row.short_description||'',image,gallery:urls.length?urls:[image],duration:row.duration_label||'On request',capacity:row.max_capacity?`Up to ${row.max_capacity}`:'On request',maxCapacity:row.max_capacity,minimumQuantity:row.minimum_quantity||1,maximumQuantity:row.maximum_quantity,priceFrom:row.price===null?null:Number(row.price),currency:row.currency||'EUR',priceType:row.pricing_type.replaceAll('_',' '),availability:row.availability_mode.replaceAll('_',' '),meetingPoint:row.meeting_point||'Borealis Guest House',included:row.included_items||[],notes:row.important_notes||[],bookingRequirements:row.booking_notice?[row.booking_notice]:[],category:'Borealis experience',featured:row.is_featured,bookable:row.bookable,bookIndependently:row.book_independently,seo:{title:seo?.title||row.name,description:seo?.meta_description||row.short_description||row.name}};
   });
  }catch{return[]}
-}
+});
