@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import {useEffect,useRef,useState,useSyncExternalStore} from 'react';
 import {createPortal} from 'react-dom';
 import {whatsAppHref} from '@/lib/whatsapp';
@@ -7,47 +8,51 @@ import {whatsAppHref} from '@/lib/whatsapp';
 const subscribeToClient=()=>()=>{};
 const clientReady=()=>true;
 const serverReady=()=>false;
+const obstacles='a,button,input,select,textarea,label,h1,h2,h3,p,nav,[role="button"],[role="alert"],[role="status"],.safe-bottom-bar,.safe-bottom-offset,[data-floating-contact-obstacle],[data-cookie-notice]';
+const regions='.safe-bottom-bar,.safe-bottom-offset,[data-floating-contact-obstacle],[data-cookie-notice]';
 
-function WhatsAppIcon() {
-  return <svg viewBox="0 0 32 32" width="26" height="26" fill="none" aria-hidden="true"><path d="M26.7 15.4a10.7 10.7 0 0 1-16 9.3l-6.4 1.7 1.7-6.2a10.7 10.7 0 1 1 20.7-4.8Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/><path d="M11.3 9.6c-.4-.1-1.1 0-1.5.6-.5.6-.9 1.5-.5 2.8 1 3.7 4.4 6.7 8 7.7 1.2.4 2.2.2 2.9-.4.7-.6.9-1.7.5-2l-2.7-1.4c-.3-.2-.6-.1-.8.2l-.8 1c-2.1-.7-3.6-2.1-4.5-4l.8-1c.2-.3.3-.5.1-.9l-1.5-2.6Z" fill="currentColor"/></svg>;
-}
-
-/** One validated destination, presented as a desktop icon or a mobile sticker, both fixed to the viewport. */
-export function WhatsAppContact({value,menuOpen=false}:{value?:string;menuOpen?:boolean}) {
-  const href=whatsAppHref(value),mobile=useRef<HTMLAnchorElement>(null),desktop=useRef<HTMLAnchorElement>(null),mounted=useSyncExternalStore(subscribeToClient,clientReady,serverReady),[obstructed,setObstructed]=useState(false);
+/** One destination and one focus target; CSS switches circle/pill at 768px. */
+export function WhatsAppContact({value,menuOpen=false,label='Chat with us',accessibleLabel='Chat with Borealis on WhatsApp (opens in a new tab)'}:{value?:string;menuOpen?:boolean;label?:string;accessibleLabel?:string}) {
+  const href=whatsAppHref(value),button=useRef<HTMLAnchorElement>(null),mounted=useSyncExternalStore(subscribeToClient,clientReady,serverReady),[obstructed,setObstructed]=useState(false);
   useEffect(()=>{
     if(!href||!mounted)return;
     let frame=0;
     const update=()=>{
       frame=0;
-      const element=window.innerWidth<768?mobile.current:desktop.current;
+      const element=button.current;
       if(!element)return;
       const modal=[...document.querySelectorAll('[role="dialog"][aria-modal="true"],dialog[open]')].some(el=>!el.closest('[aria-hidden="true"],[inert]')&&el.getClientRects().length&&getComputedStyle(el).visibility!=='hidden');
-      const editing=window.innerWidth<768&&document.activeElement?.matches('input,textarea,select,[contenteditable="true"]');
-      const keyboard=window.innerWidth<768&&window.visualViewport&&window.visualViewport.height<window.innerHeight*.8;
-      // Text and images must not make the sticker disappear during ordinary scrolling.
-      // If a control occupies this corner, move up the right edge rather than covering it.
-      const base=window.innerWidth<768?100:24, gap=12;
-      let offset=base;
+      const mobile=window.innerWidth<768;
+      const editing=mobile&&document.activeElement?.matches('input,textarea,select,[contenteditable="true"]');
+      const keyboard=mobile&&window.visualViewport&&window.visualViewport.height<window.innerHeight*.8;
+      const base=mobile?16:24, gap=12;
+      let offset=base, unavailable=false;
       element.style.setProperty('--whatsapp-bottom',`${offset}px`);
-      for(let attempt=0;attempt<4;attempt++){
+      // Measure whole controls/notice regions rather than sampling a few points in a wide pill.
+      const candidates=[...new Set([...document.querySelectorAll(obstacles)].map(el=>el.closest(regions)||el))].filter(el=>el!==element&&!element.contains(el)&&!el.closest('[aria-hidden="true"],[inert]'));
+      for(let attempt=0;attempt<=candidates.length;attempt++){
         const r=element.getBoundingClientRect();
-        if(!r.width)break;
-        const collision=[[r.left+4,r.top+4],[r.right-4,r.top+4],[r.left+4,r.bottom-4],[r.right-4,r.bottom-4],[r.left+r.width/2,r.top+r.height/2]].flatMap(([x,y])=>document.elementsFromPoint(x,y)).find(el=>!element.contains(el)&&el!==element&&Boolean(el.closest('a,button,input,select,textarea,nav,[role="button"],.safe-bottom-bar,.safe-bottom-offset')));
-        if(!collision)break;
-        const control=collision.closest('.safe-bottom-bar,.safe-bottom-offset')||collision.closest('a,button,input,select,textarea,nav,[role="button"],.safe-bottom-bar,.safe-bottom-offset')!;
-        offset=Math.min(window.innerHeight-140,Math.max(offset+gap,window.innerHeight-control.getBoundingClientRect().top+gap));
+        const collisions=candidates.map(el=>({el,rect:el.getBoundingClientRect()})).filter(({el,rect})=>{
+          if(!rect.width||!rect.height||rect.right<=r.left-gap||rect.left>=r.right+gap||rect.bottom<=r.top-gap||rect.top>=r.bottom+gap)return false;
+          const style=getComputedStyle(el);
+          return style.visibility!=='hidden'&&style.display!=='none'&&Number(style.opacity)>0;
+        });
+        if(!collisions.length)break;
+        const top=Math.min(...collisions.map(x=>x.rect.top));
+        offset+=r.bottom-top+gap;
         element.style.setProperty('--whatsapp-bottom',`${offset}px`);
+        if(element.getBoundingClientRect().top<(window.visualViewport?.offsetTop||0)+8){unavailable=true;break;}
       }
-      setObstructed(Boolean(modal||editing||keyboard));
+      setObstructed(Boolean(modal||editing||keyboard||unavailable));
     };
     const schedule=()=>{if(!frame)frame=requestAnimationFrame(update)};
-    const observer=new MutationObserver(records=>{if(records.some(record=>record.target!==mobile.current&&record.target!==desktop.current))schedule()});observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['open','aria-modal','aria-hidden','inert','class','style']});
-    schedule();window.addEventListener('scroll',schedule,{passive:true});window.addEventListener('resize',schedule);document.addEventListener('focusin',schedule);document.addEventListener('focusout',schedule);document.addEventListener('transitionend',schedule);window.visualViewport?.addEventListener('resize',schedule);
-    return()=>{cancelAnimationFrame(frame);observer.disconnect();window.removeEventListener('scroll',schedule);window.removeEventListener('resize',schedule);document.removeEventListener('focusin',schedule);document.removeEventListener('focusout',schedule);document.removeEventListener('transitionend',schedule);window.visualViewport?.removeEventListener('resize',schedule)};
+    const observer=new MutationObserver(records=>{if(records.some(record=>record.target!==button.current))schedule()});
+    observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['open','aria-modal','aria-hidden','inert','class','style','data-floating-contact-obstacle','data-cookie-notice']});
+    schedule();window.addEventListener('scroll',schedule,{passive:true,capture:true});window.addEventListener('resize',schedule);document.addEventListener('focusin',schedule);document.addEventListener('focusout',schedule);document.addEventListener('transitionend',schedule);window.visualViewport?.addEventListener('resize',schedule);
+    return()=>{cancelAnimationFrame(frame);observer.disconnect();window.removeEventListener('scroll',schedule,true);window.removeEventListener('resize',schedule);document.removeEventListener('focusin',schedule);document.removeEventListener('focusout',schedule);document.removeEventListener('transitionend',schedule);window.visualViewport?.removeEventListener('resize',schedule)};
   },[href,mounted]);
   if(!href)return null;
   const hidden=menuOpen||obstructed;
-  const content=<><a ref={desktop} href={href} target="_blank" rel="noopener noreferrer" aria-label="Chat with Borealis on WhatsApp (opens in a new tab)" className={`whatsapp-desktop ${hidden?'is-obstructed':''}`} data-ready={mounted} tabIndex={hidden?-1:undefined} aria-hidden={hidden?true:undefined}><WhatsAppIcon/></a><a ref={mobile} href={href} target="_blank" rel="noopener noreferrer" aria-label="Chat with Borealis on WhatsApp (opens in a new tab)" className={`whatsapp-sticker ${hidden?'is-obstructed':''}`} data-ready={mounted} tabIndex={hidden?-1:undefined} aria-hidden={hidden?true:undefined}><WhatsAppIcon/></a></>;
+  const content=<a ref={button} href={href} target="_blank" rel="noopener noreferrer" aria-label={accessibleLabel} className={`whatsapp-contact ${hidden?'is-obstructed':''}`} data-ready={mounted} tabIndex={hidden?-1:undefined} aria-hidden={hidden?true:undefined}><Image src="/brand/whatsapp-glyph-white.svg" width={28} height={28} alt="" aria-hidden="true" loading="eager" className="whatsapp-contact__logo"/><span className="whatsapp-contact__label">{label}</span></a>;
   return mounted?createPortal(content,document.body):content;
 }
