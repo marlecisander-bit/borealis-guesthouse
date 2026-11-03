@@ -12,7 +12,7 @@ import { contentRepository } from '@/services/content';
 import { getHomepageCms } from '@/services/homepage-cms';
 import{localizeHomepageCms}from'@/services/homepage-translations';
 import{getLanguageContext}from'@/services/translations';
-import { getNavigation, getOccupancyAgePolicy, getSiteDocument } from '@/services/site-content';
+import { getNavigation, getContactInfo, getOccupancyAgePolicy, getSiteDocument } from '@/services/site-content';
 import type { HomepageKey } from '@/types/homepage-cms';
 import {authorizePreview} from '@/lib/preview';
 import {PreviewBanner} from '@/components/public/PreviewBanner';
@@ -24,11 +24,11 @@ export async function generateMetadata():Promise<Metadata>{return createPageMeta
 
 export default async function Home({searchParams}:{searchParams:Promise<{preview?:string}>}) {
   const preview=Boolean(await authorizePreview('homepage',(await searchParams).preview));
-  const [liveProperty, homepageCmsRaw, publishedHero, navigation,language,globalContent,agePolicy] = await Promise.all([
+  const [liveProperty, homepageCmsRaw, publishedHero, navigation,language,globalContent,agePolicy,contact] = await Promise.all([
     contentRepository.getProperty(),
     getHomepageCms(preview),
     preview?Promise.resolve(null):getPublishedHomepageHero(),
-    getNavigation('header'),getLanguageContext(),getSiteDocument('global'),getOccupancyAgePolicy(),
+    getNavigation('header'),getLanguageContext(),getSiteDocument('global'),getOccupancyAgePolicy(),getContactInfo(),
   ]);
   const homepageCms=await localizeHomepageCms(homepageCmsRaw);
   const section=(key:HomepageKey)=>homepageCms?.sections.find(item=>item.key===key);
@@ -39,7 +39,7 @@ export default async function Home({searchParams}:{searchParams:Promise<{preview
   const bookingCtaLabel=(hero?.settings as Record<string,unknown>|undefined)?.bookingCtaLabel;
   return (
     <>
-      <Header overlay navigation={navigation} languages={language.enabled} selectedLanguage={language.selected?.code||''} bookingCtaLabel={globalContent.headerCtaLabel||'Book now'} mobileBookingCtaLabel={globalContent.mobileMenuCtaLabel||'Check availability'}/>
+      <Header overlay whatsappHref={contact.whatsapp} navigation={navigation} languages={language.enabled} selectedLanguage={language.selected?.code||''} bookingCtaLabel={globalContent.headerCtaLabel||'Book now'} mobileBookingCtaLabel={globalContent.mobileMenuCtaLabel||'Check availability'}/>
       <main className="flex flex-col">{preview&&<PreviewBanner label="Homepage draft preview"/>}
         {visible('hero')&&<section data-homepage-section="hero" style={{order:order('hero',0)}} className="hero-section relative z-30 min-h-[88svh] bg-lake text-white lg:min-h-[94svh]">
           <HeroImage desktopAsset={homepageCms?.heroAssets[String(heroSettings?.desktopHeroAssetId || '')]} mobileAsset={homepageCms?.heroAssets[String(heroSettings?.mobileHeroAssetId || '')]} desktopFocal={heroSettings?.desktopFocal} mobileFocal={heroSettings?.mobileFocal} desktopImage={!preview&&publishedHero?.imageUrl?publishedHero.imageUrl:hero?.backgroundMediaId?homepageCms?.mediaUrls[hero.backgroundMediaId]||liveProperty.heroImage:liveProperty.heroImage} mobileImage={homepageCms?.mediaUrls[String(heroSettings?.mobileMediaId || '')]} alt={String(heroSettings?.imageAlt || hero?.title || 'Koman Lake surrounded by mountain slopes')} overlayIntensity={heroSettings?.overlayIntensity} />

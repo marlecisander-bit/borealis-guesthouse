@@ -1,3 +1,4 @@
+import {whatsAppHref} from '@/lib/whatsapp';
 import {cache} from 'react';
 import {createPublicCmsClient} from '@/lib/supabase/public-cms';
 import'server-only';
@@ -22,7 +23,7 @@ export const getContactInfo = cache(async function getContactInfo(preview=false)
     const db=createPublicCmsClient();
     const{data:property}=await db.from('properties').select('address_line,location,google_maps_url,phone,whatsapp,email,instagram_url,facebook_url').eq('status','published').order('created_at').limit(1).maybeSingle();
     const hasContent=Object.keys(d).length>0||Boolean(property);
-    const phone=property?.phone||d.phone||'',whatsapp=property?.whatsapp||d.whatsapp||'',instagram=property?.instagram_url||d.instagram||'',facebook=property?.facebook_url||'';
+    const phone=property?.phone||d.phone||'',whatsapp=whatsAppHref(property?.whatsapp),instagram=property?.instagram_url||d.instagram||'',facebook=property?.facebook_url||'';
     return hasContent?{
       email:property?.email||d.email||fallback.email,
       phone,phoneLabel:phone||'Phone number to be confirmed',
@@ -33,7 +34,7 @@ export const getContactInfo = cache(async function getContactInfo(preview=false)
       mapsUrl:property?.google_maps_url||'',placeholder:false,
     }:fallback;
   }catch{
-    return Object.keys(d).length?{email:d.email||fallback.email,phone:d.phone||'',phoneLabel:d.phone||'Phone number to be confirmed',whatsapp:d.whatsapp||'',whatsappLabel:d.whatsapp?'Message us on WhatsApp':'WhatsApp number to be confirmed',instagram:d.instagram||'',instagramLabel:d.instagram?'Borealis on Instagram':'Instagram profile to be confirmed',facebook:'',facebookLabel:'',address:d.address||fallback.address,mapsUrl:'',placeholder:false}:fallback;
+    return Object.keys(d).length?{email:d.email||fallback.email,phone:d.phone||'',phoneLabel:d.phone||'Phone number to be confirmed',whatsapp:'',whatsappLabel:'',instagram:d.instagram||'',instagramLabel:d.instagram?'Borealis on Instagram':'Instagram profile to be confirmed',facebook:'',facebookLabel:'',address:d.address||fallback.address,mapsUrl:'',placeholder:false}:fallback;
   }
 });
 export const getNavigation = cache(async function getNavigation(location:'header'|'footer'){try{const db=createPublicCmsClient(),{data}=await db.from('navigation_items').select('id,label,href').eq('location',location).eq('status','published').eq('is_visible',true).order('sort_order'),rows=data||[],translated=await getEntityTranslationMap('navigation_item',rows.map(x=>x.id));return rows.filter(x=>!/^\/about(?:[/?#]|$)/.test(x.href)).filter(x=>(x.href!=='/transfers'||!rows.some(item=>item.href==='/experiences'))&&(x.href!=='/contact'||!rows.some(item=>item.href==='/gallery'))).map(x=>({label:x.href==='/experiences'||x.href==='/transfers'?'Journey':x.href==='/gallery'||x.href==='/contact'?'Discover':translated.get(x.id)?.label||x.label,href:x.href==='/transfers'?'/experiences':x.href==='/contact'?'/gallery':x.href})).sort((a,b)=>['/','/rooms','/experiences','/explore-koman','/gallery'].indexOf(a.href)-['/','/rooms','/experiences','/explore-koman','/gallery'].indexOf(b.href))}catch{return[]}});

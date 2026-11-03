@@ -16,6 +16,7 @@ export function SettingsForm({ data }: { data: SettingsDashboard }) {
   const editor=useEditorForm(state);
  const formRef=useRef<HTMLFormElement>(null);
   const s = data.settings;
+  const [whatsapp,setWhatsApp] = useState(s.whatsapp);
   const [mapsUrl, setMapsUrl] = useState(s.mapsUrl);
   const error = (key: string) => state.errors?.[key];
   return <form ref={formRef} action={action} onChange={editor.onChange} onSubmit={editor.submit} className="space-y-5"><EditorWorkspace tabs={['Property details','Booking policies','Payments & fees','Notifications']} hashTabs={settingsHashes} trailing={<Link href="/admin/channels" className="inline-flex min-h-11 items-center rounded-lg px-4 text-sm font-semibold text-[#45656a]">Integrations</Link>}><EditorPanel name="Property details">
@@ -24,7 +25,7 @@ export function SettingsForm({ data }: { data: SettingsDashboard }) {
         <Field label="Property name" error={error('name')}><input name="name" defaultValue={s.name} className={input}/></Field>
         <Field label="Legal / business name (optional)"><input name="legalName" defaultValue={s.legalName} className={input}/></Field>
         <Field label="Phone"><input name="phone" type="tel" defaultValue={s.phone} className={input}/></Field>
-        <Field label="WhatsApp"><input name="whatsapp" defaultValue={s.whatsapp} className={input}/></Field>
+        <Field label="WhatsApp number" helpId="whatsapp-number-help" error={error('whatsapp')} help="Include the country code. +, spaces, parentheses and dashes are removed when saved. Leave blank to hide WhatsApp."><input name="whatsapp" aria-label="WhatsApp number" aria-describedby="whatsapp-number-help" aria-invalid={Boolean(error('whatsapp'))} type="tel" inputMode="tel" autoComplete="tel" value={whatsapp} onChange={event=>setWhatsApp(event.target.value)} className={input}/></Field>
         <Field label="Email" error={error('email')}><input name="email" type="email" defaultValue={s.email} className={input}/></Field>
         <Field label="Instagram"><input name="instagram" type="url" defaultValue={s.instagram} className={input}/></Field>
         <Field label="Facebook (optional)"><input name="facebook" type="url" defaultValue={s.facebook} className={input}/></Field>
@@ -63,5 +64,5 @@ export function SettingsForm({ data }: { data: SettingsDashboard }) {
 }
 
 function Section({ id, title, description, children }: { id?:string; title:string; description?:string; children:React.ReactNode }) { return <section id={id} className="scroll-mt-24 space-y-5 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"><header><h2 className="text-xl font-bold">{title}</h2>{description&&<p className="mt-1 text-sm leading-6 text-slate-500">{description}</p>}</header>{children}</section>; }
-function Field({ label, error, help, children }: { label: string; error?: string; help?: string; children: React.ReactNode }) { return <label className="block text-sm font-semibold">{label}{children}{help&&<span className="mt-2 block text-xs font-normal leading-5 text-slate-500">{help}</span>}{error && <span className="mt-1 block text-xs text-red-700">{error}</span>}</label>; }
+function Field({ label, error, help, helpId, children }: { label: string; error?: string; help?: string; helpId?:string; children: React.ReactNode }) { return <label className="block text-sm font-semibold">{label}{children}{help&&<span id={helpId} className="mt-2 block text-xs font-normal leading-5 text-slate-500">{help}</span>}{error && <span className="mt-1 block text-xs text-red-700">{error}</span>}</label>; }
 function Check({ name, label, checked, disabled = false }: { name: string; label: string; checked: boolean; disabled?: boolean }) { return <label className={`flex min-h-12 items-center gap-3 rounded-lg border border-slate-200 px-4 font-semibold ${disabled ? 'bg-slate-50 text-slate-400' : ''}`}>{disabled && checked && <input type="hidden" name={name} value="on"/>}<input name={name} type="checkbox" defaultChecked={checked} disabled={disabled}/>{label}</label>; }
