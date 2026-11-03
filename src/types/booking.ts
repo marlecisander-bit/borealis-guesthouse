@@ -7,8 +7,9 @@ export interface AvailableRoom { room: Room; nightlyRate: number; nightlyRates:{
 export interface AccommodationRoom { room:Room; quantity:number; occupancies:OccupancyCounts[]; guestCounts:number[]; subtotal:number; currency:string }
 export interface AccommodationOption { id:string; rooms:AccommodationRoom[]; requestedGuests:number; requestedOccupancy:OccupancyCounts; totalRooms:number; totalCapacity:number; unusedCapacity:number; subtotal:number; currency:string; nights:number; minimumStay:number|null }
 export interface BookingAddon {
+  rentalConfig?:import('../lib/rentals/model').PublicRentalConfig; rentalSelection?:import('../lib/rentals/model').RentalSelection; rentalQuote?:import('../lib/rentals/model').RentalQuote;
   id:string; bookingKey?:string; type:'experience'|'transfer'; name:string; description:string;
-  image:string; duration:string; price:number; priceLabel?:string; perGuest?:boolean;
+  image:string; duration:string; currency?:string; price:number; priceLabel?:string; perGuest?:boolean;
   capacity:number|null; availabilityMode:string; availableDays?:number[];
   windowStart?:string; windowEnd?:string; direction?:'arrival'|'departure'|'other';
   date:string; time:string; quantity:number;

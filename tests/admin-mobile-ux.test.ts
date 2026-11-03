@@ -62,5 +62,5 @@ test('mobile room, editor and media actions remain comfortably tappable', () => 
 test('mobile booking detail prioritizes the common lifecycle action', () => {
   const detail = source('src/app/admin/bookings/[id]/page.tsx');
   assert.match(detail, /order-1 space-y-6 lg:order-2/);
-  assert.ok(detail.indexOf('Change status') < detail.indexOf('Payment'));
+  assert.ok(detail.indexOf('>Change status</h2>') < detail.indexOf('>Payment</h2>'));
 });

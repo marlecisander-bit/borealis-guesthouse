@@ -1,3 +1,5 @@
+import {RentalBookingFlow} from '@/components/booking/RentalBookingFlow';
+import {tiranaToday} from '@/lib/rentals/model';
 import { notFound } from 'next/navigation';
 import { ExperienceBookingFlow } from '@/components/booking/ExperienceBookingFlow';
 import { PublicShell } from '@/components/public/PageShell';
@@ -10,7 +12,8 @@ type SlotRow={slot_id:string|null;service_date:string;start_time:string|null;end
 export default async function Page({params,searchParams}:{params:Promise<{slug:string}>;searchParams:Promise<{date?:string;time?:string;quantity?:string}>}){
   const{slug}=await params,requested=await searchParams,item=await contentRepository.getExperience(slug);
   if(!item||!item.bookable||!item.bookIndependently)notFound();
-  const db=await createServerSupabaseClient(),fromDate=/^\d{4}-\d{2}-\d{2}$/.test(requested.date||'')?requested.date!:new Date().toISOString().slice(0,10);
+  if(item.rental){if(!item.rental.standalone)notFound();return <PublicShell mobileBooking={false}><main className="bg-ivory py-12 md:py-20"><div className="shell"><RentalBookingFlow experience={{id:item.id,title:item.title,currency:item.currency,rental:item.rental}} initialDate={requested.date}/></div></main></PublicShell>}
+  const db=await createServerSupabaseClient(),fromDate=/^\d{4}-\d{2}-\d{2}$/.test(requested.date||'')?requested.date!:tiranaToday();
   const{data,error}=await db.rpc('get_public_experience_slots',{target_experience:item.id,from_date:fromDate});
   if(error)throw error;
   const slots=((data||[])as SlotRow[]).map(row=>({slotId:row.slot_id,date:row.service_date,startTime:row.start_time||'',endTime:row.end_time||'',remaining:Number(row.remaining)}));

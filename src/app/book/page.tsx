@@ -36,8 +36,8 @@ export default async function BookPage({ searchParams }: { searchParams: Promise
 async function BookingConfigurator({initialRoom,initialTransfer,initialExperience,bookingMode,search,infantMaxAge,childMaxAge}:{initialRoom?:string;initialTransfer?:string;initialExperience?:string;bookingMode?:string;search:ReturnType<typeof validateBookingSearch>;infantMaxAge:number;childMaxAge:number}) {
   const guests = search?.guests || 2;
   const [experiences, transfers] = await Promise.all([contentRepository.getExperiences(), contentRepository.getTransfers()]);
-  const experienceAddons = experiences.filter(item=>item.bookable).map(item=>({
-    id:item.id, bookingKey:item.slug, type:'experience' as const, name:item.title, description:item.description, image:item.image,
+  const experienceAddons = experiences.filter(item=>item.bookable&&(!item.rental||item.rental.roomAddon)).map(item=>({
+    currency:item.currency,rentalConfig:item.rental||undefined,id:item.id, bookingKey:item.slug, type:'experience' as const, name:item.title, description:item.description, image:item.image,
     duration:item.duration, price:item.priceFrom||0, priceLabel:item.priceFrom===null?'On request':`${item.currency} ${item.priceFrom}`,
     perGuest:item.priceType.includes('per person'), capacity:item.maxCapacity??null, availabilityMode:item.availability.replaceAll(' ','_'),
     date:search?.checkIn||'', time:'', quantity:guests,

@@ -1,3 +1,4 @@
+import {publicRentalConfig} from '../src/lib/rentals/model.ts';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -52,6 +53,6 @@ test('live Supabase transport explicitly bypasses cache by default',async()=>{
 test('homepage selection preserves order and fills gaps left by unpublished items',async()=>{
  const rows=['e1','e2','e3','e4'].map(id=>({id,slug:id,name:id,price:null,pricing_type:'per_person',availability_mode:'on_request',is_featured:false}));
  const db={from:(table:string)=>{let ids:string[]|undefined,limit=1000;const query:any={};for(const method of ['select','eq','order'])query[method]=()=>query;query.in=(_key:string,values:string[])=>{ids=values;return query};query.limit=(value:number)=>{limit=value;return query};query.then=(resolve:any)=>Promise.resolve({data:table==='experiences'?rows.filter(row=>!ids||ids.includes(row.id)).slice(0,limit):[],error:null}).then(resolve);return query}};
- const {getDatabaseExperiences}=load('src/services/database-experiences.ts',{'react':{cache:(fn:unknown)=>fn},'@/lib/supabase/public-cms':{createPublicCmsClient:()=>db},'@/lib/supabase/server':{createServerSupabaseClient:async()=>db}});
+ const {getDatabaseExperiences}=load('src/services/database-experiences.ts',{'@/lib/rentals/model':{publicRentalConfig},'react':{cache:(fn:unknown)=>fn},'@/lib/supabase/public-cms':{createPublicCmsClient:()=>db},'@/lib/supabase/server':{createServerSupabaseClient:async()=>db}});
  const selected=await getDatabaseExperiences(undefined,3,['unpublished','e4','e3','e2']);assert.deepEqual(selected.map((row:any)=>row.id),['e4','e3','e2']);
 });

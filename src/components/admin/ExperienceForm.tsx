@@ -1,4 +1,5 @@
 'use client';
+import {RentalFields} from './RentalFields';
 import Image from 'next/image';
 import { useActionState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -15,9 +16,9 @@ export function ExperienceForm({item,media}:{item:AdminExperience|null;media:Exp
   useEffect(()=>{if(state.ok&&state.id&&!item)router.replace(`/admin/experiences/${state.id}`)},[state,item,router]);
   return <form action={action} className="space-y-6">
     <input type="hidden" name="id" value={item?.id||''}/>
-    <input type="hidden" name="slug" value={item?.slug||''}/>
-    <input type="hidden" name="sortOrder" value={item?.sortOrder||0}/>
-    <Section title="General"><Grid>
+
+
+    <Section title="Content"><Grid><Field label="URL slug"><input name="slug" defaultValue={item?.slug||''} className={input}/></Field><Field label="Display order"><input name="sortOrder" type="number" defaultValue={item?.sortOrder||0} className={input}/></Field>
       <Field label="Name" error={state.errors?.name}><input name="name" defaultValue={item?.name||''} className={input}/></Field>
     </Grid></Section>
     <Section title="Description">
@@ -28,12 +29,12 @@ export function ExperienceForm({item,media}:{item:AdminExperience|null;media:Exp
       <Field label="Cover image" error={state.errors?.coverMediaId}><select name="coverMediaId" defaultValue={item?.coverMediaId||''} className={input}><option value="">No cover selected</option>{media.map(option=><option key={option.id} value={option.id}>{option.label}</option>)}</select></Field>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{media.map(option=><label key={option.id} className="flex gap-3 rounded-xl border border-slate-200 p-3"><span className="relative size-16 shrink-0 overflow-hidden rounded-lg"><Image src={option.url} alt="" fill sizes="64px" className="object-cover"/></span><span className="text-sm"><input type="checkbox" name="galleryMediaIds" value={option.id} defaultChecked={item?.galleryMediaIds.includes(option.id)}/> {option.label}</span></label>)}</div>
     </Section>
-    <Section title="Experience details"><Grid>
+    <RentalFields initial={item?.rentalConfig} error={state.errors?.rentalConfig}/><Section title="Legacy experience details (dinner / non-rental activities)"><Grid>
       <Field label="Duration" error={state.errors?.duration}><input name="duration" defaultValue={item?.duration||''} placeholder="60 minutes" className={input}/></Field>
-      <Field label="Capacity" error={state.errors?.capacity}><input name="capacity" type="number" min="1" defaultValue={item?.capacity||''} className={input}/></Field>
+      <Field label="Participant capacity (non-rental)" error={state.errors?.capacity}><input name="capacity" type="number" min="1" defaultValue={item?.capacity||''} className={input}/></Field>
       <Field label="Price" error={state.errors?.price}><input name="price" type="number" min="0" step="0.01" defaultValue={item?.price??''} className={input}/></Field>
       <Field label="Currency"><CurrencySelect defaultValue={item?.currency||'EUR'} className={input}/></Field>
-      <Field label="Pricing type"><select name="pricingType" defaultValue={item?.pricingType||'fixed'} className={input}><option value="per_person">Per participant / unit</option><option value="per_group">Per group</option><option value="fixed">Fixed booking price</option><option value="on_request">On request</option></select></Field>
+      <Field label="Pricing type"><select name="pricingType" defaultValue={item?.pricingType||'fixed'} className={input}><option value="per_person">Per participant</option><option value="per_group">Per group</option><option value="fixed">Fixed booking price</option><option value="on_request">On request</option></select></Field>
       <Field label="Meeting point"><input name="meetingPoint" defaultValue={item?.meetingPoint||''} className={input}/></Field>
     </Grid>
       <Field label="Included — one per line"><textarea name="included" rows={3} defaultValue={item?.included.join('\n')||''} className={`${input} py-3`}/></Field>
@@ -41,9 +42,9 @@ export function ExperienceForm({item,media}:{item:AdminExperience|null;media:Exp
       <Field label="Important notes — one per line"><textarea name="notes" rows={3} defaultValue={item?.notes.join('\n')||''} className={`${input} py-3`}/></Field>
       <Field label="Booking notice"><textarea name="bookingNotice" rows={3} defaultValue={item?.bookingNotice||''} className={`${input} py-3`}/></Field>
     </Section>
-    <Section title="Availability & booking">
-      <div className="grid gap-4 sm:grid-cols-2"><Check name="bookable" label="Bookable as a room add-on" checked={item?.bookable??true}/><Check name="bookIndependently" label="Allow standalone booking" checked={item?.bookIndependently??false}/></div>
-      <p className="text-sm text-slate-500">Standalone booking appears publicly only when both options are enabled. Every route reserves the same capacity.</p>
+    <Section title="Legacy schedule & product season">
+      <div className="grid gap-4 sm:grid-cols-2"><Check name="bookable" label="Non-rental: bookable as a room add-on" checked={item?.bookable??true}/><Check name="bookIndependently" label="Non-rental: allow standalone booking" checked={item?.bookIndependently??false}/></div>
+      <p className="text-sm text-slate-500">For equipment rentals use the rental booking switches above; these legacy settings apply to participant-based experiences.</p>
       <Grid>
         <Field label="Availability mode"><select name="availabilityMode" defaultValue={item?.availabilityMode||'on_request'} className={input}><option value="always">Operating schedule</option><option value="specific_dates">Specific dates / overrides</option><option value="recurring">Recurring schedule</option><option value="on_request">On request</option></select></Field>
         <Field label="Minimum quantity" error={state.errors?.quantity}><input name="minimumQuantity" type="number" min="1" defaultValue={item?.minimumQuantity||1} className={input}/></Field>

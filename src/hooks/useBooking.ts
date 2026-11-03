@@ -12,7 +12,7 @@ function updateAddonForStay(item: BookingAddon, search: StaySearch) {
     return { ...item, quantity: search.guests };
   }
   const dateIsInStay = Boolean(item.date && search.checkIn && search.checkOut && item.date >= search.checkIn && item.date < search.checkOut);
-  return { ...item, date: dateIsInStay ? item.date : search.checkIn, quantity: search.guests };
+  return { ...item, date: dateIsInStay ? item.date : search.checkIn, quantity: item.rentalConfig?item.quantity:search.guests, rentalQuote:undefined, rentalSelection: item.rentalSelection?{...item.rentalSelection,date:dateIsInStay?item.date:search.checkIn,adults:search.adults,children:search.children}:undefined };
 }
 function reducer(state: BookingState, action: Action): BookingState {
   switch (action.type) {
@@ -39,7 +39,7 @@ function reducer(state: BookingState, action: Action): BookingState {
       return { ...state, options:action.value, selectedAccommodation:selected, hold:null, status:action.value.length ? 'success' : 'empty', step:1 };
     }
     case 'error': return { ...state, status:'error', error:action.value };
-    case 'select-accommodation': return { ...state, selectedAccommodation:action.value, hold:null, step:2 };
+    case 'select-accommodation': return { ...state, selectedAccommodation:action.value, addons:state.addons.filter(a=>!a.rentalConfig||a.currency===action.value.currency), hold:null, step:2 };
     case 'toggle-addon': {
       const key = (item: BookingAddon) => `${item.type}:${item.id}`;
       const exists = state.addons.some(item => key(item) === key(action.value));
