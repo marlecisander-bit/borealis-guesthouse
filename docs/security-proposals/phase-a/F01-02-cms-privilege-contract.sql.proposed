@@ -1,0 +1,23 @@
+-- DESIGN ONLY. Apply only AFTER all CMS admin/preview callers use F01-01 RPCs.
+-- Fresh ACL/policy/role/view/function inventory and isolated tests are mandatory.
+BEGIN;
+SET LOCAL lock_timeout = '3s';
+SET LOCAL statement_timeout = '30s';
+REVOKE ALL PRIVILEGES ON TABLE public.cms_documents
+  FROM PUBLIC, anon, authenticated;
+-- Table ACL revocation does not remove column ACLs. Clear both levels.
+REVOKE ALL PRIVILEGES
+  (id,property_id,document_key,data,draft_data,status,created_at,updated_at,
+   created_by,updated_by,published_at,archived_at)
+  ON TABLE public.cms_documents FROM PUBLIC, anon, authenticated;
+GRANT SELECT (id,property_id,document_key,data,status)
+  ON TABLE public.cms_documents TO anon, authenticated;
+DROP POLICY cms_documents_public ON public.cms_documents;
+DROP POLICY cms_documents_admin ON public.cms_documents;
+CREATE POLICY cms_documents_published_read
+  ON public.cms_documents FOR SELECT TO anon, authenticated
+  USING (status = 'published'::public.content_status);
+-- No direct authenticated write policy/grant. Definer RPCs check active membership.
+-- No table change, data move, view, trigger change or service_role grant change.
+NOTIFY pgrst, 'reload schema';
+COMMIT;

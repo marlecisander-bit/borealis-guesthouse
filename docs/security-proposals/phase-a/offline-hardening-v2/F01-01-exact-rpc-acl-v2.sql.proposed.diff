@@ -1,0 +1,22 @@
+--- original/F01-01-exact-rpc-acl-v2.sql.proposed
++++ offline-v2/F01-01-exact-rpc-acl-v2.sql.proposed
+@@ -1,3 +1,4 @@
++-- OFFLINE V2 PROPOSAL ONLY: not approved or executed; adds exact ACL assertions.
+ -- DESIGN ONLY. Not installed, not a migration-runner input.
+ -- Prerequisites: verified PostgreSQL owner postgres, trusted can_manage_property
+ -- definition, no role inheritance/alternate definer exposure, reconciled schema.
+@@ -114,4 +115,14 @@
+  END LOOP;
+ END;
+ $f01_post$;
++DO $exact_acl$
++DECLARE f regprocedure;
++BEGIN
++ FOREACH f IN ARRAY ARRAY['public.borealis_admin_cms_documents(uuid,text)'::regprocedure,'public.borealis_save_cms_document(uuid,text,jsonb,public.content_status)'::regprocedure] LOOP
++  IF EXISTS(SELECT 1 FROM pg_proc p CROSS JOIN LATERAL aclexplode(COALESCE(p.proacl,acldefault('f',p.proowner))) a WHERE p.oid=f AND (a.grantee NOT IN ('postgres'::regrole::oid,'authenticated'::regrole::oid) OR (a.grantee='authenticated'::regrole::oid AND a.is_grantable))) THEN
++   RAISE EXCEPTION 'Unexpected private RPC ACL/default grant; stop for review';
++  END IF;
++ END LOOP;
++END;
++$exact_acl$;
+ COMMIT;

@@ -6,15 +6,17 @@ const images={kayak:'/borealis-placeholder.svg'};
 import { createPageMetadata } from '@/lib/seo';
 import { contentRepository } from '@/services/content';
 import {getLandingPageContent} from '@/services/site-content';
+import {TransfersSection} from '@/components/public/TransfersSection';
 import {formatMoney} from '@/lib/pricing/format';
 
-export async function generateMetadata():Promise<Metadata>{return createPageMetadata('experiences')}
+export async function generateMetadata():Promise<Metadata>{const metadata = await createPageMetadata('experiences'); return {...metadata, title: 'Journey — Experiences & Transfers | Borealis Guest House', openGraph: {...metadata.openGraph, title: 'Journey — Experiences & Transfers'}, twitter: {...metadata.twitter, title: 'Journey — Experiences & Transfers'}}}
 
-export default async function ExperiencesPage() {
+export default async function ExperiencesPage({searchParams}:{searchParams:Promise<{preview?:string}>}) {
   const [experiences,page] = await Promise.all([contentRepository.getExperiences(),getLandingPageContent('experiences')]);
   return <PublicShell>
-    <PageHero eyebrow={page.eyebrow} title={page.heading} copy={page.description} image={page.heroImage||images.kayak} imageAlt={page.heroImageAlt} />
-    <section className="shell py-20 md:py-28">
+    <PageHero eyebrow={page.eyebrow} title="Journey" copy={page.description} image={page.heroImage||images.kayak} imageAlt={page.heroImageAlt} />
+    <nav aria-label="Journey sections" className="shell flex flex-wrap gap-3 pt-8"><Link href="#experiences" className="rounded-full bg-lake px-6 py-3 text-sm font-bold text-white">Experiences</Link><Link href="#transfers" className="rounded-full bg-sand px-6 py-3 text-sm font-bold text-lake">Transfers</Link></nav>
+    <section id="experiences" className="shell scroll-mt-24 py-20 md:py-28">
       <div className="max-w-2xl"><p className="eyebrow">{page.introEyebrow}</p><h2 className="mt-4 font-serif text-5xl leading-tight text-lake md:text-6xl">{page.introHeading}</h2>{page.introDescription&&<p className="mt-5 leading-7 text-muted">{page.introDescription}</p>}</div>
       <div className="mt-12 grid gap-6 md:grid-cols-2">
         {experiences.map((item, index) => <article key={item.id} className={`group ${index%2===1?'md:translate-y-12':''}`}>
@@ -24,6 +26,7 @@ export default async function ExperiencesPage() {
       </div>
     </section>
     <section className="bg-ivory py-20 md:py-24"><div className="shell grid gap-8 md:grid-cols-[1fr_auto] md:items-center"><div><p className="eyebrow">{page.ctaEyebrow}</p><h2 className="mt-3 font-serif text-4xl text-lake md:text-5xl">{page.ctaHeading}</h2><p className="mt-4 max-w-2xl text-muted">{page.ctaDescription}</p></div><Link href={page.ctaTarget||'/book'} className="rounded-full bg-lake px-7 py-4 text-center text-sm font-bold text-white">{page.ctaLabel}</Link></div></section>
+    <TransfersSection searchParams={searchParams} />
     <CTASection />
   </PublicShell>;
 }

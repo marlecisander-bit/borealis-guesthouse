@@ -1,0 +1,11 @@
+{
+  "execution_enabled": false,
+  "authorization": null,
+  "target_reference": null,
+  "target_origin": null,
+  "baseline_reviewed": false,
+  "application_compatibility_implemented": false,
+  "sql_executed": false,
+  "case_status": "NOT RUN",
+  "production_promotion_authorized": false
+}

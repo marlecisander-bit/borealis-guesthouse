@@ -1,0 +1,56 @@
+id,finding,channel,actor,scenario,required_after,status
+F01-01,F01,REST table,anon,Published explicit approved projection,Published synthetic data visible; draft marker absent,NOT RUN
+F01-02,F01,REST table,anon,Explicit draft_data and wildcard selection on published row,Draft column denied; no private bytes; do not require wildcard to succeed,NOT RUN
+F01-03,F01,REST table,anon,Unpublished and archived row selection,No unpublished row or draft material,NOT RUN
+F01-04,F01,REST/RPC,authenticated non-member,Private table/RPC reads,Denied or empty per contract; no draft bytes,NOT RUN
+F01-05,F01,REST/RPC,staff/disabled/legacy-only,Private read/save attempts,Denied despite legacy email or stale role claims,NOT RUN
+F01-06,F01,RPC/app,owner/editor A,Private list/key read and draft preview,Own-property published and draft fixture available only to authorized caller,NOT RUN
+F01-07,F01,RPC/app,manager A,Same-property CMS compatibility,Authorized active role follows reviewed O/M/E contract,NOT RUN
+F01-08,F01,RPC/app,editor A,Save draft on published document,Public data/status unchanged; private draft updated; atomic result,NOT RUN
+F01-09,F01,RPC/app,editor A,Create draft then publish,New draft not public; publication exposes intended merged public data; clears draft,NOT RUN
+F01-10,F01,RPC/app,editor A,Publish failure and concurrent save,No partial state; concurrency contract explicit; retain prior public version,NOT RUN
+F01-11,F01,RPC,editor A,Read/save property B,Denied; no B row change or existence leak beyond contract,NOT RUN
+F01-12,F01,REST table,owner/editor A,Direct INSERT UPDATE DELETE including mixed columns,Denied after contraction; use authorized RPC only,NOT RUN
+F01-13,F01,REST table,anon,Public reads after save and publish,Draft does not enter shared cache; new published value visible after intended invalidation,NOT RUN
+F01-14,F01,app/cache,owner then anon,Authenticated preview followed by anonymous request,Private response no-store; no shared cached draft; anonymous public response remains clean,NOT RUN
+F01-15,F01,SQL/catalog,fixture administrator,ACL inheritance column/view exposure and definer ownership,No alternate grant/view/function path to drafts; owner/search_path matches approved contract,NOT RUN
+F01-16,F01,RPC,editor A,book/global on recorded eight-key baseline,Expose expected constraint failure; require reviewed key delta before compatibility PASS,NOT RUN
+F01-17,F01,RPC,editor A,Unknown key malformed status/null input and dependency failure,Fail closed without public partial update; no arbitrary document contract expansion,NOT RUN
+F02-01,F02,REST RPC/SQL,anon,Call next_booking_reference(uuid) directly,Permission denied; counter unchanged,NOT RUN
+F02-02,F02,REST RPC/SQL,authenticated O/M/E/staff/non-member,Call reference helper directly,Denied even for application editors; counter unchanged,NOT RUN
+F02-03,F02,REST RPC/SQL,anon/authenticated,Call expire_booking_holds(uuid) directly,Denied; no booking/items/reservation side effect,NOT RUN
+F02-04,F02,RPC/application,synthetic public guest,Room hold and confirmation nested reference path,Legitimate reviewed transaction succeeds with one intended reference/reservation,NOT RUN
+F02-05,F02,RPC/application,synthetic public guest,Multi-room transaction,All intended rooms committed atomically; references follow contract; no partial reservation,NOT RUN
+F02-06,F02,RPC/application,synthetic public guest,Standalone experience transaction,Legitimate nested path works; capacity and reference contract maintained,NOT RUN
+F02-07,F02,RPC/application,synthetic public guest,Package/add-on path,Reviewed public entry point remains allowed; helper remains directly denied,NOT RUN
+F02-08,F02,RPC/SQL,trusted DEV maintenance identity,Expire synthetic held booking,Only eligible expired held fixtures expire; future/confirmed and other-property fixtures preserved,NOT RUN
+F02-09,F02,RPC/SQL,trusted nested owner,Booking path invokes expiration,Effective definer owner retains access; no accidental public grant required,NOT RUN
+F02-10,F02,concurrent RPC,synthetic guests,Parallel successful booking references,Unique references; no duplicate allocation; gaps not mistaken for integrity failure,NOT RUN
+F02-11,F02,SQL/catalog,fixture administrator,PUBLIC inherited roles overloaded signatures and default ACLs,No unexpected execute path; exact signature revocation only; unrelated public RPCs preserved,NOT RUN
+F02-12,F02,transaction failure,synthetic guest,Nested helper/caller error,Whole intended booking transaction rolls back; evidence includes counters and reservations,NOT RUN
+F02-13,F02,REST RPC,anon/authenticated,Direct PostgREST bypass of application,Same denial independent of UI/Next route; no mutations after failed call,NOT RUN
+F03-01,F03,Storage HTTP+REST,owner/manager/editor A,Ordinary upload and metadata insert,Same-property valid raster object/metadata succeed without admin_users membership,NOT RUN
+F03-02,F03,Storage HTTP+REST,staff/non-member/disabled/legacy-only,Insert overwrite delete and metadata CRUD,Denied; object existence/byte hashes and metadata unchanged,NOT RUN
+F03-03,F03,Storage HTTP+REST,editor A,Upload/read-list/update/delete property B,Denied for authenticated protected operations; public image GET remains intentionally public,NOT RUN
+F03-04,F03,Storage HTTP+REST,editor A,Metadata bucket/prefix/property mismatch,Denied; changing metadata property alone cannot escape boundary,NOT RUN
+F03-05,F03,Storage HTTP,editor A,UPDATE source and destination path/property,Both checked; cross-property rename/copy/move remain unsupported/denied,NOT RUN
+F03-06,F03,Storage HTTP,editor A,Root bad UUID uppercase dot dotdot repeated slash percent backslash trailing slash,Fail closed without cast error or object side effect,NOT RUN
+F03-07,F03,app+Storage HTTP,owner/editor A,Hero start authenticated upload finish and variant generation,No signed token returned; own JWT upload works; finish rechecks role/path/type/size; variants and metadata consistent,NOT RUN
+F03-08,F03,app+Storage HTTP,disabled after hero start,Finish and new authenticated upload after disable commit,New authorization checks deny after committed disable; record in-flight limitations,NOT RUN
+F03-09,F03,Storage HTTP,enabled editor A,Call signed-upload creation directly bypassing app,Denied at service operation policy; no new signed capability,NOT RUN
+F03-10,F03,Storage HTTP,synthetic user with pre-change token,Mint synthetic token before policy change and disable,Characterize actual behavior; no immediate revocation claim; record issuance cutoff and expiry,NOT RUN
+F03-11,F03,Storage HTTP,old token and old JWT,After verified maximum token lifetime plus margin/drain,Old token cannot complete upload; disabled user JWT cannot write,NOT RUN
+F03-12,F03,public Storage HTTP,anon,Known synthetic public image URL before/after,Stable URL and byte hash; no auth requirement; publicness is intentional,NOT RUN
+F03-13,F03,Storage HTTP+REST,editor A,Root/unprefixed historical-format synthetic object,Public GET retained; edits denied or explicit reviewed compatibility; no automatic move,NOT RUN
+F03-14,F03,Storage HTTP,editor A,Supported SDK upload overwrite list/download info remove,Expected operation names/context verified on actual server; appropriate own-property operations pass,NOT RUN
+F03-15,F03,Storage HTTP,editor A,Signing signed completion copy/move S3 TUS/resumable unknown context,Excluded routes deny; no helper/context emulation used as server evidence,NOT RUN
+F03-16,F03,Storage HTTP+REST,owner A staff B/multi-property,Membership combinations,Only properties with active O/M/E membership writable; owner A does not upgrade staff B,NOT RUN
+F03-17,F03,app+Storage HTTP,editor A,Metadata failure and object cleanup failure,Compensation checked; orphan/error observable; no privileged retry or unintended delete,NOT RUN
+F03-18,F03,app+Storage HTTP,editor A,10 MiB bucket and 24 MiB hero UI boundary,Boundary documented and tested; no silent limit increase; incompatible size prevents PASS,NOT RUN
+F03-19,F03,SQL/catalog+HTTP,fixture administrator,All effective policies/grants/helper ownership and public bucket,No surviving permissive legacy bypass; public reads preserved; managed operation helpers match version,NOT RUN
+ENV-01,ENV,guard,operator,Missing target or production endpoint/key inherited,Abort before connection/mutation; no automatic fallback,NOT RUN
+ENV-02,ENV,guard,operator,Proposal hash schema owner or platform drift,Abort before applying any delta,NOT RUN
+ENV-03,ENV,restore,DEV administrator,Recreate synthetic baseline and compare schema fingerprints,Reproducible defaults constraints functions owners ACLs policies and fixture version,NOT RUN
+ENV-04,ENV,transaction,DEV administrator,Lock timeout/statement failure during each proposed delta,Whole transaction rejected; no partial policy/ACL state,NOT RUN
+ENV-05,ENV,recovery,DEV administrator,Rehearse secure pause/forward repair for each finding,Public continuity where intended; no automatic insecure permission restoration,NOT RUN
+ENV-06,ENV,evidence,operator,Sanitization and provider/target trace,No production target/provider send; no secret/body/token in evidence; every missing test NOT RUN,NOT RUN

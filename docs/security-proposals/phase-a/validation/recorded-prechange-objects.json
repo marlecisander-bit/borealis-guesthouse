@@ -1,0 +1,1853 @@
+{
+  "notice": "Recorded schema metadata only; historical, incomplete; no live SQL executed. Full owners/defaults/column ACLs/platform metadata still required.",
+  "policies": [
+    {
+      "schemaname": "storage",
+      "tablename": "objects",
+      "policyname": "Admins can delete public media",
+      "permissive": "PERMISSIVE",
+      "roles": [
+        "authenticated"
+      ],
+      "cmd": "DELETE",
+      "qual": "((bucket_id = 'public-media'::text) AND (EXISTS ( SELECT 1\n FROM admin_users\n WHERE (lower((admin_users.email)::text) = lower((auth.jwt() ->> 'email'::text))))))",
+      "with_check": null
+    },
+    {
+      "schemaname": "storage",
+      "tablename": "objects",
+      "policyname": "Admins can update public media",
+      "permissive": "PERMISSIVE",
+      "roles": [
+        "authenticated"
+      ],
+      "cmd": "UPDATE",
+      "qual": "((bucket_id = 'public-media'::text) AND (EXISTS ( SELECT 1\n FROM admin_users\n WHERE (lower((admin_users.email)::text) = lower((auth.jwt() ->> 'email'::text))))))",
+      "with_check": null
+    },
+    {
+      "schemaname": "storage",
+      "tablename": "objects",
+      "policyname": "Admins can upload public media",
+      "permissive": "PERMISSIVE",
+      "roles": [
+        "authenticated"
+      ],
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "((bucket_id = 'public-media'::text) AND (EXISTS ( SELECT 1\n FROM admin_users\n WHERE (lower((admin_users.email)::text) = lower((auth.jwt() ->> 'email'::text))))))"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "cms_documents",
+      "policyname": "cms_documents_admin",
+      "permissive": "PERMISSIVE",
+      "roles": [
+        "authenticated"
+      ],
+      "cmd": "ALL",
+      "qual": "can_manage_site_content(property_id)",
+      "with_check": "can_manage_site_content(property_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "cms_documents",
+      "policyname": "cms_documents_public",
+      "permissive": "PERMISSIVE",
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "cmd": "SELECT",
+      "qual": "((status = 'published'::content_status) OR can_manage_site_content(property_id))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "admin_users",
+      "policyname": "admin_users_self_read",
+      "permissive": "PERMISSIVE",
+      "roles": [
+        "authenticated"
+      ],
+      "cmd": "SELECT",
+      "qual": "(lower((email)::text) = lower((auth.jwt() ->> 'email'::text)))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "admin_profiles",
+      "policyname": "admin_profiles_owner_manage",
+      "permissive": "PERMISSIVE",
+      "roles": [
+        "authenticated"
+      ],
+      "cmd": "ALL",
+      "qual": "can_manage_property(property_id, ARRAY['owner'::admin_role])",
+      "with_check": "can_manage_property(property_id, ARRAY['owner'::admin_role])"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "admin_profiles",
+      "policyname": "admin_profiles_self_read",
+      "permissive": "PERMISSIVE",
+      "roles": [
+        "authenticated"
+      ],
+      "cmd": "SELECT",
+      "qual": "((user_id = auth.uid()) OR can_manage_property(property_id, ARRAY['owner'::admin_role, 'manager'::admin_role]))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "media_assets",
+      "policyname": "Admins can delete media",
+      "permissive": "PERMISSIVE",
+      "roles": [
+        "authenticated"
+      ],
+      "cmd": "DELETE",
+      "qual": "(EXISTS ( SELECT 1\n FROM admin_users\n WHERE ((lower((admin_users.email)::text) = lower((auth.jwt() ->> 'email'::text))) AND (admin_users.property_id = media_assets.property_id))))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "media_assets",
+      "policyname": "Admins can insert media",
+      "permissive": "PERMISSIVE",
+      "roles": [
+        "authenticated"
+      ],
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "(EXISTS ( SELECT 1\n FROM admin_users\n WHERE ((lower((admin_users.email)::text) = lower((auth.jwt() ->> 'email'::text))) AND (admin_users.property_id = media_assets.property_id))))"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "media_assets",
+      "policyname": "Admins can update media",
+      "permissive": "PERMISSIVE",
+      "roles": [
+        "authenticated"
+      ],
+      "cmd": "UPDATE",
+      "qual": "(EXISTS ( SELECT 1\n FROM admin_users\n WHERE ((lower((admin_users.email)::text) = lower((auth.jwt() ->> 'email'::text))) AND (admin_users.property_id = media_assets.property_id))))",
+      "with_check": "(EXISTS ( SELECT 1\n FROM admin_users\n WHERE ((lower((admin_users.email)::text) = lower((auth.jwt() ->> 'email'::text))) AND (admin_users.property_id = media_assets.property_id))))"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "media_assets",
+      "policyname": "media_assets_admin_manage",
+      "permissive": "PERMISSIVE",
+      "roles": [
+        "authenticated"
+      ],
+      "cmd": "ALL",
+      "qual": "can_manage_property(property_id, ARRAY['owner'::admin_role, 'manager'::admin_role, 'editor'::admin_role])",
+      "with_check": "can_manage_property(property_id, ARRAY['owner'::admin_role, 'manager'::admin_role, 'editor'::admin_role])"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "media_assets",
+      "policyname": "media_assets_public_read",
+      "permissive": "PERMISSIVE",
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "cmd": "SELECT",
+      "qual": "((status = 'published'::content_status) AND (is_visible = true))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "homepage_hero_assets",
+      "policyname": "hero_assets_admin_insert",
+      "permissive": "PERMISSIVE",
+      "roles": [
+        "authenticated"
+      ],
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "can_manage_homepage(property_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "homepage_hero_assets",
+      "policyname": "hero_assets_admin_read",
+      "permissive": "PERMISSIVE",
+      "roles": [
+        "authenticated"
+      ],
+      "cmd": "SELECT",
+      "qual": "can_manage_homepage(property_id)",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "homepage_hero_assets",
+      "policyname": "hero_assets_admin_update",
+      "permissive": "PERMISSIVE",
+      "roles": [
+        "authenticated"
+      ],
+      "cmd": "UPDATE",
+      "qual": "can_manage_homepage(property_id)",
+      "with_check": "can_manage_homepage(property_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "homepage_hero_assets",
+      "policyname": "hero_assets_public_read",
+      "permissive": "PERMISSIVE",
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "cmd": "SELECT",
+      "qual": "(status = 'ready'::text)",
+      "with_check": null
+    }
+  ],
+  "constraints": [
+    {
+      "table": "cms_documents",
+      "name": "cms_documents_created_by_fkey",
+      "definition": "FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+    },
+    {
+      "table": "cms_documents",
+      "name": "cms_documents_document_key_check",
+      "definition": "CHECK ((document_key = ANY (ARRAY['rooms'::text, 'experiences'::text, 'transfers'::text, 'explore-koman'::text, 'about'::text, 'gallery'::text, 'contact'::text, 'footer'::text])))"
+    },
+    {
+      "table": "cms_documents",
+      "name": "cms_documents_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table": "cms_documents",
+      "name": "cms_documents_property_id_document_key_key",
+      "definition": "UNIQUE (property_id, document_key)"
+    },
+    {
+      "table": "cms_documents",
+      "name": "cms_documents_property_id_fkey",
+      "definition": "FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "cms_documents",
+      "name": "cms_documents_updated_by_fkey",
+      "definition": "FOREIGN KEY (updated_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+    },
+    {
+      "table": "admin_users",
+      "name": "admin_users_email_key",
+      "definition": "UNIQUE (email)"
+    },
+    {
+      "table": "admin_users",
+      "name": "admin_users_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table": "admin_users",
+      "name": "admin_users_property_id_fkey",
+      "definition": "FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "admin_profiles",
+      "name": "admin_profiles_created_by_fkey",
+      "definition": "FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+    },
+    {
+      "table": "admin_profiles",
+      "name": "admin_profiles_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table": "admin_profiles",
+      "name": "admin_profiles_property_id_fkey",
+      "definition": "FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "admin_profiles",
+      "name": "admin_profiles_updated_by_fkey",
+      "definition": "FOREIGN KEY (updated_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+    },
+    {
+      "table": "admin_profiles",
+      "name": "admin_profiles_user_id_fkey",
+      "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "admin_profiles",
+      "name": "admin_profiles_user_id_property_id_key",
+      "definition": "UNIQUE (user_id, property_id)"
+    },
+    {
+      "table": "media_assets",
+      "name": "media_assets_created_by_fkey",
+      "definition": "FOREIGN KEY (created_by) REFERENCES auth.users(id)"
+    },
+    {
+      "table": "media_assets",
+      "name": "media_assets_focal_x_check",
+      "definition": "CHECK (((focal_x IS NULL) OR ((focal_x >= (0)::numeric) AND (focal_x <= (1)::numeric))))"
+    },
+    {
+      "table": "media_assets",
+      "name": "media_assets_focal_y_check",
+      "definition": "CHECK (((focal_y IS NULL) OR ((focal_y >= (0)::numeric) AND (focal_y <= (1)::numeric))))"
+    },
+    {
+      "table": "media_assets",
+      "name": "media_assets_image_mime_check",
+      "definition": "CHECK (((mime_type IS NULL) OR (mime_type = ANY (ARRAY['image/jpeg'::text, 'image/png'::text, 'image/webp'::text, 'image/avif'::text]))))"
+    },
+    {
+      "table": "media_assets",
+      "name": "media_assets_image_size_check",
+      "definition": "CHECK (((size_bytes IS NULL) OR ((size_bytes > 0) AND (size_bytes <= 10485760))))"
+    },
+    {
+      "table": "media_assets",
+      "name": "media_assets_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table": "media_assets",
+      "name": "media_assets_property_id_fkey",
+      "definition": "FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "media_assets",
+      "name": "media_assets_storage_bucket_check",
+      "definition": "CHECK ((storage_bucket = 'public-media'::text))"
+    },
+    {
+      "table": "media_assets",
+      "name": "media_assets_updated_by_fkey",
+      "definition": "FOREIGN KEY (updated_by) REFERENCES auth.users(id)"
+    },
+    {
+      "table": "booking_reference_counters",
+      "name": "booking_reference_counters_last_value_check",
+      "definition": "CHECK ((last_value >= 0))"
+    },
+    {
+      "table": "booking_reference_counters",
+      "name": "booking_reference_counters_pkey",
+      "definition": "PRIMARY KEY (property_id, reference_year)"
+    },
+    {
+      "table": "booking_reference_counters",
+      "name": "booking_reference_counters_property_id_fkey",
+      "definition": "FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "homepage_hero_assets",
+      "name": "homepage_hero_assets_check",
+      "definition": "CHECK ((original_path ~~ ((property_id)::text || '/hero/%/original/%'::text)))"
+    },
+    {
+      "table": "homepage_hero_assets",
+      "name": "homepage_hero_assets_created_by_fkey",
+      "definition": "FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+    },
+    {
+      "table": "homepage_hero_assets",
+      "name": "homepage_hero_assets_kind_check",
+      "definition": "CHECK ((kind = ANY (ARRAY['desktop_hero'::text, 'mobile_hero'::text])))"
+    },
+    {
+      "table": "homepage_hero_assets",
+      "name": "homepage_hero_assets_original_path_key",
+      "definition": "UNIQUE (original_path)"
+    },
+    {
+      "table": "homepage_hero_assets",
+      "name": "homepage_hero_assets_pkey",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table": "homepage_hero_assets",
+      "name": "homepage_hero_assets_property_id_fkey",
+      "definition": "FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE"
+    },
+    {
+      "table": "homepage_hero_assets",
+      "name": "homepage_hero_assets_size_bytes_check",
+      "definition": "CHECK (((size_bytes > 0) AND (size_bytes <= 25165824)))"
+    },
+    {
+      "table": "homepage_hero_assets",
+      "name": "homepage_hero_assets_status_check",
+      "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'processing'::text, 'ready'::text])))"
+    }
+  ],
+  "columns": [
+    {
+      "table": "homepage_hero_assets",
+      "column": "updated_at",
+      "type": "timestamptz",
+      "nullable": "NO"
+    },
+    {
+      "table": "booking_reference_counters",
+      "column": "property_id",
+      "type": "uuid",
+      "nullable": "NO"
+    },
+    {
+      "table": "booking_reference_counters",
+      "column": "reference_year",
+      "type": "int4",
+      "nullable": "NO"
+    },
+    {
+      "table": "booking_reference_counters",
+      "column": "last_value",
+      "type": "int4",
+      "nullable": "NO"
+    },
+    {
+      "table": "homepage_hero_assets",
+      "column": "id",
+      "type": "uuid",
+      "nullable": "NO"
+    },
+    {
+      "table": "homepage_hero_assets",
+      "column": "property_id",
+      "type": "uuid",
+      "nullable": "NO"
+    },
+    {
+      "table": "homepage_hero_assets",
+      "column": "size_bytes",
+      "type": "int8",
+      "nullable": "NO"
+    },
+    {
+      "table": "homepage_hero_assets",
+      "column": "width",
+      "type": "int4",
+      "nullable": "YES"
+    },
+    {
+      "table": "homepage_hero_assets",
+      "column": "height",
+      "type": "int4",
+      "nullable": "YES"
+    },
+    {
+      "table": "homepage_hero_assets",
+      "column": "variants",
+      "type": "jsonb",
+      "nullable": "NO"
+    },
+    {
+      "table": "homepage_hero_assets",
+      "column": "created_by",
+      "type": "uuid",
+      "nullable": "YES"
+    },
+    {
+      "table": "homepage_hero_assets",
+      "column": "created_at",
+      "type": "timestamptz",
+      "nullable": "NO"
+    },
+    {
+      "table": "cms_documents",
+      "column": "id",
+      "type": "uuid",
+      "nullable": "NO"
+    },
+    {
+      "table": "cms_documents",
+      "column": "property_id",
+      "type": "uuid",
+      "nullable": "NO"
+    },
+    {
+      "table": "cms_documents",
+      "column": "data",
+      "type": "jsonb",
+      "nullable": "NO"
+    },
+    {
+      "table": "cms_documents",
+      "column": "draft_data",
+      "type": "jsonb",
+      "nullable": "YES"
+    },
+    {
+      "table": "cms_documents",
+      "column": "status",
+      "type": "content_status",
+      "nullable": "NO"
+    },
+    {
+      "table": "cms_documents",
+      "column": "created_at",
+      "type": "timestamptz",
+      "nullable": "NO"
+    },
+    {
+      "table": "cms_documents",
+      "column": "updated_at",
+      "type": "timestamptz",
+      "nullable": "NO"
+    },
+    {
+      "table": "cms_documents",
+      "column": "created_by",
+      "type": "uuid",
+      "nullable": "YES"
+    },
+    {
+      "table": "cms_documents",
+      "column": "updated_by",
+      "type": "uuid",
+      "nullable": "YES"
+    },
+    {
+      "table": "cms_documents",
+      "column": "published_at",
+      "type": "timestamptz",
+      "nullable": "YES"
+    },
+    {
+      "table": "cms_documents",
+      "column": "archived_at",
+      "type": "timestamptz",
+      "nullable": "YES"
+    },
+    {
+      "table": "admin_users",
+      "column": "id",
+      "type": "uuid",
+      "nullable": "NO"
+    },
+    {
+      "table": "admin_users",
+      "column": "property_id",
+      "type": "uuid",
+      "nullable": "YES"
+    },
+    {
+      "table": "admin_users",
+      "column": "created_at",
+      "type": "timestamp",
+      "nullable": "YES"
+    },
+    {
+      "table": "admin_users",
+      "column": "updated_at",
+      "type": "timestamp",
+      "nullable": "YES"
+    },
+    {
+      "table": "admin_profiles",
+      "column": "id",
+      "type": "uuid",
+      "nullable": "NO"
+    },
+    {
+      "table": "admin_profiles",
+      "column": "user_id",
+      "type": "uuid",
+      "nullable": "NO"
+    },
+    {
+      "table": "admin_profiles",
+      "column": "property_id",
+      "type": "uuid",
+      "nullable": "NO"
+    },
+    {
+      "table": "admin_profiles",
+      "column": "role",
+      "type": "admin_role",
+      "nullable": "NO"
+    },
+    {
+      "table": "admin_profiles",
+      "column": "is_active",
+      "type": "bool",
+      "nullable": "NO"
+    },
+    {
+      "table": "admin_profiles",
+      "column": "created_at",
+      "type": "timestamptz",
+      "nullable": "NO"
+    },
+    {
+      "table": "admin_profiles",
+      "column": "updated_at",
+      "type": "timestamptz",
+      "nullable": "NO"
+    },
+    {
+      "table": "admin_profiles",
+      "column": "created_by",
+      "type": "uuid",
+      "nullable": "YES"
+    },
+    {
+      "table": "admin_profiles",
+      "column": "updated_by",
+      "type": "uuid",
+      "nullable": "YES"
+    },
+    {
+      "table": "media_assets",
+      "column": "id",
+      "type": "uuid",
+      "nullable": "NO"
+    },
+    {
+      "table": "media_assets",
+      "column": "property_id",
+      "type": "uuid",
+      "nullable": "NO"
+    },
+    {
+      "table": "media_assets",
+      "column": "size_bytes",
+      "type": "int4",
+      "nullable": "YES"
+    },
+    {
+      "table": "media_assets",
+      "column": "created_at",
+      "type": "timestamp",
+      "nullable": "YES"
+    },
+    {
+      "table": "media_assets",
+      "column": "updated_at",
+      "type": "timestamp",
+      "nullable": "YES"
+    },
+    {
+      "table": "media_assets",
+      "column": "display_order",
+      "type": "int4",
+      "nullable": "NO"
+    },
+    {
+      "table": "media_assets",
+      "column": "is_published",
+      "type": "bool",
+      "nullable": "NO"
+    },
+    {
+      "table": "media_assets",
+      "column": "focal_x",
+      "type": "numeric",
+      "nullable": "YES"
+    },
+    {
+      "table": "media_assets",
+      "column": "focal_y",
+      "type": "numeric",
+      "nullable": "YES"
+    },
+    {
+      "table": "media_assets",
+      "column": "archived_at",
+      "type": "timestamptz",
+      "nullable": "YES"
+    },
+    {
+      "table": "media_assets",
+      "column": "created_by",
+      "type": "uuid",
+      "nullable": "YES"
+    },
+    {
+      "table": "media_assets",
+      "column": "updated_by",
+      "type": "uuid",
+      "nullable": "YES"
+    },
+    {
+      "table": "media_assets",
+      "column": "width",
+      "type": "int4",
+      "nullable": "YES"
+    },
+    {
+      "table": "media_assets",
+      "column": "height",
+      "type": "int4",
+      "nullable": "YES"
+    },
+    {
+      "table": "media_assets",
+      "column": "status",
+      "type": "content_status",
+      "nullable": "NO"
+    },
+    {
+      "table": "media_assets",
+      "column": "is_visible",
+      "type": "bool",
+      "nullable": "NO"
+    },
+    {
+      "table": "media_assets",
+      "column": "sort_order",
+      "type": "int4",
+      "nullable": "NO"
+    },
+    {
+      "table": "media_assets",
+      "column": "published_at",
+      "type": "timestamptz",
+      "nullable": "YES"
+    },
+    {
+      "table": "homepage_hero_assets",
+      "column": "status",
+      "type": "text",
+      "nullable": "NO"
+    },
+    {
+      "table": "cms_documents",
+      "column": "document_key",
+      "type": "text",
+      "nullable": "NO"
+    },
+    {
+      "table": "admin_users",
+      "column": "email",
+      "type": "varchar",
+      "nullable": "NO"
+    },
+    {
+      "table": "admin_users",
+      "column": "role",
+      "type": "varchar",
+      "nullable": "YES"
+    },
+    {
+      "table": "media_assets",
+      "column": "file_path",
+      "type": "varchar",
+      "nullable": "NO"
+    },
+    {
+      "table": "media_assets",
+      "column": "alt_text",
+      "type": "varchar",
+      "nullable": "YES"
+    },
+    {
+      "table": "media_assets",
+      "column": "title",
+      "type": "varchar",
+      "nullable": "YES"
+    },
+    {
+      "table": "media_assets",
+      "column": "file_type",
+      "type": "varchar",
+      "nullable": "YES"
+    },
+    {
+      "table": "media_assets",
+      "column": "placement",
+      "type": "varchar",
+      "nullable": "NO"
+    },
+    {
+      "table": "media_assets",
+      "column": "related_slug",
+      "type": "varchar",
+      "nullable": "YES"
+    },
+    {
+      "table": "media_assets",
+      "column": "caption",
+      "type": "text",
+      "nullable": "YES"
+    },
+    {
+      "table": "media_assets",
+      "column": "filename",
+      "type": "text",
+      "nullable": "YES"
+    },
+    {
+      "table": "media_assets",
+      "column": "mime_type",
+      "type": "text",
+      "nullable": "YES"
+    },
+    {
+      "table": "media_assets",
+      "column": "storage_bucket",
+      "type": "text",
+      "nullable": "NO"
+    },
+    {
+      "table": "homepage_hero_assets",
+      "column": "kind",
+      "type": "text",
+      "nullable": "NO"
+    },
+    {
+      "table": "homepage_hero_assets",
+      "column": "original_path",
+      "type": "text",
+      "nullable": "NO"
+    },
+    {
+      "table": "homepage_hero_assets",
+      "column": "filename",
+      "type": "text",
+      "nullable": "NO"
+    },
+    {
+      "table": "admin_profiles",
+      "column": "display_name",
+      "type": "text",
+      "nullable": "YES"
+    }
+  ],
+  "functions": [
+    {
+      "name": "can_manage_availability",
+      "args": "target_property uuid",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "267281a2991680ebada4bad25e2046b8d15e81cbb796616c7e95fb724f304a59"
+    },
+    {
+      "name": "is_property_admin",
+      "args": "target_property uuid, allowed_roles text[]",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "a7c14c788e3b6e65248d178cc0d8a417c4099cbd3312ea511299fda9dc3599d4"
+    },
+    {
+      "name": "can_manage_rates",
+      "args": "target_property uuid",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "e5f5fa6e7a9cfebaad3aea84fb7dbb8cf4744daead8908bc1acee09ade74ef72"
+    },
+    {
+      "name": "can_manage_homepage",
+      "args": "target_property uuid",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "aab0b84f60a5a2281dc162d453a29419a8a32754224836f2dc03a2286dadcfd8"
+    },
+    {
+      "name": "set_updated_at",
+      "args": "",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "6aa175c4af5f3440da81fed7e0020d1e1b2c204a81934aa2537c163f418eb526"
+    },
+    {
+      "name": "can_manage_site_content",
+      "args": "target_property uuid",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "7343bc70a234eda4e63d163335d54940c399fa1367bb87facb4aff1abe883271"
+    },
+    {
+      "name": "can_manage_amenities",
+      "args": "target_property uuid",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "fc71ecfb825dd25f8fb967cc47ae680e5dbf13ec6cc02dbd1ec2b4b94eda4676"
+    },
+    {
+      "name": "apply_content_lifecycle_timestamps",
+      "args": "",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "e62f28939d38d98ddee8c2bc7a355a83021b64ae111d3bc7e57d3f188ad05189"
+    },
+    {
+      "name": "is_room_available",
+      "args": "target_room uuid, stay_start date, stay_end date",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "52cd75f87018b5ab5337490c2fae1d13cc8f0a6e208ee8b3dbadd0997e578d38"
+    },
+    {
+      "name": "can_manage_experiences",
+      "args": "target_property uuid",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "7343bc70a234eda4e63d163335d54940c399fa1367bb87facb4aff1abe883271"
+    },
+    {
+      "name": "can_manage_property",
+      "args": "target_property uuid, allowed_roles admin_role[]",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "4ac2fc5af25fcb95f60e304de4911bbcc217b1af5c85ce40a9b7154dd6eb6121"
+    },
+    {
+      "name": "capture_page_seo_slug_change",
+      "args": "",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "0c32281ea1dbaa70defe52bc8296cf28c4bb202ca9ffe7ad46857ba37a5dbad0"
+    },
+    {
+      "name": "expire_booking_holds",
+      "args": "target_property uuid",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "96ea54817e0a23b4242aeedca83508ce6b28163b56f4dd17ca3440d820e48872"
+    },
+    {
+      "name": "create_booking_hold",
+      "args": "target_room_type uuid, stay_start date, stay_end date, guest_count integer, guest_data jsonb, addon_data jsonb",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "9ae41cfad923beb5aeb3e4a0c7e80d7cd36f16c1f77f4c29593402b1583598a8"
+    },
+    {
+      "name": "available_room_count",
+      "args": "target_property uuid, target_room_type uuid, stay_start date, stay_end date",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "a9abb2e6b9308c34ee6aa08700de9d744a72c6c9fe6bb1fa6410e5292511cb98"
+    },
+    {
+      "name": "submit_contact_inquiry",
+      "args": "sender_name text, sender_email text, sender_phone text, inquiry_subject text, inquiry_message text",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "0e624fb61a18082a0f2143437acda869de47995cfb5ddd9be6f846036b9e87fc"
+    },
+    {
+      "name": "validate_external_calendar_target",
+      "args": "",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "8cb4f812e9e97b727963ea6a4d6957f53d908c14acf31cd01640e7ab8b572e66"
+    },
+    {
+      "name": "sync_booking_reservation_status",
+      "args": "",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "ffd1cd46bba69ed6b97fb5471186a8156e2fa4c5b535eda0fbd155fcc96c6f87"
+    },
+    {
+      "name": "mirror_external_calendar_event",
+      "args": "",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "b9c79a7b6720c9ab219899623b73f8d6a51f4e35b175af09ee497544e9f63c9a"
+    },
+    {
+      "name": "refresh_external_calendar_blocks",
+      "args": "",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "d75f35320bfc255cbd321c27dd3926fe16809fa17fdf4708af60619fabd15b11"
+    },
+    {
+      "name": "lock_property_inventory",
+      "args": "",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "313e918ad2ae3fa50b632c3ad93206eff90e2fcc006bc94ce1612add428bbe39"
+    },
+    {
+      "name": "guard_room_reservation_availability",
+      "args": "",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "537d47b2f64533bc80d14f9458bef449cad7b385942913f0fe189d38cdc9da5e"
+    },
+    {
+      "name": "sync_external_calendar_events",
+      "args": "target_calendar uuid, event_payload jsonb",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "01e831954f6213dad92cfb0f84e16305ff279f3de1a4af37b18770214b794aa5"
+    },
+    {
+      "name": "get_booking_confirmation",
+      "args": "target_token uuid",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "7176e7de6a59ee6987f8b9ee837a4be41dbe595414dc2a9e04d6cdd4e5e5bb0c"
+    },
+    {
+      "name": "is_external_calendar_export_enabled",
+      "args": "target_token text",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "369dd357e41b3cdfca3cc0af05eb6793114893ce235c18ae89bc0f99205320e8"
+    },
+    {
+      "name": "get_external_calendar_export_events",
+      "args": "target_token text",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "ef36c119be9094d9e39566b17e5ab1e738ec2407bc8d997d595a873cffe2f55d"
+    },
+    {
+      "name": "guard_booking_item_currency",
+      "args": "",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "77c3da63ae5d458b11207357dcda584ef941c3fded03085454476cc909a88776"
+    },
+    {
+      "name": "sync_room_inventory",
+      "args": "target_room_type uuid, target_count integer, actor uuid",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "126a5b067cea8f3df9fb35b2fdc7a2ea3fbbcb400400c103e0c5aca0d0e53bac"
+    },
+    {
+      "name": "next_booking_reference",
+      "args": "target_property uuid",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "a36821c05e3b4275e4f3167034adb1aefaec3c2b73e59ab0a359479b0139580b"
+    },
+    {
+      "name": "calculate_room_stay_price",
+      "args": "target_property uuid, target_room_type uuid, stay_start date, stay_end date, guest_count integer",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "e1fd380e222ca0b857f8fa3e77ac102bef61523751dd1a20aaec60e0ebddcd77"
+    },
+    {
+      "name": "create_multi_room_booking_package_hold",
+      "args": "room_data jsonb, stay_start date, stay_end date, guest_count integer, guest_data jsonb, addon_data jsonb",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "2563bc2d59a863dbde7e99fccfa26e808645ec9ebd4f88f09167770e050daa01"
+    },
+    {
+      "name": "guard_availability_block_reservations",
+      "args": "",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "a294fc0a5b5786a1983144c54f9c27eb383ef85572eed51c68c2ed84a8769ab7"
+    },
+    {
+      "name": "sync_booking_item_status",
+      "args": "",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "ae1c4a59538727456e255f28362852ea8a4481c059d197af430a00c992baa344"
+    },
+    {
+      "name": "create_booking_package_hold",
+      "args": "target_room_type uuid, stay_start date, stay_end date, guest_count integer, guest_data jsonb, addon_data jsonb",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "ce9eea8fe705b561cd0a623947fe32f1c13ceb51661b32de4d63466fb380d155"
+    },
+    {
+      "name": "enqueue_booking_notification",
+      "args": "",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "97fe96bdfaa226a575182f64f878195dcaee862b2f124648426e96f87b6dda0b"
+    },
+    {
+      "name": "guard_experience_booking_item",
+      "args": "",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "cfbe330d43d45378ccab8bf5a58c5112c0ca27d9800caa56b36cd6956acb4012"
+    },
+    {
+      "name": "get_public_experience_slots",
+      "args": "target_experience uuid, from_date date",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "b791793d08b2a33e8db94c45a57bfc991e9a295b40f8c5af6f7814bf488bef03"
+    },
+    {
+      "name": "create_experience_booking_hold",
+      "args": "target_experience uuid, requested_date date, requested_time time without time zone, participant_count integer, guest_data jsonb",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "359531b18ff0c41d80f5ae428f0614353dc19d721212cb6501376b3d7ab725cd"
+    },
+    {
+      "name": "enrich_experience_booking_notification",
+      "args": "",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "f70ca5a758773b9ba269eb264616f9d9757c8951f02503fe24fd79042a002e53"
+    },
+    {
+      "name": "validate_room_occupancy",
+      "args": "target_room_type uuid, adult_count integer, child_count integer, infant_count integer",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "4a7125079347b79d4f4fe31a3315f147df381791cf1f08d802f2059eddabe64c"
+    },
+    {
+      "name": "confirm_booking_hold",
+      "args": "target_booking uuid, target_token uuid",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "e55d9950ef288c1dfcc0dc2639134ca8bac45e7950192980967aa6e40184c201"
+    },
+    {
+      "name": "create_admin_booking",
+      "args": "target_room_type uuid, stay_start date, stay_end date, adult_count integer, child_count integer, guest_data jsonb",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "91d254a9750ddb9c5e412ae0eaa3ab7d3f3bb22309a4a1cc207e3cda15fdef11"
+    },
+    {
+      "name": "get_booking_confirmation_package",
+      "args": "target_token uuid",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "68f48f988e0ad9ed049c310351c5fece2f729ab4850d91f06fedab8efc2ba8cd"
+    },
+    {
+      "name": "create_admin_booking",
+      "args": "target_room_type uuid, stay_start date, stay_end date, adult_count integer, child_count integer, infant_count integer, guest_data jsonb",
+      "config": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "source_sha256": "e00475be76d992f4d3e91a009959f9b608a0eca98ce3ff9d21fe5364055e3c94"
+    }
+  ],
+  "grants": [
+    {
+      "table_name": "cms_documents",
+      "grantee": "anon",
+      "privilege_type": "INSERT"
+    },
+    {
+      "table_name": "cms_documents",
+      "grantee": "anon",
+      "privilege_type": "SELECT"
+    },
+    {
+      "table_name": "cms_documents",
+      "grantee": "anon",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "table_name": "cms_documents",
+      "grantee": "anon",
+      "privilege_type": "DELETE"
+    },
+    {
+      "table_name": "cms_documents",
+      "grantee": "anon",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "table_name": "cms_documents",
+      "grantee": "anon",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "table_name": "cms_documents",
+      "grantee": "anon",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "table_name": "cms_documents",
+      "grantee": "authenticated",
+      "privilege_type": "INSERT"
+    },
+    {
+      "table_name": "cms_documents",
+      "grantee": "authenticated",
+      "privilege_type": "SELECT"
+    },
+    {
+      "table_name": "cms_documents",
+      "grantee": "authenticated",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "table_name": "cms_documents",
+      "grantee": "authenticated",
+      "privilege_type": "DELETE"
+    },
+    {
+      "table_name": "cms_documents",
+      "grantee": "authenticated",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "table_name": "cms_documents",
+      "grantee": "authenticated",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "table_name": "cms_documents",
+      "grantee": "authenticated",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "table_name": "cms_documents",
+      "grantee": "service_role",
+      "privilege_type": "INSERT"
+    },
+    {
+      "table_name": "cms_documents",
+      "grantee": "service_role",
+      "privilege_type": "SELECT"
+    },
+    {
+      "table_name": "cms_documents",
+      "grantee": "service_role",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "table_name": "cms_documents",
+      "grantee": "service_role",
+      "privilege_type": "DELETE"
+    },
+    {
+      "table_name": "cms_documents",
+      "grantee": "service_role",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "table_name": "cms_documents",
+      "grantee": "service_role",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "table_name": "cms_documents",
+      "grantee": "service_role",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "table_name": "admin_users",
+      "grantee": "anon",
+      "privilege_type": "INSERT"
+    },
+    {
+      "table_name": "admin_users",
+      "grantee": "anon",
+      "privilege_type": "SELECT"
+    },
+    {
+      "table_name": "admin_users",
+      "grantee": "anon",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "table_name": "admin_users",
+      "grantee": "anon",
+      "privilege_type": "DELETE"
+    },
+    {
+      "table_name": "admin_users",
+      "grantee": "anon",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "table_name": "admin_users",
+      "grantee": "anon",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "table_name": "admin_users",
+      "grantee": "anon",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "table_name": "admin_users",
+      "grantee": "authenticated",
+      "privilege_type": "INSERT"
+    },
+    {
+      "table_name": "admin_users",
+      "grantee": "authenticated",
+      "privilege_type": "SELECT"
+    },
+    {
+      "table_name": "admin_users",
+      "grantee": "authenticated",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "table_name": "admin_users",
+      "grantee": "authenticated",
+      "privilege_type": "DELETE"
+    },
+    {
+      "table_name": "admin_users",
+      "grantee": "authenticated",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "table_name": "admin_users",
+      "grantee": "authenticated",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "table_name": "admin_users",
+      "grantee": "authenticated",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "table_name": "admin_users",
+      "grantee": "service_role",
+      "privilege_type": "INSERT"
+    },
+    {
+      "table_name": "admin_users",
+      "grantee": "service_role",
+      "privilege_type": "SELECT"
+    },
+    {
+      "table_name": "admin_users",
+      "grantee": "service_role",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "table_name": "admin_users",
+      "grantee": "service_role",
+      "privilege_type": "DELETE"
+    },
+    {
+      "table_name": "admin_users",
+      "grantee": "service_role",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "table_name": "admin_users",
+      "grantee": "service_role",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "table_name": "admin_users",
+      "grantee": "service_role",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "table_name": "admin_profiles",
+      "grantee": "anon",
+      "privilege_type": "INSERT"
+    },
+    {
+      "table_name": "admin_profiles",
+      "grantee": "anon",
+      "privilege_type": "SELECT"
+    },
+    {
+      "table_name": "admin_profiles",
+      "grantee": "anon",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "table_name": "admin_profiles",
+      "grantee": "anon",
+      "privilege_type": "DELETE"
+    },
+    {
+      "table_name": "admin_profiles",
+      "grantee": "anon",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "table_name": "admin_profiles",
+      "grantee": "anon",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "table_name": "admin_profiles",
+      "grantee": "anon",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "table_name": "admin_profiles",
+      "grantee": "authenticated",
+      "privilege_type": "INSERT"
+    },
+    {
+      "table_name": "admin_profiles",
+      "grantee": "authenticated",
+      "privilege_type": "SELECT"
+    },
+    {
+      "table_name": "admin_profiles",
+      "grantee": "authenticated",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "table_name": "admin_profiles",
+      "grantee": "authenticated",
+      "privilege_type": "DELETE"
+    },
+    {
+      "table_name": "admin_profiles",
+      "grantee": "authenticated",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "table_name": "admin_profiles",
+      "grantee": "authenticated",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "table_name": "admin_profiles",
+      "grantee": "authenticated",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "table_name": "admin_profiles",
+      "grantee": "service_role",
+      "privilege_type": "INSERT"
+    },
+    {
+      "table_name": "admin_profiles",
+      "grantee": "service_role",
+      "privilege_type": "SELECT"
+    },
+    {
+      "table_name": "admin_profiles",
+      "grantee": "service_role",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "table_name": "admin_profiles",
+      "grantee": "service_role",
+      "privilege_type": "DELETE"
+    },
+    {
+      "table_name": "admin_profiles",
+      "grantee": "service_role",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "table_name": "admin_profiles",
+      "grantee": "service_role",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "table_name": "admin_profiles",
+      "grantee": "service_role",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "table_name": "media_assets",
+      "grantee": "anon",
+      "privilege_type": "INSERT"
+    },
+    {
+      "table_name": "media_assets",
+      "grantee": "anon",
+      "privilege_type": "SELECT"
+    },
+    {
+      "table_name": "media_assets",
+      "grantee": "anon",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "table_name": "media_assets",
+      "grantee": "anon",
+      "privilege_type": "DELETE"
+    },
+    {
+      "table_name": "media_assets",
+      "grantee": "anon",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "table_name": "media_assets",
+      "grantee": "anon",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "table_name": "media_assets",
+      "grantee": "anon",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "table_name": "media_assets",
+      "grantee": "authenticated",
+      "privilege_type": "INSERT"
+    },
+    {
+      "table_name": "media_assets",
+      "grantee": "authenticated",
+      "privilege_type": "SELECT"
+    },
+    {
+      "table_name": "media_assets",
+      "grantee": "authenticated",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "table_name": "media_assets",
+      "grantee": "authenticated",
+      "privilege_type": "DELETE"
+    },
+    {
+      "table_name": "media_assets",
+      "grantee": "authenticated",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "table_name": "media_assets",
+      "grantee": "authenticated",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "table_name": "media_assets",
+      "grantee": "authenticated",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "table_name": "media_assets",
+      "grantee": "service_role",
+      "privilege_type": "INSERT"
+    },
+    {
+      "table_name": "media_assets",
+      "grantee": "service_role",
+      "privilege_type": "SELECT"
+    },
+    {
+      "table_name": "media_assets",
+      "grantee": "service_role",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "table_name": "media_assets",
+      "grantee": "service_role",
+      "privilege_type": "DELETE"
+    },
+    {
+      "table_name": "media_assets",
+      "grantee": "service_role",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "table_name": "media_assets",
+      "grantee": "service_role",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "table_name": "media_assets",
+      "grantee": "service_role",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "table_name": "booking_reference_counters",
+      "grantee": "anon",
+      "privilege_type": "INSERT"
+    },
+    {
+      "table_name": "booking_reference_counters",
+      "grantee": "anon",
+      "privilege_type": "SELECT"
+    },
+    {
+      "table_name": "booking_reference_counters",
+      "grantee": "anon",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "table_name": "booking_reference_counters",
+      "grantee": "anon",
+      "privilege_type": "DELETE"
+    },
+    {
+      "table_name": "booking_reference_counters",
+      "grantee": "anon",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "table_name": "booking_reference_counters",
+      "grantee": "anon",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "table_name": "booking_reference_counters",
+      "grantee": "anon",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "table_name": "booking_reference_counters",
+      "grantee": "authenticated",
+      "privilege_type": "INSERT"
+    },
+    {
+      "table_name": "booking_reference_counters",
+      "grantee": "authenticated",
+      "privilege_type": "SELECT"
+    },
+    {
+      "table_name": "booking_reference_counters",
+      "grantee": "authenticated",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "table_name": "booking_reference_counters",
+      "grantee": "authenticated",
+      "privilege_type": "DELETE"
+    },
+    {
+      "table_name": "booking_reference_counters",
+      "grantee": "authenticated",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "table_name": "booking_reference_counters",
+      "grantee": "authenticated",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "table_name": "booking_reference_counters",
+      "grantee": "authenticated",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "table_name": "booking_reference_counters",
+      "grantee": "service_role",
+      "privilege_type": "INSERT"
+    },
+    {
+      "table_name": "booking_reference_counters",
+      "grantee": "service_role",
+      "privilege_type": "SELECT"
+    },
+    {
+      "table_name": "booking_reference_counters",
+      "grantee": "service_role",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "table_name": "booking_reference_counters",
+      "grantee": "service_role",
+      "privilege_type": "DELETE"
+    },
+    {
+      "table_name": "booking_reference_counters",
+      "grantee": "service_role",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "table_name": "booking_reference_counters",
+      "grantee": "service_role",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "table_name": "booking_reference_counters",
+      "grantee": "service_role",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "table_name": "homepage_hero_assets",
+      "grantee": "anon",
+      "privilege_type": "INSERT"
+    },
+    {
+      "table_name": "homepage_hero_assets",
+      "grantee": "anon",
+      "privilege_type": "SELECT"
+    },
+    {
+      "table_name": "homepage_hero_assets",
+      "grantee": "anon",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "table_name": "homepage_hero_assets",
+      "grantee": "anon",
+      "privilege_type": "DELETE"
+    },
+    {
+      "table_name": "homepage_hero_assets",
+      "grantee": "anon",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "table_name": "homepage_hero_assets",
+      "grantee": "anon",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "table_name": "homepage_hero_assets",
+      "grantee": "anon",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "table_name": "homepage_hero_assets",
+      "grantee": "authenticated",
+      "privilege_type": "INSERT"
+    },
+    {
+      "table_name": "homepage_hero_assets",
+      "grantee": "authenticated",
+      "privilege_type": "SELECT"
+    },
+    {
+      "table_name": "homepage_hero_assets",
+      "grantee": "authenticated",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "table_name": "homepage_hero_assets",
+      "grantee": "authenticated",
+      "privilege_type": "DELETE"
+    },
+    {
+      "table_name": "homepage_hero_assets",
+      "grantee": "authenticated",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "table_name": "homepage_hero_assets",
+      "grantee": "authenticated",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "table_name": "homepage_hero_assets",
+      "grantee": "authenticated",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "table_name": "homepage_hero_assets",
+      "grantee": "service_role",
+      "privilege_type": "INSERT"
+    },
+    {
+      "table_name": "homepage_hero_assets",
+      "grantee": "service_role",
+      "privilege_type": "SELECT"
+    },
+    {
+      "table_name": "homepage_hero_assets",
+      "grantee": "service_role",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "table_name": "homepage_hero_assets",
+      "grantee": "service_role",
+      "privilege_type": "DELETE"
+    },
+    {
+      "table_name": "homepage_hero_assets",
+      "grantee": "service_role",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "table_name": "homepage_hero_assets",
+      "grantee": "service_role",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "table_name": "homepage_hero_assets",
+      "grantee": "service_role",
+      "privilege_type": "TRIGGER"
+    }
+  ]
+}

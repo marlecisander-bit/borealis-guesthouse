@@ -1,8 +1,16 @@
+import { previewEnabled } from '@/lib/readonly-preview/policy';
+import { previewServerResponse } from '@/lib/readonly-preview/server-request';
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { fetchSupabase } from '@/lib/supabase/fetch';
 
 export async function proxy(request: NextRequest) {
+  if (previewEnabled()) {
+    return previewServerResponse(request);
+  }
+  // Preserve the historical production matcher behavior when preview is off.
+  const path = request.nextUrl.pathname;
+  if (path.startsWith('/api') || path.startsWith('/_next/static') || path.startsWith('/_next/image') || path.includes('.')) return NextResponse.next();
   let response = NextResponse.next({ request });
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -70,4 +78,4 @@ export async function proxy(request: NextRequest) {
   return response;
 }
 
-export const config = { matcher: ['/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)'] };
+export const config = { matcher: ['/:path*'] };

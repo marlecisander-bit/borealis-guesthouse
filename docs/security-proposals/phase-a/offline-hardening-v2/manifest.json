@@ -1,0 +1,14 @@
+{
+  "F01-01-exact-rpc-acl-v2.sql.proposed": {
+    "sha256": "85d264c3f8daea65ba3a18645cf9e35fb022692a5e438406372ff2008593cd4d",
+    "original_sha256": "74128a10917c7f17fe0c1530655e058d8de0418fd682ce28af1031cd8783254a",
+    "execution_approved": false,
+    "postgresql_parser_or_runtime_tested": false
+  },
+  "F01-02-guarded-contraction-v2.sql.proposed": {
+    "sha256": "2c75705cae58221c4f1abb7cd65af03c415abfae28ea7b234151f07179514c46",
+    "original_sha256": "0d5dfb0ecfa63a104d56b81fe9a513cce9bf7e02ce276f09259559a99f8faadc",
+    "execution_approved": false,
+    "postgresql_parser_or_runtime_tested": false
+  }
+}

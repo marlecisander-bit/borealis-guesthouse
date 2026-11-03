@@ -10,7 +10,7 @@ import type { LanguageRecord } from '@/types/languages';
 import { isHomeNavigationItem } from '@/lib/navigation/home';
 import { BookingLink, useBookingRoutePrefetch } from './BookingLink';
 
-const fallbackLinks = [['Home', '/'], ['Rooms', '/rooms'], ['Experiences', '/experiences'], ['Explore Koman', '/explore-koman'], ['Transfers', '/transfers'], ['Gallery', '/gallery'], ['About', '/about'], ['Contact', '/contact']];
+const fallbackLinks = [['Home', '/'], ['Rooms', '/rooms'], ['Journey', '/experiences'], ['Explore Koman', '/explore-koman'], ['Discover', '/gallery'], ['About', '/about']];
 const mobileFocusable = 'a[href],button:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
 export function Header({ overlay = false, navigation, languages = [], selectedLanguage = '', bookingCtaLabel = 'Book now', mobileBookingCtaLabel = 'Check availability' }: { overlay?: boolean; navigation?: { label: string; href: string }[]; languages?: LanguageRecord[]; selectedLanguage?: string; bookingCtaLabel?: string; mobileBookingCtaLabel?: string }) {
@@ -108,7 +108,7 @@ export function Header({ overlay = false, navigation, languages = [], selectedLa
   }, [open]);
 
   const closeMenu = () => setOpen(false);
-  const active = (href: string) => href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`);
+  const active = (href: string) => href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`) || (href === '/experiences' && (pathname === '/transfers' || pathname.startsWith('/transfers/'))) || (href === '/gallery' && pathname === '/contact');
   const scrolledOverlay = overlay && scrolled;
 
   return <><header
@@ -124,7 +124,7 @@ export function Header({ overlay = false, navigation, languages = [], selectedLa
           <BorealisLogo priority variant="dark" className="hidden h-14 w-auto lg:block" />
         </> : <BorealisLogo priority variant={transparent ? 'light' : 'dark'} className="block h-14 w-auto -translate-y-0.5 sm:translate-y-0" />}
       </HomeLink>
-      <nav data-desktop-navigation className={`hidden items-center gap-3 text-[.58rem] font-semibold uppercase tracking-[.1em] lg:flex xl:gap-5 xl:text-[.64rem] xl:tracking-[.13em] ${desktopTone}`} aria-label="Main navigation">
+      <nav data-desktop-navigation className={`hidden items-center gap-3 text-[.58rem] lg:ml-auto lg:mr-6 font-semibold uppercase tracking-[.1em] lg:flex xl:gap-5 xl:text-[.64rem] xl:tracking-[.13em] ${desktopTone}`} aria-label="Main navigation">
         {links.map(([label, href]) => href === '/' ? <HomeLink key={`${label}-${href}`} ariaCurrent={active(href) ? 'page' : undefined} className="transition-opacity hover:opacity-60">{label}</HomeLink> : <Link key={`${label}-${href}`} href={href} aria-current={active(href) ? 'page' : undefined} className="transition-opacity hover:opacity-60">{label}</Link>)}
       </nav>
       <div className="flex items-center gap-2">

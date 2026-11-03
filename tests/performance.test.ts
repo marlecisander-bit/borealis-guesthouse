@@ -46,7 +46,7 @@ test('media usage checks are batched and retain mobile Hero archive protection',
 test('live Supabase transport explicitly bypasses cache by default',async()=>{
  const original=globalThis.fetch,calls:any[]=[];
  globalThis.fetch=async(_input,init)=>{calls.push(init);return new Response()};
- try{const {fetchSupabase}=load('src/lib/supabase/fetch.ts',{});await fetchSupabase('https://example.test/rest/v1/bookings');assert.equal(calls[0].cache,'no-store');assert.ok(calls[0].signal);}finally{globalThis.fetch=original;}
+ try{const {fetchSupabase}=load('src/lib/supabase/fetch.ts',{'../readonly-preview/policy':{previewEnabled:()=>false}});await fetchSupabase('https://example.test/rest/v1/bookings');assert.equal(calls[0].cache,'no-store');assert.ok(calls[0].signal);}finally{globalThis.fetch=original;}
 });
 
 test('homepage selection preserves order and fills gaps left by unpublished items',async()=>{

@@ -1,4 +1,5 @@
-export type SiteDocumentKey='rooms'|'experiences'|'transfers'|'explore-koman'|'about'|'gallery'|'contact'|'book'|'global'|'footer';
+export const SITE_DOCUMENT_KEYS = ['rooms','experiences','transfers','explore-koman','about','gallery','contact','book','global','footer'] as const;
+export type SiteDocumentKey = typeof SITE_DOCUMENT_KEYS[number];
 export interface SiteDocument{id:string;key:SiteDocumentKey;data:Record<string,string>;status:'draft'|'published'}
 export interface NavigationItem{id:string;label:string;href:string;location:'header'|'footer';visible:boolean;sortOrder:number;status:'published'|'archived'}
 export interface SiteContentState{ok:boolean;message:string}

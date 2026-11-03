@@ -1,0 +1,11 @@
+# F03 media and hero metadata review candidate v2
+
+Local preparation complete; no SQL executed. Use this complete alternative transaction for future review, not the original followed by this file. Original proposal and hash remain intact.
+
+The existing Storage/media statements are preserved. Added hero policies replace only admin read/insert/update with active O/M/E property authorization, keeping ready-state public reads and lifecycle/size constraints. No shared can_manage_homepage body, real membership, bucket or object is changed. A pure invoker helper validates the exact original id/kind/property path and optimized variant paths and dimensions; pending/processing may have empty variants, ready writes require at least one variant. SELECT remains property-role based so authorized editors can inspect/repair legacy rows; UPDATE checks the source property and validates the target row. Public ready reads do not depend on the private validator.
+
+Guards use the last recorded read-only metadata and server-side can_manage_property fingerprint, not the older indentation-normalized local F01 fingerprint. Original F01 proposals are not changed. Exact policy/helper/role/default-grant checks can fail closed on drift. This candidate has not been parsed or run by PostgreSQL; static/mocked tests do not establish RLS behavior. Future execution still requires fresh full ACL/column/default privilege review, exact schema/helper/grant assertions, actual Storage operation context, signed-capability lifetime/in-flight drain, legacy row compatibility and a source-only release review. This is not an approved production runner.
+
+The local authenticated hero app accepts 10 MiB; the existing 24 MiB DB metadata constraint remains unchanged to avoid a silent historical-data narrowing. Existing ready reads remain available; legacy malformed write targets need a deliberate repair plan, never an automatic backfill. No path/object existence or byte validity is proved by metadata policy validation.
+
+Deploy compatibility while authoring is paused, apply only separately approved final policies, deny new signing at the service boundary, then drain outstanding capabilities and in-flight requests before reopening. Documented two-hour expiry is not proof of the deployed maximum. No signed token was minted/revoked. No insecure legacy-policy rollback is prepared.

@@ -54,7 +54,7 @@ function HeroImageControl({ kind, value, onChange, fallback = '' }: { kind: Hero
     if (!file || busy) return;
     const version = ++selectionVersion.current;
     setMessage('');
-    if (!(file.type in HERO_IMAGE_CONFIG.mimeExtensions) || !file.size || file.size > HERO_IMAGE_CONFIG.maxBytes) { setMessage('Choose a JPEG, PNG, WebP or AVIF image up to 24 MB.'); return; }
+    if (!(file.type in HERO_IMAGE_CONFIG.mimeExtensions) || !file.size || file.size > HERO_IMAGE_CONFIG.maxBytes) { setMessage('Choose a JPEG, PNG, WebP or AVIF image up to 10 MiB.'); return; }
     const url = URL.createObjectURL(file);
     try {
       const image = new window.Image();
@@ -78,8 +78,8 @@ function HeroImageControl({ kind, value, onChange, fallback = '' }: { kind: Hero
         const started = await heroRequest({ action: 'start', kind, filename: chosen.file.name, size: chosen.file.size, mime: chosen.file.type });
         const {createClient}=await import('@/lib/supabase/client');
         const db = createClient();
-        const uploaded = await db.storage.from('public-media').uploadToSignedUrl(started.path, started.token, chosen.file, { contentType: chosen.file.type, cacheControl: '31536000' });
-        if (uploaded.error) throw new Error('Upload interrupted. Check your connection and retry.');
+        const { uploadHeroOriginal } = await import('@/lib/hero-original-upload');
+        await uploadHeroOriginal(db, started, chosen.file, kind);
         id = started.id;
         setUploadId(id);
       }

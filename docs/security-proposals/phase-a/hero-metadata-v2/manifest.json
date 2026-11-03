@@ -1,0 +1,9 @@
+{
+  "original": "docs/security-proposals/phase-a/F03-media-policy-consolidation.sql.proposed",
+  "original_sha256": "c37193538e29df1f67a0a1fecbeba87209b40584f7b4bc08cef1c3f07febf217",
+  "candidate": "F03-media-and-hero-policy-consolidation-v2.sql.proposed",
+  "candidate_sha256": "9214519c97484958c7b632aad6e333a18b98ad3cd02ec9a09496bf2861c92f1e",
+  "executed": false,
+  "postgresql_parser_runtime_tested": false,
+  "supersedes_original_as_review_candidate": true
+}

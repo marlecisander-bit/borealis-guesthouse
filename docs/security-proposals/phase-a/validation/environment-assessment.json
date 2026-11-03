@@ -1,0 +1,43 @@
+{
+  "assessment_date": "2026-10-21",
+  "services_started": false,
+  "production_sql_executed": false,
+  "new_project_created": false,
+  "docker": {
+    "client_server_version": "29.8.2",
+    "borealis_containers": 14,
+    "running_borealis_containers": 0,
+    "official_cli_containers": 9,
+    "historical_custom_containers": 5,
+    "official_network": "borealis-cli-dev-20261020",
+    "historical_network": "borealis-local-only-isolated",
+    "official_volumes": [
+      "supabase_db_borealis-cli-dev-20261020",
+      "supabase_storage_borealis-cli-dev-20261020"
+    ],
+    "official_images": {
+      "postgres": "17.11.0.004",
+      "auth": "v2.197.0",
+      "postgrest": "v16.4",
+      "storage": "v1.82.1"
+    },
+    "inspection_scope": "Read-only selected metadata; no container environment or secrets displayed"
+  },
+  "cli": {
+    "version": "2.121.0",
+    "sha256": "6e8be5fb2802ccdd247d3b47823c31ed8d7e792255048594ba32ee79a55208dc",
+    "help_only_under_network_denial": true
+  },
+  "historical_binding_probe": {
+    "omitted_host": "wildcard IPv4 and IPv6",
+    "explicit_numeric_loopback": "127.0.0.1 only",
+    "new_probe_run": false,
+    "limitation": "Explicit Docker publish success does not establish supported pinned CLI configuration"
+  },
+  "hosted_preparation": {
+    "dev_project_reference": null,
+    "activation_allowed": false,
+    "maximum_additional_spend": 0
+  },
+  "recommendation": "Separate hosted DEV after explicit provisioning authorization and current capacity verification"
+}

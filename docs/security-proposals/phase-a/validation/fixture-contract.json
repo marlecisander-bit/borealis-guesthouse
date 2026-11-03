@@ -1,0 +1,24 @@
+{
+  "status": "NOT_CREATED",
+  "properties": {
+    "A": "10000000-0000-4000-8000-000000000001",
+    "B": "10000000-0000-4000-8000-000000000002"
+  },
+  "user_aliases": [
+    "owner_A",
+    "manager_A",
+    "editor_A",
+    "staff_A",
+    "disabled_editor_A",
+    "non_member",
+    "legacy_email_only_A",
+    "owner_A_staff_B",
+    "editor_B"
+  ],
+  "user_ids": "Allocate in isolated Auth; do not substitute or copy real IDs",
+  "email_domain": "example.test; no email sends",
+  "cms": "Distinct synthetic published/draft markers for same published row plus unpublished and archived rows",
+  "booking": "Synthetic room/multi-room/experience inventory rates settings holds counters notifications; EUR fixtures; no providers",
+  "media": "Small generated raster bytes only; own-property and malformed/legacy path variants; no real object copies",
+  "credentials": "DEV-only secrets outside docs/Git; ordinary JWTs for permission assertions; elevated setup identity separate"
+}

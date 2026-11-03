@@ -4,17 +4,19 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import ts from 'typescript';
 import * as config from '../src/lib/hero-image-config.ts';
+import * as security from '../src/lib/media-upload-security.ts';
 import { processHeroImage } from '../src/lib/hero-image-processing.ts';
 
 const require = createRequire(import.meta.url);
 const compiled = ts.transpileModule(readFileSync(new URL('../src/app/admin/content/homepage/hero-upload/route.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, esModuleInterop: true } }).outputText;
-const owner = { userId: 'owner', role: 'owner', propertyId: 'c889345c-c05b-4459-b72f-c1b441fc1160' };
+const owner = { userId: '30000000-0000-4000-8000-000000000001', role: 'owner', propertyId: 'c889345c-c05b-4459-b72f-c1b441fc1160' };
 function handler(session: typeof owner | null, db: unknown) {
   const dependencies: Record<string, unknown> = {
     '@/lib/admin/auth': { getCurrentAdmin: async () => session },
     '@/lib/supabase/server': { createServerSupabaseClient: async () => db },
     '@/lib/media-url': { mediaBucket: 'public-media' },
     '@/lib/hero-image-config': config,
+    '@/lib/media-upload-security': security,
     '@/lib/hero-assets': { mapHeroAsset: (row: unknown) => row, heroAssetColumns: '*' },
     '@/lib/hero-image-processing': { processHeroImage },
   };
@@ -29,7 +31,7 @@ test('Hero uploads reject anonymous, staff and cross-origin requests before touc
   assert.equal((await handler(owner, null)(request({ action: 'start' }, 'https://unrelated.example'))).status, 403);
 });
 
-test('Hero upload initiation validates type/size and signs an immutable property-owned original', async () => {
+test('Hero upload initiation validates type/size and returns an immutable property-owned path without signing', async () => {
   const rows: Record<string, unknown>[] = [];
   const signed: { path: string; upsert: boolean }[] = [];
   const db = {
@@ -44,9 +46,12 @@ test('Hero upload initiation validates type/size and signs an immutable property
   const response = await post(request({ action: 'start', kind: 'mobile_hero', mime: 'image/jpeg', size: 1000, filename: 'lake.jpg', propertyId: 'another-property' }));
   assert.equal(response.status, 200);
   assert.equal(rows[0].property_id, owner.propertyId);
-  assert.ok(signed[0].path.startsWith(`${owner.propertyId}/hero/mobile_hero/`));
-  assert.ok(signed[0].path.endsWith('/original/source.jpg'));
-  assert.equal(signed[0].upsert, false);
+  const started = await response.json();
+  assert.ok(started.path.startsWith(`${owner.propertyId}/hero/mobile_hero/`));
+  assert.ok(started.path.endsWith('/original/source.jpg'));
+  assert.equal(started.propertyId, owner.propertyId);
+  assert.equal(started.token, undefined);
+  assert.equal(signed.length, 0);
 });
 
 test('Finalization is property-scoped and an already-ready upload is not recompressed', async () => {

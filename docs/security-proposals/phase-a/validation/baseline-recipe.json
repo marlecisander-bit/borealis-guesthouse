@@ -1,0 +1,33 @@
+{
+  "status": "PREPARATION_ONLY_NOT_EXECUTABLE",
+  "target": null,
+  "schema_baseline_ready": false,
+  "ordering": [
+    "platform managed schemas/roles/extensions and version admission",
+    "enum definitions and application base tables with exact defaults",
+    "primary/unique/exclusion constraints indexes and FK dependency order",
+    "final membership helpers and application functions with exact owners/search_path/ACL",
+    "triggers and side-effect dependencies",
+    "exact RLS policies table/column/default grants and exposed views",
+    "schema fingerprint and restore rehearsal",
+    "synthetic fixture installation",
+    "F01 expand/app/contract",
+    "F02 exact helper ACL",
+    "F03 app/policy/capability drain"
+  ],
+  "blockers": [
+    "no admitted independent DEV target",
+    "full DDL/owners/defaults/role inheritance/column ACLs/platform configuration incomplete",
+    "eight recorded CMS keys vs ten application/RPC keys",
+    "Storage operation context/helpers not service-tested",
+    "hero 10 MiB bucket vs 24 MiB client mismatch"
+  ],
+  "excluded": [
+    "production guest/draft/media data",
+    "production membership/account copies",
+    "migration 034/035 room seed DML",
+    "blind replay of migration 037 seed DML",
+    "first-admin personal setup",
+    "production provider credentials and jobs"
+  ]
+}

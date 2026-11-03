@@ -1,0 +1,64 @@
+{
+  "repository": "https://github.com/google/fonts",
+  "commit": "47d54ca1ebb14fd864695f1d39dc734f39017c33",
+  "files": [
+    {
+      "path": "src/app/fonts/manrope/OFL.txt",
+      "source_url": "https://raw.githubusercontent.com/google/fonts/47d54ca1ebb14fd864695f1d39dc734f39017c33/ofl/manrope/OFL.txt",
+      "source_commit": "47d54ca1ebb14fd864695f1d39dc734f39017c33",
+      "github_blob_sha1": "e271172a9ed0cddc895aabb6509f1c7d880b492d",
+      "sha256": "58172e0c0fac2cda8a37b348164bb55e44b0e69051e557e92b1d3f6910141f7b",
+      "bytes": 4387,
+      "license": "SIL OFL 1.1"
+    },
+    {
+      "path": "src/app/fonts/manrope/METADATA.pb",
+      "source_url": "https://raw.githubusercontent.com/google/fonts/47d54ca1ebb14fd864695f1d39dc734f39017c33/ofl/manrope/METADATA.pb",
+      "source_commit": "47d54ca1ebb14fd864695f1d39dc734f39017c33",
+      "github_blob_sha1": "3e79d88e5324a509c44005bc94449d0a93f34fc7",
+      "sha256": "fb204147a7c16d009d4fa53248b6075bc941d7adfa450a825bc5d4cef2f9ded9",
+      "bytes": 732,
+      "license": null
+    },
+    {
+      "path": "src/app/fonts/manrope/Manrope[wght].ttf",
+      "source_url": "https://raw.githubusercontent.com/google/fonts/47d54ca1ebb14fd864695f1d39dc734f39017c33/ofl/manrope/Manrope%5Bwght%5D.ttf",
+      "source_commit": "47d54ca1ebb14fd864695f1d39dc734f39017c33",
+      "github_blob_sha1": "75274da58537d6123b14f2cd0c355ad4681fc2b3",
+      "sha256": "3ae11c49db0455a3cc33e37d380f20fdb8c7f8b41dc07625c177e3d87a9d6ae6",
+      "bytes": 164700,
+      "license": null
+    },
+    {
+      "path": "src/app/fonts/cormorantgaramond/OFL.txt",
+      "source_url": "https://raw.githubusercontent.com/google/fonts/47d54ca1ebb14fd864695f1d39dc734f39017c33/ofl/cormorantgaramond/OFL.txt",
+      "source_commit": "47d54ca1ebb14fd864695f1d39dc734f39017c33",
+      "github_blob_sha1": "507d70f4565352dbfcf2dfc9b42eb092b57c0be8",
+      "sha256": "60700d351cac4650c51f3f9db318d2a420f8b45052dba2715eb5fec41f0f6956",
+      "bytes": 4387,
+      "license": "SIL OFL 1.1"
+    },
+    {
+      "path": "src/app/fonts/cormorantgaramond/METADATA.pb",
+      "source_url": "https://raw.githubusercontent.com/google/fonts/47d54ca1ebb14fd864695f1d39dc734f39017c33/ofl/cormorantgaramond/METADATA.pb",
+      "source_commit": "47d54ca1ebb14fd864695f1d39dc734f39017c33",
+      "github_blob_sha1": "f013f7293318fe0b84fd8f72c2ec7a1c3e402966",
+      "sha256": "faa16a5e79613ca7cadd599ada1f4cf6891f3cb6731631fbed2a0b18a342e556",
+      "bytes": 1426,
+      "license": null
+    },
+    {
+      "path": "src/app/fonts/cormorantgaramond/CormorantGaramond[wght].ttf",
+      "source_url": "https://raw.githubusercontent.com/google/fonts/47d54ca1ebb14fd864695f1d39dc734f39017c33/ofl/cormorantgaramond/CormorantGaramond%5Bwght%5D.ttf",
+      "source_commit": "47d54ca1ebb14fd864695f1d39dc734f39017c33",
+      "github_blob_sha1": "d992a83ce525c330fad3a19087746bcb2dc038ee",
+      "sha256": "b20b7d9626dd956b2c5e558692ad328b1f19e3275e2782db4fa07670d83f35e0",
+      "bytes": 1195560,
+      "license": null
+    }
+  ],
+  "styles_loaded": [
+    "normal"
+  ],
+  "italic_behavior": "Original loader requested normal only; existing CSS synthesis is preserved. Official italic asset not downloaded or added."
+}

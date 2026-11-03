@@ -1,0 +1,18 @@
+{
+  "target": "rlqyruulxyanfgvnzkpe",
+  "approval": "REQUIRED_NOT_GIVEN",
+  "executed": false,
+  "packages": {
+    "F01-00-cms-key-compatibility.sql.proposed": {
+      "original_sha256": "b5641ba534d742f95fd38b2c7a2ec44d539b1a88fce320a5fcb3d98a4f3d6d13",
+      "guarded_sha256": "52a520dc7f3d323ad8e4b037f6b8a36c61803233793866449a80dbc6cb2604ae",
+      "guard_expected_key_state": "current eight keys"
+    },
+    "F01-01-cms-rpc-expand.sql.proposed": {
+      "original_sha256": "4b42aed3841135e2fc0fb14d4ceea01d2510c7714cb99e41a34d980bb30f6760",
+      "guarded_sha256": "74128a10917c7f17fe0c1530655e058d8de0418fd682ce28af1031cd8783254a",
+      "guard_expected_key_state": "ten keys after accepted F01-00"
+    }
+  },
+  "sql_parser_or_live_rehearsal": "NOT_RUN"
+}

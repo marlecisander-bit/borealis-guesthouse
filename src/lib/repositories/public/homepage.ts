@@ -1,3 +1,4 @@
+import { fetchPublicCms } from '@/lib/supabase/public-cms';
 import 'server-only';
 
 import { unstable_cache } from 'next/cache';
@@ -23,7 +24,7 @@ async function readPublishedHomepageHero(): Promise<PublishedHomepageHero | null
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return null;
 
-  const db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  const db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false }, global: { fetch: fetchPublicCms } });
   const { data: hero, error } = await db
     .from('homepage_sections')
     .select('property_id,title,subtitle,eyebrow,cta_label,cta_link,background_media_id,settings,is_visible,sort_order')

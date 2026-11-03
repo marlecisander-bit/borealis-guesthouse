@@ -3,6 +3,7 @@ import { contentRevalidatePath as revalidatePath } from '@/lib/revalidate-public
 import {requireAdmin} from '@/lib/admin/auth';
 import {isLandingPageKey,landingPageFieldNames} from '@/lib/landing-page-content';
 import {adminSiteContentRepository} from '@/lib/repositories/admin/site-content';
+import {SITE_DOCUMENT_KEYS} from '@/types/site-content-cms';
 import type {SiteContentState,SiteDocumentKey} from '@/types/site-content-cms';
 
 const fieldsByKey:Record<SiteDocumentKey,string[]>={
@@ -21,6 +22,7 @@ const text=(data:FormData,key:string)=>String(data.get(key)||'').trim();
 
 export async function saveSiteDocument(key:SiteDocumentKey,_:SiteContentState,formData:FormData):Promise<SiteContentState>{
   const session=await requireAdmin(['owner','manager','editor']);
+  if(!SITE_DOCUMENT_KEYS.includes(key))return{ok:false,message:'Choose a supported CMS document.'};
   const status=text(formData,'status') as 'draft'|'published';
   const data=Object.fromEntries(fieldsByKey[key].map(field=>[field,text(formData,field)]));
   if(!['draft','published'].includes(status))return{ok:false,message:'Choose draft or publish.'};
@@ -37,8 +39,10 @@ export async function saveSiteDocument(key:SiteDocumentKey,_:SiteContentState,fo
     await adminSiteContentRepository.saveDocument(session,key,data,status);
     revalidatePath('/admin/content');
     revalidatePath(`/admin/content/${key}`);
-    revalidatePath(`/${key}`);
-    if(key==='contact'||key==='footer'||key==='global')revalidatePath('/');
+    if(status==='published'){
+      revalidatePath(`/${key}`);
+      if(key==='contact'||key==='footer'||key==='global')revalidatePath('/', 'layout');
+    }
     return{ok:true,message:status==='published'?'Changes published.':'Draft saved. The public website is unchanged.'};
   }catch(error){return{ok:false,message:error instanceof Error?error.message:'Could not save changes.'}}
 }

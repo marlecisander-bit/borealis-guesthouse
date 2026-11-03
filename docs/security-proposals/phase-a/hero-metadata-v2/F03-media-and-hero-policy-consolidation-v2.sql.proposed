@@ -1,0 +1,178 @@
+-- VERSION 2 LOCAL REVIEW CANDIDATE. NOT EXECUTED; replaces original transaction, do not apply both.
+-- DESIGN ONLY. This proposal FAILS CLOSED if operation helpers are unavailable.
+-- Do not implement substitute helpers or remove operation checks to make it run.
+-- Requires matched Storage-server version/operation behavior and token-drain plan.
+BEGIN;
+SET LOCAL lock_timeout = '3s';
+SET LOCAL statement_timeout = '30s';
+DO $hero_guard$
+BEGIN
+  IF (SELECT jsonb_agg(to_jsonb(p) ORDER BY schemaname,tablename,policyname) FROM pg_policies p
+      WHERE (schemaname='storage' AND tablename IN ('objects','buckets')) OR
+        (schemaname='public' AND tablename IN ('media_assets','homepage_hero_assets','admin_profiles')))
+      IS DISTINCT FROM $expected$[{"cmd":"ALL","qual":"can_manage_property(property_id, ARRAY['owner'::admin_role])","roles":["authenticated"],"tablename":"admin_profiles","permissive":"PERMISSIVE","policyname":"admin_profiles_owner_manage","schemaname":"public","with_check":"can_manage_property(property_id, ARRAY['owner'::admin_role])"},{"cmd":"SELECT","qual":"((user_id = auth.uid()) OR can_manage_property(property_id, ARRAY['owner'::admin_role, 'manager'::admin_role]))","roles":["authenticated"],"tablename":"admin_profiles","permissive":"PERMISSIVE","policyname":"admin_profiles_self_read","schemaname":"public","with_check":null},{"cmd":"INSERT","qual":null,"roles":["authenticated"],"tablename":"homepage_hero_assets","permissive":"PERMISSIVE","policyname":"hero_assets_admin_insert","schemaname":"public","with_check":"can_manage_homepage(property_id)"},{"cmd":"SELECT","qual":"can_manage_homepage(property_id)","roles":["authenticated"],"tablename":"homepage_hero_assets","permissive":"PERMISSIVE","policyname":"hero_assets_admin_read","schemaname":"public","with_check":null},{"cmd":"UPDATE","qual":"can_manage_homepage(property_id)","roles":["authenticated"],"tablename":"homepage_hero_assets","permissive":"PERMISSIVE","policyname":"hero_assets_admin_update","schemaname":"public","with_check":"can_manage_homepage(property_id)"},{"cmd":"SELECT","qual":"(status = 'ready'::text)","roles":["anon","authenticated"],"tablename":"homepage_hero_assets","permissive":"PERMISSIVE","policyname":"hero_assets_public_read","schemaname":"public","with_check":null},{"cmd":"DELETE","qual":"(EXISTS ( SELECT 1\n   FROM admin_users\n  WHERE ((lower((admin_users.email)::text) = lower((auth.jwt() ->> 'email'::text))) AND (admin_users.property_id = media_assets.property_id))))","roles":["authenticated"],"tablename":"media_assets","permissive":"PERMISSIVE","policyname":"Admins can delete media","schemaname":"public","with_check":null},{"cmd":"INSERT","qual":null,"roles":["authenticated"],"tablename":"media_assets","permissive":"PERMISSIVE","policyname":"Admins can insert media","schemaname":"public","with_check":"(EXISTS ( SELECT 1\n   FROM admin_users\n  WHERE ((lower((admin_users.email)::text) = lower((auth.jwt() ->> 'email'::text))) AND (admin_users.property_id = media_assets.property_id))))"},{"cmd":"UPDATE","qual":"(EXISTS ( SELECT 1\n   FROM admin_users\n  WHERE ((lower((admin_users.email)::text) = lower((auth.jwt() ->> 'email'::text))) AND (admin_users.property_id = media_assets.property_id))))","roles":["authenticated"],"tablename":"media_assets","permissive":"PERMISSIVE","policyname":"Admins can update media","schemaname":"public","with_check":"(EXISTS ( SELECT 1\n   FROM admin_users\n  WHERE ((lower((admin_users.email)::text) = lower((auth.jwt() ->> 'email'::text))) AND (admin_users.property_id = media_assets.property_id))))"},{"cmd":"ALL","qual":"can_manage_property(property_id, ARRAY['owner'::admin_role, 'manager'::admin_role, 'editor'::admin_role])","roles":["authenticated"],"tablename":"media_assets","permissive":"PERMISSIVE","policyname":"media_assets_admin_manage","schemaname":"public","with_check":"can_manage_property(property_id, ARRAY['owner'::admin_role, 'manager'::admin_role, 'editor'::admin_role])"},{"cmd":"SELECT","qual":"((status = 'published'::content_status) AND (is_visible = true))","roles":["anon","authenticated"],"tablename":"media_assets","permissive":"PERMISSIVE","policyname":"media_assets_public_read","schemaname":"public","with_check":null},{"cmd":"DELETE","qual":"((bucket_id = 'public-media'::text) AND (EXISTS ( SELECT 1\n   FROM admin_users\n  WHERE (lower((admin_users.email)::text) = lower((auth.jwt() ->> 'email'::text))))))","roles":["authenticated"],"tablename":"objects","permissive":"PERMISSIVE","policyname":"Admins can delete public media","schemaname":"storage","with_check":null},{"cmd":"UPDATE","qual":"((bucket_id = 'public-media'::text) AND (EXISTS ( SELECT 1\n   FROM admin_users\n  WHERE (lower((admin_users.email)::text) = lower((auth.jwt() ->> 'email'::text))))))","roles":["authenticated"],"tablename":"objects","permissive":"PERMISSIVE","policyname":"Admins can update public media","schemaname":"storage","with_check":null},{"cmd":"INSERT","qual":null,"roles":["authenticated"],"tablename":"objects","permissive":"PERMISSIVE","policyname":"Admins can upload public media","schemaname":"storage","with_check":"((bucket_id = 'public-media'::text) AND (EXISTS ( SELECT 1\n   FROM admin_users\n  WHERE (lower((admin_users.email)::text) = lower((auth.jwt() ->> 'email'::text))))))"}]$expected$::jsonb THEN
+    RAISE EXCEPTION 'F03 policy baseline changed; stop for review';
+  END IF;
+  IF (SELECT md5(pg_get_functiondef('public.can_manage_property(uuid,public.admin_role[])'::regprocedure))) <> '7a19027fe9a390687ef548b974f90273'
+     OR NOT EXISTS(SELECT 1 FROM pg_proc WHERE oid='public.can_manage_property(uuid,public.admin_role[])'::regprocedure
+       AND pg_get_userbyid(proowner)='postgres' AND prosecdef AND proconfig @> ARRAY['search_path=public']) THEN
+    RAISE EXCEPTION 'Active membership helper fingerprint/owner changed';
+  END IF;
+  IF (SELECT jsonb_agg(jsonb_build_object('role',pg_get_userbyid(roleid),'member',pg_get_userbyid(member),'grantor',pg_get_userbyid(grantor),'admin_option',admin_option,'inherit_option',inherit_option,'set_option',set_option) ORDER BY pg_get_userbyid(roleid),pg_get_userbyid(member)) FROM pg_auth_members)
+       IS DISTINCT FROM $expected$[{"role":"anon","member":"authenticator","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":false},{"role":"anon","member":"postgres","grantor":"supabase_admin","set_option":true,"admin_option":true,"inherit_option":true},{"role":"anon","member":"supabase_realtime_admin","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":false},{"role":"authenticated","member":"authenticator","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":false},{"role":"authenticated","member":"postgres","grantor":"supabase_admin","set_option":true,"admin_option":true,"inherit_option":true},{"role":"authenticated","member":"supabase_realtime_admin","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":false},{"role":"authenticator","member":"postgres","grantor":"supabase_admin","set_option":true,"admin_option":true,"inherit_option":true},{"role":"authenticator","member":"supabase_storage_admin","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":false},{"role":"pg_create_subscription","member":"postgres","grantor":"supabase_admin","set_option":true,"admin_option":true,"inherit_option":true},{"role":"pg_monitor","member":"postgres","grantor":"supabase_admin","set_option":true,"admin_option":true,"inherit_option":true},{"role":"pg_monitor","member":"supabase_etl_admin","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":true},{"role":"pg_monitor","member":"supabase_read_only_user","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":true},{"role":"pg_read_all_data","member":"postgres","grantor":"supabase_admin","set_option":true,"admin_option":true,"inherit_option":true},{"role":"pg_read_all_data","member":"supabase_etl_admin","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":true},{"role":"pg_read_all_data","member":"supabase_read_only_user","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":true},{"role":"pg_read_all_settings","member":"pg_monitor","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":true},{"role":"pg_read_all_stats","member":"pg_monitor","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":true},{"role":"pg_signal_backend","member":"postgres","grantor":"supabase_admin","set_option":true,"admin_option":true,"inherit_option":true},{"role":"pg_stat_scan_tables","member":"pg_monitor","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":true},{"role":"service_role","member":"authenticator","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":false},{"role":"service_role","member":"postgres","grantor":"supabase_admin","set_option":true,"admin_option":true,"inherit_option":true},{"role":"service_role","member":"supabase_realtime_admin","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":false},{"role":"supabase_privileged_role","member":"postgres","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":true},{"role":"supabase_privileged_role","member":"supabase_etl_admin","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":true}]$expected$::jsonb THEN RAISE EXCEPTION 'Role inheritance changed'; END IF;
+  IF has_schema_privilege('anon','public','CREATE') OR has_schema_privilege('authenticated','public','CREATE')
+     OR has_schema_privilege('anon','storage','CREATE') OR has_schema_privilege('authenticated','storage','CREATE') THEN RAISE EXCEPTION 'Untrusted schema CREATE'; END IF;
+  IF EXISTS(SELECT 1 FROM pg_roles WHERE rolname IN ('anon','authenticated') AND (rolsuper OR rolbypassrls)) THEN RAISE EXCEPTION 'Ordinary role bypass'; END IF;
+  IF (SELECT count(*) FROM storage.buckets) <> 1 OR NOT EXISTS(SELECT 1 FROM storage.buckets WHERE id='public-media' AND public AND file_size_limit=10485760
+       AND allowed_mime_types @> ARRAY['image/jpeg','image/png','image/webp','image/avif']::text[] AND array_length(allowed_mime_types,1)=4) THEN RAISE EXCEPTION 'Bucket configuration changed'; END IF;
+  IF NOT EXISTS(SELECT 1 FROM pg_class WHERE oid='public.homepage_hero_assets'::regclass AND relrowsecurity AND pg_get_userbyid(relowner)='postgres') THEN RAISE EXCEPTION 'Hero ownership/RLS changed'; END IF;
+  IF has_function_privilege('anon','public.next_booking_reference(uuid)','EXECUTE') OR has_function_privilege('authenticated','public.next_booking_reference(uuid)','EXECUTE')
+     OR has_function_privilege('anon','public.expire_booking_holds(uuid)','EXECUTE') OR has_function_privilege('authenticated','public.expire_booking_holds(uuid)','EXECUTE') THEN RAISE EXCEPTION 'F02 restriction changed'; END IF;
+END;
+$hero_guard$;
+
+DO $preflight$
+BEGIN
+  IF pg_catalog.to_regprocedure('storage.allow_only_operation(text)') IS NULL
+     OR pg_catalog.to_regprocedure('storage.allow_any_operation(text[])') IS NULL THEN
+    RAISE EXCEPTION 'Verified Storage operation helpers required';
+  END IF;
+END;
+$preflight$;
+CREATE FUNCTION public.borealis_can_write_media_object(
+  object_bucket text, object_name text
+) RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $body$
+  SELECT COALESCE(
+    auth.uid() IS NOT NULL
+    AND object_bucket = 'public-media'
+    AND object_name ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/[^/]'
+    AND object_name !~ '(^|/)\.{1,2}(/|$)'
+    AND pg_catalog.strpos(object_name,'//') = 0
+    AND pg_catalog.strpos(object_name,pg_catalog.chr(92)) = 0
+    AND pg_catalog.strpos(object_name,'%') = 0
+    AND pg_catalog.right(object_name,1) <> '/'
+    AND EXISTS (
+      SELECT 1 FROM public.admin_profiles AS ap
+      WHERE ap.user_id = auth.uid() AND ap.is_active = TRUE
+        AND ap.role = ANY(ARRAY['owner','manager','editor']::public.admin_role[])
+        AND ap.property_id::text = pg_catalog.split_part(object_name,'/',1)
+    ), FALSE);
+$body$;
+ALTER FUNCTION public.borealis_can_write_media_object(text,text) OWNER TO postgres;
+REVOKE ALL ON FUNCTION public.borealis_can_write_media_object(text,text)
+  FROM PUBLIC, anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.borealis_can_write_media_object(text,text)
+  TO authenticated;
+
+DROP POLICY "Admins can upload public media" ON storage.objects;
+DROP POLICY "Admins can update public media" ON storage.objects;
+DROP POLICY "Admins can delete public media" ON storage.objects;
+-- Gate: recorded snapshot has precisely these three policies on storage.objects.
+-- Any different/additional policy inventory requires a new reviewed delta.
+CREATE POLICY borealis_media_object_read
+  ON storage.objects FOR SELECT TO authenticated
+  USING (public.borealis_can_write_media_object(bucket_id,name)
+    AND storage.allow_any_operation(ARRAY[
+      'object.get_authenticated','object.get_authenticated_info',
+      'object.head_authenticated_info','object.list','object.list_v2',
+      'object.upload','object.upload_update','object.delete','object.delete_many'
+    ]::text[]));
+CREATE POLICY borealis_media_object_insert
+  ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (public.borealis_can_write_media_object(bucket_id,name)
+    AND storage.allow_only_operation('object.upload'));
+CREATE POLICY borealis_media_object_update
+  ON storage.objects FOR UPDATE TO authenticated
+  USING (public.borealis_can_write_media_object(bucket_id,name)
+    AND storage.allow_only_operation('object.upload_update'))
+  WITH CHECK (public.borealis_can_write_media_object(bucket_id,name)
+    AND storage.allow_only_operation('object.upload_update'));
+CREATE POLICY borealis_media_object_delete
+  ON storage.objects FOR DELETE TO authenticated
+  USING (public.borealis_can_write_media_object(bucket_id,name)
+    AND storage.allow_any_operation(ARRAY['object.delete','object.delete_many']::text[]));
+-- Public bucket flag/read delivery unchanged. No anonymous object-list policy added.
+
+DROP POLICY "Admins can insert media" ON public.media_assets;
+DROP POLICY "Admins can update media" ON public.media_assets;
+DROP POLICY "Admins can delete media" ON public.media_assets;
+DROP POLICY media_assets_admin_manage ON public.media_assets;
+CREATE POLICY borealis_media_assets_read ON public.media_assets
+  FOR SELECT TO authenticated
+  USING (public.can_manage_property(property_id,
+    ARRAY['owner','manager','editor']::public.admin_role[]));
+CREATE POLICY borealis_media_assets_insert ON public.media_assets
+  FOR INSERT TO authenticated
+  WITH CHECK (public.borealis_can_write_media_object(storage_bucket,file_path)
+    AND pg_catalog.split_part(file_path,'/',1) = property_id::text);
+CREATE POLICY borealis_media_assets_update ON public.media_assets
+  FOR UPDATE TO authenticated
+  USING (public.borealis_can_write_media_object(storage_bucket,file_path)
+    AND pg_catalog.split_part(file_path,'/',1) = property_id::text)
+  WITH CHECK (public.borealis_can_write_media_object(storage_bucket,file_path)
+    AND pg_catalog.split_part(file_path,'/',1) = property_id::text);
+CREATE POLICY borealis_media_assets_delete ON public.media_assets
+  FOR DELETE TO authenticated
+  USING (public.borealis_can_write_media_object(storage_bucket,file_path)
+    AND pg_catalog.split_part(file_path,'/',1) = property_id::text);
+-- Preserve media_assets_public_read exactly.
+-- Pure shape/path validation: no membership/data lookup and no definer privilege.
+CREATE FUNCTION public.borealis_hero_paths_valid(
+  target_property uuid, target_id uuid, target_kind text, source_path text, image_variants jsonb
+) RETURNS boolean LANGUAGE sql IMMUTABLE SECURITY INVOKER SET search_path = '' AS $hero_paths$
+  SELECT COALESCE(
+    target_kind IN ('desktop_hero','mobile_hero')
+    AND source_path ~ ('^' || target_property::text || '/hero/' || target_kind || '/' || target_id::text || '/original/source\.(jpg|png|webp|avif)$')
+    AND pg_catalog.jsonb_typeof(image_variants) = 'array'
+    AND NOT EXISTS (
+      SELECT 1 FROM pg_catalog.jsonb_array_elements(
+        CASE WHEN pg_catalog.jsonb_typeof(image_variants) = 'array' THEN image_variants ELSE '[]'::jsonb END
+      ) AS items(v)
+      WHERE pg_catalog.jsonb_typeof(v) IS DISTINCT FROM 'object'
+         OR pg_catalog.jsonb_typeof(v->'path') IS DISTINCT FROM 'string'
+         OR pg_catalog.jsonb_typeof(v->'width') IS DISTINCT FROM 'number'
+         OR pg_catalog.jsonb_typeof(v->'height') IS DISTINCT FROM 'number'
+         OR (v->>'width') !~ '^[1-9][0-9]{0,7}$'
+         OR (v->>'height') !~ '^[1-9][0-9]{0,7}$'
+         OR (v->>'path') !~ ('^' || target_property::text || '/hero/' || target_kind || '/' || target_id::text || '/optimized/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/' || (v->>'width') || '\.(jpg|png|webp|avif)$')
+    ), FALSE);
+$hero_paths$;
+ALTER FUNCTION public.borealis_hero_paths_valid(uuid,uuid,text,text,jsonb) OWNER TO postgres;
+REVOKE ALL ON FUNCTION public.borealis_hero_paths_valid(uuid,uuid,text,text,jsonb) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.borealis_hero_paths_valid(uuid,uuid,text,text,jsonb) TO authenticated;
+
+-- Do not change can_manage_homepage globally: other callers retain their own review scope.
+DROP POLICY hero_assets_admin_read ON public.homepage_hero_assets;
+DROP POLICY hero_assets_admin_insert ON public.homepage_hero_assets;
+DROP POLICY hero_assets_admin_update ON public.homepage_hero_assets;
+CREATE POLICY borealis_hero_assets_read ON public.homepage_hero_assets FOR SELECT TO authenticated
+  USING (public.can_manage_property(property_id,ARRAY['owner','manager','editor']::public.admin_role[]));
+CREATE POLICY borealis_hero_assets_insert ON public.homepage_hero_assets FOR INSERT TO authenticated
+  WITH CHECK (public.can_manage_property(property_id,ARRAY['owner','manager','editor']::public.admin_role[])
+    AND public.borealis_hero_paths_valid(property_id,id,kind,original_path,variants)
+    AND (status <> 'ready' OR CASE WHEN pg_catalog.jsonb_typeof(variants)='array' THEN pg_catalog.jsonb_array_length(variants)>0 ELSE FALSE END));
+CREATE POLICY borealis_hero_assets_update ON public.homepage_hero_assets FOR UPDATE TO authenticated
+  USING (public.can_manage_property(property_id,ARRAY['owner','manager','editor']::public.admin_role[]))
+  WITH CHECK (public.can_manage_property(property_id,ARRAY['owner','manager','editor']::public.admin_role[])
+    AND public.borealis_hero_paths_valid(property_id,id,kind,original_path,variants)
+    AND (status <> 'ready' OR CASE WHEN pg_catalog.jsonb_typeof(variants)='array' THEN pg_catalog.jsonb_array_length(variants)>0 ELSE FALSE END));
+-- USING admits an authorized legacy source row for repair; WITH CHECK validates the full target.
+-- Preserve hero_assets_public_read (ready) exactly. Do not add DELETE or change lifecycle/size constraints.
+DO $hero_post$
+DECLARE f regprocedure;
+BEGIN
+  FOREACH f IN ARRAY ARRAY['public.borealis_can_write_media_object(text,text)'::regprocedure,'public.borealis_hero_paths_valid(uuid,uuid,text,text,jsonb)'::regprocedure] LOOP
+    IF EXISTS(SELECT 1 FROM pg_proc p CROSS JOIN LATERAL aclexplode(COALESCE(p.proacl,acldefault('f',p.proowner))) a WHERE p.oid=f
+       AND (a.grantee NOT IN ('postgres'::regrole::oid,'authenticated'::regrole::oid) OR (a.grantee='authenticated'::regrole::oid AND a.is_grantable))) THEN
+      RAISE EXCEPTION 'Unexpected helper default/explicit grant';
+    END IF;
+    IF NOT has_function_privilege('authenticated',f,'EXECUTE') OR has_function_privilege('anon',f,'EXECUTE') THEN RAISE EXCEPTION 'Helper execution boundary'; END IF;
+  END LOOP;
+  IF (SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename='homepage_hero_assets') <> 4
+    OR NOT EXISTS(SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='homepage_hero_assets' AND policyname='hero_assets_public_read' AND cmd='SELECT' AND qual='(status = ''ready''::text)') THEN RAISE EXCEPTION 'Hero policy/public read boundary'; END IF;
+END;
+$hero_post$;
+
+NOTIFY pgrst, 'reload schema';
+COMMIT;

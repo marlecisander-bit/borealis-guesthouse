@@ -1,3 +1,4 @@
+import { previewEnabled } from '../readonly-preview/policy';
 import {cache} from 'react';
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
@@ -13,9 +14,10 @@ export const createServerSupabaseClient = cache(async function createServerSupab
       global: { fetch: fetchSupabase },
       cookies: {
         getAll() {
-          return cookieStore.getAll()
+          return previewEnabled() ? [] : cookieStore.getAll()
         },
         setAll(cookiesToSet) {
+          if (previewEnabled()) return;
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)

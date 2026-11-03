@@ -1,0 +1,79 @@
+-- DESIGN ONLY. Not installed, not a migration-runner input.
+-- Prerequisites: verified PostgreSQL owner postgres, trusted can_manage_property
+-- definition, no role inheritance/alternate definer exposure, reconciled schema.
+BEGIN;
+SET LOCAL lock_timeout = '3s';
+SET LOCAL statement_timeout = '30s';
+CREATE FUNCTION public.borealis_admin_cms_documents(
+  target_property uuid, target_document_key text DEFAULT NULL
+) RETURNS SETOF public.cms_documents
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = '' AS $body$
+BEGIN
+  IF auth.uid() IS NULL OR public.can_manage_property(
+    target_property, ARRAY['owner','manager','editor']::public.admin_role[]
+  ) IS NOT TRUE THEN
+    RAISE EXCEPTION 'CMS access denied' USING ERRCODE = '42501';
+  END IF;
+  RETURN QUERY SELECT d.* FROM public.cms_documents AS d
+    WHERE d.property_id = target_property
+      AND (target_document_key IS NULL OR d.document_key = target_document_key);
+END;
+$body$;
+ALTER FUNCTION public.borealis_admin_cms_documents(uuid,text) OWNER TO postgres;
+REVOKE ALL ON FUNCTION public.borealis_admin_cms_documents(uuid,text)
+  FROM PUBLIC, anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.borealis_admin_cms_documents(uuid,text)
+  TO authenticated;
+
+CREATE FUNCTION public.borealis_save_cms_document(
+  target_property uuid, target_document_key text,
+  input_data jsonb, target_status public.content_status
+) RETURNS uuid
+LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = '' AS $body$
+DECLARE
+  result_id uuid;
+BEGIN
+  IF auth.uid() IS NULL OR public.can_manage_property(
+    target_property, ARRAY['owner','manager','editor']::public.admin_role[]
+  ) IS NOT TRUE THEN
+    RAISE EXCEPTION 'CMS access denied' USING ERRCODE = '42501';
+  END IF;
+  IF target_document_key IS NULL OR target_document_key NOT IN
+    ('about','contact','footer','book','global','rooms','experiences',
+     'transfers','explore-koman','gallery')
+    OR input_data IS NULL OR pg_catalog.jsonb_typeof(input_data) <> 'object'
+    OR target_status IS NULL OR target_status NOT IN
+      ('draft'::public.content_status,'published'::public.content_status)
+  THEN
+    RAISE EXCEPTION 'Invalid CMS document' USING ERRCODE = '22023';
+  END IF;
+  -- One upsert owns the merge; no read-then-write race or caller SELECT on draft.
+  INSERT INTO public.cms_documents AS current_document
+    (property_id,document_key,data,draft_data,status,created_by,updated_by)
+  VALUES
+    (target_property,target_document_key,
+     CASE WHEN target_status = 'published' THEN input_data ELSE '{}'::jsonb END,
+     CASE WHEN target_status = 'draft' THEN input_data ELSE NULL END,
+     target_status,auth.uid(),auth.uid())
+  ON CONFLICT (property_id,document_key) DO UPDATE SET
+    data = CASE WHEN target_status = 'published' THEN
+      current_document.data || COALESCE(current_document.draft_data,'{}'::jsonb) || input_data
+      ELSE current_document.data END,
+    draft_data = CASE WHEN target_status = 'draft' THEN
+      current_document.data || COALESCE(current_document.draft_data,'{}'::jsonb) || input_data
+      ELSE NULL END,
+    status = CASE WHEN target_status = 'published' THEN target_status
+      ELSE current_document.status END,
+    updated_at = pg_catalog.now(), updated_by = auth.uid()
+  RETURNING id INTO result_id;
+  RETURN result_id;
+END;
+$body$;
+ALTER FUNCTION public.borealis_save_cms_document(uuid,text,jsonb,public.content_status)
+  OWNER TO postgres;
+REVOKE ALL ON FUNCTION public.borealis_save_cms_document(uuid,text,jsonb,public.content_status)
+  FROM PUBLIC, anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.borealis_save_cms_document(uuid,text,jsonb,public.content_status)
+  TO authenticated;
+NOTIFY pgrst, 'reload schema';
+COMMIT;

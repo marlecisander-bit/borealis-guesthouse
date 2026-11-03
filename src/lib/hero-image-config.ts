@@ -4,7 +4,8 @@ export type HeroVariant = { url: string; width: number; height: number };
 export type HeroAsset = { id: string; kind: HeroAssetKind; filename: string; width: number; height: number; sizeBytes: number; variants: HeroVariant[] };
 
 export const HERO_IMAGE_CONFIG = {
-  maxBytes: 24 * 1024 * 1024,
+  // Match the existing public-media bucket; changing it requires separate approval.
+  maxBytes: 10 * 1024 * 1024,
   maxPixels: 60_000_000,
   webpQuality: 93,
   preserveBelowBytes: 4 * 1024 * 1024,

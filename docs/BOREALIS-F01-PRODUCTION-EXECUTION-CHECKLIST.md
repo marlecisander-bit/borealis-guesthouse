@@ -1,0 +1,38 @@
+# Borealis F01 — controlled production execution checklist
+
+21 October2026, Europe/Tirane. Target only `rlqyruulxyanfgvnzkpe`; existing GitHub/Netlify resources. **PREPARED, NOT EXECUTED. NO-GO for live execution under this task.** Local compatibility tests/build and local encrypted recovery verification pass. Real authorization acceptance, portable recovery and a controlled maintenance/release plan remain unresolved.
+
+## Immutable execution inputs
+
+| Candidate | SHA-256 |
+| --- | --- |
+| F01-00-cms-key-compatibility.sql.proposed |b5641ba534d742f95fd38b2c7a2ec44d539b1a88fce320a5fcb3d98a4f3d6d13 |
+| F01-01-cms-rpc-expand.sql.proposed |4b42aed3841135e2fc0fb14d4ceea01d2510c7714cb99e41a34d980bb30f6760 |
+| F01-02-cms-privilege-contract.sql.proposed |0d5dfb0ecfa63a104d56b81fe9a513cce9bf7e02ce276f09259559a99f8faadc |
+
+Files remain under `docs/security-proposals/phase-a/`, outside migration discovery. Local eight-file patch identity remains unchanged;134 regressions, type/lint and normal build pass. No candidate is approved merely because its hash matches. Do not concatenate these units or replay historical migrations.
+
+## Before the first live change
+
+- Obtain explicit implementation authorization for named SQL units, synthetic fixtures/identities and cleanup, source-only GitHub/Netlify release, and conditional contraction. This preparation task grants none of those permissions.
+- Reverify target/org/project identity, current schema/constraint/column definitions, owners/search_path, table+column grants, inherited roles, RLS, triggers and exposed CMS-returning dependencies. Capture exact fresh definitions privately; fail on unexpected drift. Verify F02 remains restricted.
+- Check backup age against intervening content/schema activity. This verified database snapshot is from10:50:01 Europe/Tirane today; it is not a forever-current baseline. A fresh dump requires separate authorization if needed. Verify the package/key locally and explicitly resolve off-Mac retention/key-recovery and untested-restore limitations. No live restore or duplicate environment is implied.
+- Review the precise source-only release set; exclude `.local/`, profiles, credentials and unrelated dirty changes. Existing main auto-publishing means push is deployment. Preserve a known RPC-compatible release for recovery. Agree the authoring window, session/request drain and responsible operator before opening the change window.
+- Approve synthetic properties A/B, unique sentinel documents/keys and user/role fixtures only; no real draft/guest content. Review lifecycle/outbox/provider side effects and disable or fake integrations through a separately authorized scoped test plan. Direct SQL role simulations cannot substitute for real JWT/PostgREST tests. Do not disable a real user's membership for a denial test.
+
+## Ordered execution and acceptance
+
+1. **F01-00 — key expansion.** In its own bounded transaction, require the exact eight-key constraint, then admit precisely rooms,experiences,transfers,explore-koman,about,gallery,contact,footer,book,global. No seed/backfill/content updates. Verify the resulting definition independently. Lock/statement failure means rollback and stop; no blind retry. Do not narrow back to eight by deleting book/global content.
+2. **F01-01 — private RPC expansion.** Apply only after fresh name-collision/owner/helper checks. Preserve empty search_path, qualified references, auth.uid plus active property O/M/E checks, authenticated-only execution and no direct-user write fallback. Verify both exact function signatures, owner, body and effective/inherited grants. Verify PostgREST discovers both functions, using a separately reviewed schema-cache reload if required. Expansion alone leaves the existing draft exposure open.
+3. **Approved synthetic authorization testing.** Prove A owner/manager/editor read/save, B isolation, staff/disabled/nonmember/legacy-only denial, input validation, new/existing draft merge, publish atomicity, lifecycle fields and failure rollback. Exercise the actual PostgREST/RPC boundary with isolated synthetic user identities on this same project. Bound every fixture/cleanup; inspect side effects. Stop if any test fails. Record payload-free outcomes. No fixture is created by this checklist.
+4. **Compatible application deployment.** Publish only the reviewed RPC-compatible source after tests and explicit deployment approval. Verify existing public explicit-column readers still work; authenticated authoring/preview uses the private RPCs, own property and no-store. No privileged or direct-table fallback. Confirm the deployed commit/build/environment; preview flags stay absent. Never infer release success from a local build alone.
+5. **CMS authoring maintenance and drain.** Pause authoring before contraction; if needed pause earlier during compatibility release/testing. Drain in-flight requests, old clients/editor sessions and cached authoring bundles. Define bounded drain evidence and require refresh. Keep public published reads available. If old callers remain, stop before contraction.
+6. **F01-02 — privilege contraction.** Recheck the accepted expansion and compatibility deployment immediately before execution. Run the reviewed transaction clearing BOTH table and column privileges for PUBLIC/anon/authenticated; grant only id/property_id/document_key/data/status SELECT; replace the two recorded CMS policies with published-only read; leave ordinary direct writes unavailable. Preserve lifecycle, unrelated policy/function boundaries and F02. Commit only the reviewed delta; timeout or drift stops the phase.
+7. **Public/private verification before reopening authoring.** Synthetic published data remains readable; draft-only/archived rows remain absent; `draft_data`/wildcard/alias/embed/expression reads are denied for anon and non-admin authenticated users. Authorized O/M/E RPCs still work only for their property; direct table writes fail even for editors. Verify draft save leaves public data/cache unchanged; publication atomically exposes the merged synthetic result and invalidates owned public caches; private responses never enter shared cache. Check actual authenticated preview/browser behavior. Recheck inherited grants and alternate exposures. Clear only approved fixtures, with cleanup verification. Any failed security gate keeps authoring paused and stops promotion.
+8. **Forward fix and recovery.** Keep the restricted boundary and RPC-compatible release. Repair only the reviewed function/application fault or pause authoring. Do not automatically restore SELECT(draft_data), broad table grants, legacy CMS policies, public F02 helper execution or an incompatible pre-expansion app. Database rollback cannot recall disclosed/cached drafts. Whole-database/media restore needs a separately authorized incident procedure; do not overwrite populated production to demonstrate recoverability.
+
+## Current decision
+
+**GO:** local development, code/release review and safe regression workflow. **NO-GO:** executing this production sequence now. Blockers: no approved mutation/fixture/deployment scope in this task; real SQL/JWT/REST/cache acceptance untested; off-Mac recovery unresolved and no actual restore proof. Three missing pending hero originals are recorded recovery limitations, not an instruction to repair Storage during F01.
+
+Next request should explicitly identify the implementation phases, temporary fixture/account permissions and cleanup, acceptable recovery limits/resolution, and source publication/deployment scope. It must preserve the no-duplicate-environment choice. Contraction is conditional on the prior acceptance evidence; approval for expansion is not approval to skip gates.

@@ -19,10 +19,12 @@ type HomepageFooterProps = {
 };
 
 const fallbackLinks = [
+  { label: 'Home', href: '/' },
   { label: 'Rooms', href: '/rooms' },
-  { label: 'Experiences', href: '/experiences' },
+  { label: 'Journey', href: '/experiences' },
   { label: 'Explore Koman', href: '/explore-koman' },
-  { label: 'Gallery', href: '/gallery' },
+  { label: 'Discover', href: '/gallery' },
+  { label: 'About', href: '/about' },
 ];
 
 async function getFooterContent() {

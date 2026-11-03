@@ -46,3 +46,6 @@ next-env.d.ts
 # Next.js build/cache folders
 .next/
 .next-*/
+
+# Private local profiles, credentials, runtime state and audit evidence
+/.local/

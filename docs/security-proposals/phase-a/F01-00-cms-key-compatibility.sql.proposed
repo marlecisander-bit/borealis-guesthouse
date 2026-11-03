@@ -1,0 +1,23 @@
+-- PROPOSED ONLY: not executed; outside migration discovery.
+-- Target review: existing project rlqyruulxyanfgvnzkpe, public.cms_documents.
+-- Expands eight accepted keys to the ten keys already consumed by the application.
+-- No seed, row update, backfill, privilege or policy change.
+BEGIN;
+SET LOCAL lock_timeout = '3s';
+SET LOCAL statement_timeout = '30s';
+DO $preflight$
+BEGIN
+  IF (SELECT pg_catalog.pg_get_constraintdef(c.oid)
+      FROM pg_catalog.pg_constraint c
+      WHERE c.conrelid = 'public.cms_documents'::regclass
+        AND c.conname = 'cms_documents_document_key_check')
+      IS DISTINCT FROM 'CHECK ((document_key = ANY (ARRAY[''rooms''::text, ''experiences''::text, ''transfers''::text, ''explore-koman''::text, ''about''::text, ''gallery''::text, ''contact''::text, ''footer''::text])))' THEN
+    RAISE EXCEPTION 'CMS key constraint drift; review before proceeding';
+  END IF;
+END;
+$preflight$;
+ALTER TABLE public.cms_documents DROP CONSTRAINT cms_documents_document_key_check;
+ALTER TABLE public.cms_documents ADD CONSTRAINT cms_documents_document_key_check
+  CHECK (document_key IN ('rooms','experiences','transfers','explore-koman',
+    'about','gallery','contact','footer','book','global'));
+COMMIT;

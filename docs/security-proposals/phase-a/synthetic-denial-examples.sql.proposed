@@ -1,0 +1,57 @@
+-- DESIGN ONLY: examples for a separately approved, isolated seeded test DB.
+-- NEVER a production test. Fixture provision and target guards are prerequisites.
+-- Synthetic fixture A: property 10000000-0000-4000-8000-000000000001.
+-- Runner must verify a non-production endpoint, database identity, synthetic-only
+-- contents, no provider credentials, and explicit fixture sentinel before loading.
+BEGIN;
+SET LOCAL ROLE anon;
+SET LOCAL request.jwt.claims = '{"role":"anon"}';
+DO $test$
+BEGIN
+  IF pg_catalog.has_column_privilege('anon','public.cms_documents','draft_data','SELECT') THEN
+    RAISE EXCEPTION 'F01 anonymous draft privilege remains';
+  END IF;
+  IF pg_catalog.has_function_privilege('anon','public.next_booking_reference(uuid)','EXECUTE') THEN
+    RAISE EXCEPTION 'F02 anonymous reference execution remains';
+  END IF;
+  IF pg_catalog.has_function_privilege('anon','public.expire_booking_holds(uuid)','EXECUTE') THEN
+    RAISE EXCEPTION 'F02 anonymous expiration execution remains';
+  END IF;
+  BEGIN
+    PERFORM draft_data FROM public.cms_documents LIMIT 1;
+    RAISE EXCEPTION 'F01 draft select was not denied';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+  BEGIN
+    PERFORM public.next_booking_reference('10000000-0000-4000-8000-000000000001');
+    RAISE EXCEPTION 'F02 direct writer was not denied';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+END;
+$test$;
+ROLLBACK;
+
+BEGIN;
+SET LOCAL ROLE authenticated;
+-- Fixture U is an authenticated non-member; not a real account/token.
+SET LOCAL request.jwt.claims = '{"role":"authenticated","sub":"20000000-0000-4000-8000-000000000006"}';
+DO $test$
+BEGIN
+  IF pg_catalog.has_column_privilege('authenticated','public.cms_documents','draft_data','SELECT') THEN
+    RAISE EXCEPTION 'F01 authenticated blanket draft privilege remains';
+  END IF;
+  BEGIN
+    PERFORM * FROM public.borealis_admin_cms_documents('10000000-0000-4000-8000-000000000001',NULL);
+    RAISE EXCEPTION 'F01 non-member RPC was not denied';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+  IF public.borealis_can_write_media_object('public-media',
+    '10000000-0000-4000-8000-000000000001/30000000-0000-4000-8000-000000000001.jpg') THEN
+    RAISE EXCEPTION 'F03 non-member media authority remains';
+  END IF;
+END;
+$test$;
+ROLLBACK;
+-- Full positive/concurrency/Storage HTTP/token-drain tests are specified in plans.
+-- Direct SQL policy simulation cannot certify the Storage service's operation
+-- context, object-store effects, signed-token bypass behavior or CDN delivery.

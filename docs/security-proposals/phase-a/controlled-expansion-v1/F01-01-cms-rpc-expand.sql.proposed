@@ -1,0 +1,117 @@
+-- DESIGN ONLY. Not installed, not a migration-runner input.
+-- Prerequisites: verified PostgreSQL owner postgres, trusted can_manage_property
+-- definition, no role inheritance/alternate definer exposure, reconciled schema.
+BEGIN;
+SET LOCAL lock_timeout = '3s';
+SET LOCAL statement_timeout = '30s';
+-- Target binding is an operator/dashboard connection check, not inferred from database name.
+-- Exact project rlqyruulxyanfgvnzkpe must be reverified before execution.
+DO $f01_guard$
+BEGIN
+IF current_database() <> 'postgres' OR current_user <> 'postgres' THEN RAISE EXCEPTION 'Unexpected database or execution role'; END IF;
+IF (SELECT jsonb_agg(jsonb_build_object('name',a.attname,'type',format_type(a.atttypid,a.atttypmod),'not_null',a.attnotnull,'default',pg_get_expr(d.adbin,d.adrelid)) ORDER BY a.attname) FROM pg_attribute a LEFT JOIN pg_attrdef d ON d.adrelid=a.attrelid AND d.adnum=a.attnum WHERE a.attrelid='public.cms_documents'::regclass AND a.attnum>0 AND NOT a.attisdropped) IS DISTINCT FROM $expected$[{"name":"archived_at","type":"timestamp with time zone","default":null,"not_null":false},{"name":"created_at","type":"timestamp with time zone","default":"now()","not_null":true},{"name":"created_by","type":"uuid","default":null,"not_null":false},{"name":"data","type":"jsonb","default":"'{}'::jsonb","not_null":true},{"name":"document_key","type":"text","default":null,"not_null":true},{"name":"draft_data","type":"jsonb","default":null,"not_null":false},{"name":"id","type":"uuid","default":"uuid_generate_v4()","not_null":true},{"name":"property_id","type":"uuid","default":null,"not_null":true},{"name":"published_at","type":"timestamp with time zone","default":null,"not_null":false},{"name":"status","type":"content_status","default":"'draft'::content_status","not_null":true},{"name":"updated_at","type":"timestamp with time zone","default":"now()","not_null":true},{"name":"updated_by","type":"uuid","default":null,"not_null":false}]$expected$::jsonb THEN RAISE EXCEPTION 'F01 precondition drift: CMS columns'; END IF;
+IF (SELECT jsonb_agg(jsonb_build_object('name',conname,'definition',pg_get_constraintdef(oid)) ORDER BY conname) FROM pg_constraint WHERE conrelid='public.cms_documents'::regclass) IS DISTINCT FROM $expected$[{"name":"cms_documents_created_by_fkey","definition":"FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL"},{"name":"cms_documents_document_key_check","definition":"CHECK ((document_key = ANY (ARRAY['rooms'::text, 'experiences'::text, 'transfers'::text, 'explore-koman'::text, 'about'::text, 'gallery'::text, 'contact'::text, 'footer'::text, 'book'::text, 'global'::text])))"},{"name":"cms_documents_pkey","definition":"PRIMARY KEY (id)"},{"name":"cms_documents_property_id_document_key_key","definition":"UNIQUE (property_id, document_key)"},{"name":"cms_documents_property_id_fkey","definition":"FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE"},{"name":"cms_documents_updated_by_fkey","definition":"FOREIGN KEY (updated_by) REFERENCES auth.users(id) ON DELETE SET NULL"}]$expected$::jsonb THEN RAISE EXCEPTION 'F01 precondition drift: CMS constraints'; END IF;
+IF (SELECT jsonb_agg(to_jsonb(x) ORDER BY policyname) FROM pg_policies x WHERE schemaname='public' AND tablename='cms_documents') IS DISTINCT FROM $expected$[{"cmd":"ALL","qual":"can_manage_site_content(property_id)","roles":["authenticated"],"tablename":"cms_documents","permissive":"PERMISSIVE","policyname":"cms_documents_admin","schemaname":"public","with_check":"can_manage_site_content(property_id)"},{"cmd":"SELECT","qual":"((status = 'published'::content_status) OR can_manage_site_content(property_id))","roles":["anon","authenticated"],"tablename":"cms_documents","permissive":"PERMISSIVE","policyname":"cms_documents_public","schemaname":"public","with_check":null}]$expected$::jsonb THEN RAISE EXCEPTION 'F01 precondition drift: CMS policies'; END IF;
+IF (SELECT jsonb_agg(jsonb_build_object('schema',n.nspname,'table',c.relname,'owner',pg_get_userbyid(c.relowner),'acl',c.relacl::text,'rls',c.relrowsecurity)) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE c.oid='public.cms_documents'::regclass) IS DISTINCT FROM $expected$[{"acl":"{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}","rls":true,"owner":"postgres","table":"cms_documents","schema":"public"}]$expected$::jsonb THEN RAISE EXCEPTION 'F01 precondition drift: CMS table ACL/RLS/owner'; END IF;
+IF (SELECT jsonb_agg(jsonb_build_object('table',c.relname,'column',a.attname,'acl',a.attacl::text) ORDER BY a.attname) FROM pg_attribute a JOIN pg_class c ON c.oid=a.attrelid WHERE c.oid='public.cms_documents'::regclass AND a.attnum>0 AND NOT a.attisdropped) IS DISTINCT FROM $expected$[{"acl":null,"table":"cms_documents","column":"archived_at"},{"acl":null,"table":"cms_documents","column":"created_at"},{"acl":null,"table":"cms_documents","column":"created_by"},{"acl":null,"table":"cms_documents","column":"data"},{"acl":null,"table":"cms_documents","column":"document_key"},{"acl":null,"table":"cms_documents","column":"draft_data"},{"acl":null,"table":"cms_documents","column":"id"},{"acl":null,"table":"cms_documents","column":"property_id"},{"acl":null,"table":"cms_documents","column":"published_at"},{"acl":null,"table":"cms_documents","column":"status"},{"acl":null,"table":"cms_documents","column":"updated_at"},{"acl":null,"table":"cms_documents","column":"updated_by"}]$expected$::jsonb THEN RAISE EXCEPTION 'F01 precondition drift: CMS column ACL'; END IF;
+IF (SELECT jsonb_agg(jsonb_build_object('name',tgname,'definition',pg_get_triggerdef(oid)) ORDER BY tgname) FROM pg_trigger WHERE tgrelid='public.cms_documents'::regclass AND NOT tgisinternal) IS DISTINCT FROM $expected$[{"name":"content_lifecycle_timestamps","definition":"CREATE TRIGGER content_lifecycle_timestamps BEFORE INSERT OR UPDATE OF status ON public.cms_documents FOR EACH ROW EXECUTE FUNCTION apply_content_lifecycle_timestamps()"}]$expected$::jsonb THEN RAISE EXCEPTION 'F01 precondition drift: CMS lifecycle triggers'; END IF;
+IF (SELECT jsonb_agg(jsonb_build_object('role',r.rolname,'member',m.rolname,'grantor',g.rolname,'admin_option',a.admin_option,'inherit_option',a.inherit_option,'set_option',a.set_option) ORDER BY r.rolname,m.rolname,g.rolname) FROM pg_auth_members a JOIN pg_roles r ON r.oid=a.roleid JOIN pg_roles m ON m.oid=a.member JOIN pg_roles g ON g.oid=a.grantor) IS DISTINCT FROM $expected$[{"role":"anon","member":"authenticator","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":false},{"role":"anon","member":"postgres","grantor":"supabase_admin","set_option":true,"admin_option":true,"inherit_option":true},{"role":"anon","member":"supabase_realtime_admin","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":false},{"role":"authenticated","member":"authenticator","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":false},{"role":"authenticated","member":"postgres","grantor":"supabase_admin","set_option":true,"admin_option":true,"inherit_option":true},{"role":"authenticated","member":"supabase_realtime_admin","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":false},{"role":"authenticator","member":"postgres","grantor":"supabase_admin","set_option":true,"admin_option":true,"inherit_option":true},{"role":"authenticator","member":"supabase_storage_admin","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":false},{"role":"pg_create_subscription","member":"postgres","grantor":"supabase_admin","set_option":true,"admin_option":true,"inherit_option":true},{"role":"pg_monitor","member":"postgres","grantor":"supabase_admin","set_option":true,"admin_option":true,"inherit_option":true},{"role":"pg_monitor","member":"supabase_etl_admin","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":true},{"role":"pg_monitor","member":"supabase_read_only_user","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":true},{"role":"pg_read_all_data","member":"postgres","grantor":"supabase_admin","set_option":true,"admin_option":true,"inherit_option":true},{"role":"pg_read_all_data","member":"supabase_etl_admin","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":true},{"role":"pg_read_all_data","member":"supabase_read_only_user","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":true},{"role":"pg_read_all_settings","member":"pg_monitor","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":true},{"role":"pg_read_all_stats","member":"pg_monitor","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":true},{"role":"pg_signal_backend","member":"postgres","grantor":"supabase_admin","set_option":true,"admin_option":true,"inherit_option":true},{"role":"pg_stat_scan_tables","member":"pg_monitor","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":true},{"role":"service_role","member":"authenticator","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":false},{"role":"service_role","member":"postgres","grantor":"supabase_admin","set_option":true,"admin_option":true,"inherit_option":true},{"role":"service_role","member":"supabase_realtime_admin","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":false},{"role":"supabase_privileged_role","member":"postgres","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":true},{"role":"supabase_privileged_role","member":"supabase_etl_admin","grantor":"supabase_admin","set_option":true,"admin_option":false,"inherit_option":true}]$expected$::jsonb THEN RAISE EXCEPTION 'F01 precondition drift: role inheritance/options'; END IF;
+IF (SELECT jsonb_agg(jsonb_build_object('schema',nspname,'owner',pg_get_userbyid(nspowner),'acl',nspacl::text,'anon_create',has_schema_privilege('anon',oid,'CREATE'),'authenticated_create',has_schema_privilege('authenticated',oid,'CREATE')) ORDER BY nspname) FROM pg_namespace WHERE nspname IN ('public','auth')) IS DISTINCT FROM $expected$[{"acl":"{supabase_admin=UC/supabase_admin,anon=U/supabase_admin,authenticated=U/supabase_admin,service_role=U/supabase_admin,supabase_auth_admin=UC/supabase_admin,dashboard_user=UC/supabase_admin,postgres=U/supabase_admin}","owner":"supabase_admin","schema":"auth","anon_create":false,"authenticated_create":false},{"acl":"{pg_database_owner=UC/pg_database_owner,=U/pg_database_owner,postgres=U/pg_database_owner,anon=U/pg_database_owner,authenticated=U/pg_database_owner,service_role=U/pg_database_owner}","owner":"pg_database_owner","schema":"public","anon_create":false,"authenticated_create":false}]$expected$::jsonb THEN RAISE EXCEPTION 'F01 precondition drift: trusted schemas'; END IF;
+IF (SELECT jsonb_build_object('owner',pg_get_userbyid(p.proowner),'definer',p.prosecdef,'config',p.proconfig,'acl',p.proacl::text,'definition_md5',md5(pg_get_functiondef(p.oid))) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='apply_content_lifecycle_timestamps' AND pg_get_function_identity_arguments(p.oid)='') IS DISTINCT FROM $expected${"owner":"postgres","definer":false,"config":["search_path=public"],"acl":"{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}","definition_md5":"a5d4f7f657021199f5243fd1cbdc909e"}$expected$::jsonb THEN RAISE EXCEPTION 'F01 precondition drift: trusted function apply_content_lifecycle_timestamps'; END IF;
+IF (SELECT jsonb_build_object('owner',pg_get_userbyid(p.proowner),'definer',p.prosecdef,'config',p.proconfig,'acl',p.proacl::text,'definition_md5',md5(pg_get_functiondef(p.oid))) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='can_manage_homepage' AND pg_get_function_identity_arguments(p.oid)='target_property uuid') IS DISTINCT FROM $expected${"owner":"postgres","definer":true,"config":["search_path=public"],"acl":"{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}","definition_md5":"c970c3d7d2ff255051bd11c0584dec99"}$expected$::jsonb THEN RAISE EXCEPTION 'F01 precondition drift: trusted function can_manage_homepage'; END IF;
+IF (SELECT jsonb_build_object('owner',pg_get_userbyid(p.proowner),'definer',p.prosecdef,'config',p.proconfig,'acl',p.proacl::text,'definition_md5',md5(pg_get_functiondef(p.oid))) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='can_manage_property' AND pg_get_function_identity_arguments(p.oid)='target_property uuid, allowed_roles admin_role[]') IS DISTINCT FROM $expected${"owner":"postgres","definer":true,"config":["search_path=public"],"acl":"{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}","definition_md5":"902c6a9edf7b0104ebec93ee5c25ccfd"}$expected$::jsonb THEN RAISE EXCEPTION 'F01 precondition drift: trusted function can_manage_property'; END IF;
+IF (SELECT jsonb_build_object('owner',pg_get_userbyid(p.proowner),'definer',p.prosecdef,'config',p.proconfig,'acl',p.proacl::text,'definition_md5',md5(pg_get_functiondef(p.oid))) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='can_manage_site_content' AND pg_get_function_identity_arguments(p.oid)='target_property uuid') IS DISTINCT FROM $expected${"owner":"postgres","definer":true,"config":["search_path=public"],"acl":"{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}","definition_md5":"66bf66f4b7d80316dd407b7833c200d7"}$expected$::jsonb THEN RAISE EXCEPTION 'F01 precondition drift: trusted function can_manage_site_content'; END IF;
+IF (SELECT jsonb_build_object('owner',pg_get_userbyid(p.proowner),'definer',p.prosecdef,'config',p.proconfig,'acl',p.proacl::text,'definition_md5',md5(pg_get_functiondef(p.oid))) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='expire_booking_holds' AND pg_get_function_identity_arguments(p.oid)='target_property uuid') IS DISTINCT FROM $expected${"owner":"postgres","definer":true,"config":["search_path=public"],"acl":"{postgres=X/postgres,service_role=X/postgres}","definition_md5":"fff295524a5800093645e319857bcf59"}$expected$::jsonb THEN RAISE EXCEPTION 'F01 precondition drift: trusted function expire_booking_holds'; END IF;
+IF (SELECT jsonb_build_object('owner',pg_get_userbyid(p.proowner),'definer',p.prosecdef,'config',p.proconfig,'acl',p.proacl::text,'definition_md5',md5(pg_get_functiondef(p.oid))) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='next_booking_reference' AND pg_get_function_identity_arguments(p.oid)='target_property uuid') IS DISTINCT FROM $expected${"owner":"postgres","definer":true,"config":["search_path=public"],"acl":"{postgres=X/postgres,service_role=X/postgres}","definition_md5":"e71854af59f2f791caf40ad8e85d35c7"}$expected$::jsonb THEN RAISE EXCEPTION 'F01 precondition drift: trusted function next_booking_reference'; END IF;
+IF EXISTS(SELECT 1 FROM pg_proc WHERE pronamespace='public'::regnamespace AND proname IN ('borealis_admin_cms_documents','borealis_save_cms_document')) THEN RAISE EXCEPTION 'F01 RPC name collision'; END IF;
+IF has_function_privilege('anon','public.next_booking_reference(uuid)','EXECUTE') OR has_function_privilege('authenticated','public.next_booking_reference(uuid)','EXECUTE') OR has_function_privilege('anon','public.expire_booking_holds(uuid)','EXECUTE') OR has_function_privilege('authenticated','public.expire_booking_holds(uuid)','EXECUTE') THEN RAISE EXCEPTION 'F02 permissions drift'; END IF;
+IF (SELECT jsonb_build_object('owner',pg_get_userbyid(proowner),'config',proconfig,'acl',proacl::text,'definition_md5',md5(pg_get_functiondef(oid))) FROM pg_proc WHERE oid='auth.uid()'::regprocedure) IS DISTINCT FROM $expected${"owner":"supabase_auth_admin","config":null,"acl":"{=X/supabase_auth_admin,supabase_auth_admin=X/supabase_auth_admin,dashboard_user=X/supabase_auth_admin}","definition_md5":"287be859fa2e140a8c3d8c78e3fec7eb"}$expected$::jsonb THEN RAISE EXCEPTION 'F01 precondition drift: auth.uid trust'; END IF;
+IF (SELECT jsonb_agg(jsonb_build_object('name',rolname,'inherit',rolinherit,'bypassrls',rolbypassrls,'superuser',rolsuper) ORDER BY rolname) FROM pg_roles WHERE rolname IN ('anon','authenticated','service_role','postgres','authenticator')) IS DISTINCT FROM $expected$[{"name":"anon","inherit":true,"bypassrls":false,"superuser":false},{"name":"authenticated","inherit":true,"bypassrls":false,"superuser":false},{"name":"authenticator","inherit":false,"bypassrls":false,"superuser":false},{"name":"postgres","inherit":true,"bypassrls":true,"superuser":false},{"name":"service_role","inherit":true,"bypassrls":true,"superuser":false}]$expected$::jsonb THEN RAISE EXCEPTION 'F01 precondition drift: role security attributes'; END IF;
+END;
+$f01_guard$;
+
+CREATE FUNCTION public.borealis_admin_cms_documents(
+  target_property uuid, target_document_key text DEFAULT NULL
+) RETURNS SETOF public.cms_documents
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = '' AS $body$
+BEGIN
+  IF auth.uid() IS NULL OR public.can_manage_property(
+    target_property, ARRAY['owner','manager','editor']::public.admin_role[]
+  ) IS NOT TRUE THEN
+    RAISE EXCEPTION 'CMS access denied' USING ERRCODE = '42501';
+  END IF;
+  RETURN QUERY SELECT d.* FROM public.cms_documents AS d
+    WHERE d.property_id = target_property
+      AND (target_document_key IS NULL OR d.document_key = target_document_key);
+END;
+$body$;
+ALTER FUNCTION public.borealis_admin_cms_documents(uuid,text) OWNER TO postgres;
+REVOKE ALL ON FUNCTION public.borealis_admin_cms_documents(uuid,text)
+  FROM PUBLIC, anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.borealis_admin_cms_documents(uuid,text)
+  TO authenticated;
+
+CREATE FUNCTION public.borealis_save_cms_document(
+  target_property uuid, target_document_key text,
+  input_data jsonb, target_status public.content_status
+) RETURNS uuid
+LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = '' AS $body$
+DECLARE
+  result_id uuid;
+BEGIN
+  IF auth.uid() IS NULL OR public.can_manage_property(
+    target_property, ARRAY['owner','manager','editor']::public.admin_role[]
+  ) IS NOT TRUE THEN
+    RAISE EXCEPTION 'CMS access denied' USING ERRCODE = '42501';
+  END IF;
+  IF target_document_key IS NULL OR target_document_key NOT IN
+    ('about','contact','footer','book','global','rooms','experiences',
+     'transfers','explore-koman','gallery')
+    OR input_data IS NULL OR pg_catalog.jsonb_typeof(input_data) <> 'object'
+    OR target_status IS NULL OR target_status NOT IN
+      ('draft'::public.content_status,'published'::public.content_status)
+  THEN
+    RAISE EXCEPTION 'Invalid CMS document' USING ERRCODE = '22023';
+  END IF;
+  -- One upsert owns the merge; no read-then-write race or caller SELECT on draft.
+  INSERT INTO public.cms_documents AS current_document
+    (property_id,document_key,data,draft_data,status,created_by,updated_by)
+  VALUES
+    (target_property,target_document_key,
+     CASE WHEN target_status = 'published' THEN input_data ELSE '{}'::jsonb END,
+     CASE WHEN target_status = 'draft' THEN input_data ELSE NULL END,
+     target_status,auth.uid(),auth.uid())
+  ON CONFLICT (property_id,document_key) DO UPDATE SET
+    data = CASE WHEN target_status = 'published' THEN
+      current_document.data || COALESCE(current_document.draft_data,'{}'::jsonb) || input_data
+      ELSE current_document.data END,
+    draft_data = CASE WHEN target_status = 'draft' THEN
+      current_document.data || COALESCE(current_document.draft_data,'{}'::jsonb) || input_data
+      ELSE NULL END,
+    status = CASE WHEN target_status = 'published' THEN target_status
+      ELSE current_document.status END,
+    updated_at = pg_catalog.now(), updated_by = auth.uid()
+  RETURNING id INTO result_id;
+  RETURN result_id;
+END;
+$body$;
+ALTER FUNCTION public.borealis_save_cms_document(uuid,text,jsonb,public.content_status)
+  OWNER TO postgres;
+REVOKE ALL ON FUNCTION public.borealis_save_cms_document(uuid,text,jsonb,public.content_status)
+  FROM PUBLIC, anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.borealis_save_cms_document(uuid,text,jsonb,public.content_status)
+  TO authenticated;
+NOTIFY pgrst, 'reload schema';
+DO $f01_post$
+DECLARE f regprocedure; r text;
+BEGIN
+ FOREACH f IN ARRAY ARRAY['public.borealis_admin_cms_documents(uuid,text)'::regprocedure,'public.borealis_save_cms_document(uuid,text,jsonb,public.content_status)'::regprocedure] LOOP
+  IF NOT EXISTS(SELECT 1 FROM pg_proc WHERE oid=f AND prosecdef AND pg_get_userbyid(proowner)='postgres' AND proconfig @> ARRAY['search_path=""']) THEN RAISE EXCEPTION 'RPC security attributes rejected'; END IF;
+  IF NOT has_function_privilege('authenticated',f,'EXECUTE') OR NOT has_function_privilege('postgres',f,'EXECUTE') THEN RAISE EXCEPTION 'RPC trusted grant missing'; END IF;
+  FOREACH r IN ARRAY ARRAY['anon','service_role'] LOOP
+   IF has_function_privilege(r,f,'EXECUTE') THEN RAISE EXCEPTION 'RPC unauthorized grant'; END IF;
+  END LOOP;
+ END LOOP;
+END;
+$f01_post$;
+COMMIT;

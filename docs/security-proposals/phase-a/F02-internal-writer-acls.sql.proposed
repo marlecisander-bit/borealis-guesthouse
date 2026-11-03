@@ -1,0 +1,14 @@
+-- DESIGN ONLY. Requires exact owner/security-definer/call-graph/grant preflight.
+BEGIN;
+SET LOCAL lock_timeout = '3s';
+SET LOCAL statement_timeout = '30s';
+REVOKE EXECUTE ON FUNCTION public.next_booking_reference(uuid)
+  FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.expire_booking_holds(uuid)
+  FROM PUBLIC, anon, authenticated;
+-- Preserve an explicitly trusted server role; never send its key to a browser.
+GRANT EXECUTE ON FUNCTION public.next_booking_reference(uuid) TO service_role;
+GRANT EXECUTE ON FUNCTION public.expire_booking_holds(uuid) TO service_role;
+-- Do not alter public booking/quote/confirmation functions or their bodies.
+NOTIFY pgrst, 'reload schema';
+COMMIT;

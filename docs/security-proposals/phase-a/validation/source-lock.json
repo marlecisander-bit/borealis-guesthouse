@@ -1,0 +1,261 @@
+{
+  "purpose": "Input identity only; not certification of DDL completeness or executable migration state",
+  "files": [
+    {
+      "path": ".local/production-sync-audit/catalog.json",
+      "sha256": "5aef4e2f67bcb7ffad71d329489b9931be7457e8df4dc1e426460d8d57803554"
+    },
+    {
+      "path": ".local/production-sync-audit/detail-with-source-hashes.json",
+      "sha256": "145494d1ee531874e79f749886d8c5690a4453415793158d96fd183ec7e7cc45"
+    },
+    {
+      "path": ".local/production-sync-audit/migration-reconciliation.json",
+      "sha256": "107b00ef62feac928af4937d0f83644cc2ee643cd30c5172ac36550152560971"
+    },
+    {
+      "path": "database/cms-foundation.sql",
+      "sha256": "37db83ee1314b3f937dea73e7fc2f14a0cc3a2b69a546dfbd1f9835651404973"
+    },
+    {
+      "path": "database/media-storage.sql",
+      "sha256": "e70969ad1c2786c1a7b0b151126758826049a05655b2e066a647b74290e9a949"
+    },
+    {
+      "path": "database/migrations/20260902_001_admin_cms_public_schema.sql",
+      "sha256": "e9ac5c6d3d6d2a61e091da25dbb7cc50be48650c444e03725f42ba097470bfff"
+    },
+    {
+      "path": "database/migrations/20260902_002_rooms_management.sql",
+      "sha256": "e659982d305c200337f706b981d597a66151d93c7007933a20f5a226b32c6232"
+    },
+    {
+      "path": "database/migrations/20260902_003_amenities_manager.sql",
+      "sha256": "6acaa80bb3273970dd92ad778befd05d640804d2295755ccbca333a2e27c9e8f"
+    },
+    {
+      "path": "database/migrations/20260902_004_rate_management.sql",
+      "sha256": "ef48de631250a0f2112744f04a47d34cb1b48c7f2900cd68e5c8864172c8cc38"
+    },
+    {
+      "path": "database/migrations/20260902_005_availability_management.sql",
+      "sha256": "75c64977a46c9e1acaa63c73cb84eee312aa1b23f09c16eccb77d31cce5ed8a3"
+    },
+    {
+      "path": "database/migrations/20260902_006_homepage_cms.sql",
+      "sha256": "184979706019fa3fc8e51c3e0c6d3e57b1b2349d8bd21ba24ec6c45bb7f98707"
+    },
+    {
+      "path": "database/migrations/20260902_007_site_content_cms.sql",
+      "sha256": "117a2645ad587c709d0214830c805b5309bcc2cf1fdf8f33258750a1586d360e"
+    },
+    {
+      "path": "database/migrations/20260902_008_experiences_admin.sql",
+      "sha256": "1e88ecb0ca426e13a4ecbd7904ccb4e594dae1f73645a580d6e35c0d46acf35a"
+    },
+    {
+      "path": "database/migrations/20260903_006_room_rate_activation.sql",
+      "sha256": "8900fdfd05faad2eb96d92d237644a412c6d2c405307975bbdbfb693348684d9"
+    },
+    {
+      "path": "database/migrations/20260903_009_transfers_admin.sql",
+      "sha256": "652cee116fe54852420ec829f3b48fedb9f344e287a1d0a8007dac49bd8d8ad3"
+    },
+    {
+      "path": "database/migrations/20260903_010_explore_koman_cms.sql",
+      "sha256": "c08a41b2f58ae9805837e527d2dd5fc1e12655e89b665e970c485bbd9d84bc87"
+    },
+    {
+      "path": "database/migrations/20260903_011_central_seo.sql",
+      "sha256": "4a8ac7d1597b83bc841ff618481d670066a82531b99996199f1861a3cdde097e"
+    },
+    {
+      "path": "database/migrations/20260903_012_languages_translations.sql",
+      "sha256": "f39b24fc3978d228a61ce777c4a83ac0799f25078b965aa574cee72e19286bc4"
+    },
+    {
+      "path": "database/migrations/20260903_013_property_settings.sql",
+      "sha256": "ed27d417f505114b93c8d8349dd1d60651a3701218066260c862a95107ac9095"
+    },
+    {
+      "path": "database/migrations/20260903_014_content_workflow.sql",
+      "sha256": "1c9a1cff790f13928e3753b4a7c1d5fb2c5a13ef460ccd53c59d6277cda27739"
+    },
+    {
+      "path": "database/migrations/20260903_015_storage_property_boundaries.sql",
+      "sha256": "00c60199949ff89bbe16111035ed6d8c182d8b09aa08b4ae2d3dfafa0537430f"
+    },
+    {
+      "path": "database/migrations/20260903_016_cms_core_normalization.sql",
+      "sha256": "5466b69b676387da43db26a34b4fe640e77dec53394a078ad95f8973c58597f5"
+    },
+    {
+      "path": "database/migrations/20260903_017_media_library.sql",
+      "sha256": "bfa8228a631156bd61369a7367af96ff581c89431c51271cd7c78bb2378a808d"
+    },
+    {
+      "path": "database/migrations/20260903_018_rooms_amenities_normalization.sql",
+      "sha256": "2eafaf39c84819dca17450349c6c84008570c43e11eefc29b5cdeba8855c57d6"
+    },
+    {
+      "path": "database/migrations/20260904_019_cms_page_seo.sql",
+      "sha256": "993bd8d03ade407fcc15c1cc29233cf29b8e5551af0b8f2b0c4a33faaee1e0d9"
+    },
+    {
+      "path": "database/migrations/20260904_020_multilingual_architecture.sql",
+      "sha256": "307a3068506f3f03e45d60b8d84614d4b6084b80e522ebff99f0eee644c54b13"
+    },
+    {
+      "path": "database/migrations/20260904_021_booking_management.sql",
+      "sha256": "b17f2992393c58a4f2bdff7fb8a92188fb5a9db95ae8e6f1a6b856631b67a9de"
+    },
+    {
+      "path": "database/migrations/20260904_022_frontend_readiness.sql",
+      "sha256": "7512068d4f3ab71eb56138dc248a86192a39d477007998f6b255920295fdd6aa"
+    },
+    {
+      "path": "database/migrations/20260904_023_ical_channel_sync.sql",
+      "sha256": "2617d222fd55ee1b27494be6d38a124a1c15b3ef775fbd7d7e52c3e5679d78bd"
+    },
+    {
+      "path": "database/migrations/20260904_024_currency_defaults.sql",
+      "sha256": "1929293006cf08383b5b00bc6e1772e317237058496c3b91d4c9a44fe140dae4"
+    },
+    {
+      "path": "database/migrations/20260904_025_unified_rooms_inventory.sql",
+      "sha256": "191e15acc5f8ddc2021b4fdf077ea5a08a50b7a81ff34733ae279c43bdbf8690"
+    },
+    {
+      "path": "database/migrations/20260904_026_public_page_content_cms.sql",
+      "sha256": "088fc9744e15ee630e5cda4449d7b63266316afa7d5098ca11f558a08901fc1e"
+    },
+    {
+      "path": "database/migrations/20260905_027_booking_engine_completion.sql",
+      "sha256": "5bcc10c3be5fc4934fd5c66cbcc0e86fd16d3988884b3b889975f821567916b5"
+    },
+    {
+      "path": "database/migrations/20260905_028_booking_readiness.sql",
+      "sha256": "d4d7515a49fa2d13e707ff0b6f834c9ad60ccbea14758946734a1f8ff03d6fc3"
+    },
+    {
+      "path": "database/migrations/20260905_029_booking_packages.sql",
+      "sha256": "f47b641a546e65c0ae231d208414871b0cff207f709724b620bb0d83e6f679b6"
+    },
+    {
+      "path": "database/migrations/20260905_030_booking_cancellation_release.sql",
+      "sha256": "621a6de8de31b7f24985d1525074b36ab29597b5516d24d138db0c79af10e7cc"
+    },
+    {
+      "path": "database/migrations/20260905_031_owner_notifications.sql",
+      "sha256": "5eb09e38fa187fbbb4f0071061707c18af45ece7870992fdf39b42f7fe184aac"
+    },
+    {
+      "path": "database/migrations/20260905_032_standalone_experience_booking.sql",
+      "sha256": "ed47eb9f2daa7002659050cda776121960baa4e981842671a80dc5e6b6570e48"
+    },
+    {
+      "path": "database/migrations/20260905_033_experience_schedule_and_capacity.sql",
+      "sha256": "04567de444c644aa6ff719bf240cb1818ee90785c903e48d962aa24fda733670"
+    },
+    {
+      "path": "database/migrations/20260910_034_family_room_lake_view.sql",
+      "sha256": "a54b4e98dabd927c455e885b2aaf37199d189bc32c1cb0606b5ab66b507d1e89"
+    },
+    {
+      "path": "database/migrations/20260910_035_triple_room_lake_view.sql",
+      "sha256": "ce630b28d212b9a8ac4f9740c10390c56c18b482bb111a1613f7d4a76366caf6"
+    },
+    {
+      "path": "database/migrations/20260910_036_amenity_icon_normalization.sql",
+      "sha256": "9e80ac8f8041fed1afc3a8aee63cf8d48fbd21d4bc4e5cfaffc6103fd2ba482d"
+    },
+    {
+      "path": "database/migrations/20260911_037_public_admin_content_sync.sql",
+      "sha256": "a8426546869b293e49b3fffe0012eaf63122514130236eb13ec0d29246787934"
+    },
+    {
+      "path": "database/migrations/20260912_037_multi_room_booking.sql",
+      "sha256": "602ed79022f66bcfddaac204e84cc2e6247e794a8e62c9653bd842eb27e682d5"
+    },
+    {
+      "path": "database/migrations/20260912_038_room_occupancy_policy.sql",
+      "sha256": "9ab6dd6c4690d76749b10a8090666b37588747f550c742b5d56205ab1fb2bafd"
+    },
+    {
+      "path": "database/migrations/20260912_039_homepage_hero_assets.sql",
+      "sha256": "20e64549e222bf3aebf6fe70378a355453f8ea1b510dd9c897bb547a66fbc074"
+    },
+    {
+      "path": "database/schema.sql",
+      "sha256": "e9d07667638a4606569511823dc7bdc3310c2bcc6a4b43ff5b7e274466796475"
+    },
+    {
+      "path": "database/setup-first-admin.sql",
+      "sha256": "806dcd5f56ab5f25e033ce1803ccca5173f757018b610479671dffa995fbe7a9"
+    },
+    {
+      "path": "docs/BOREALIS-F01-DRAFT-PROTECTION-PLAN.md",
+      "sha256": "43c4ec901283d0bc9fd3f57f4dfb06100c3846a264541b3609f25032ef004993"
+    },
+    {
+      "path": "docs/BOREALIS-F02-RPC-PERMISSIONS-PLAN.md",
+      "sha256": "19a5cb8d3c223eec834a607c9261364564098022488a4a7bbf4da27b7b66a63c"
+    },
+    {
+      "path": "docs/BOREALIS-F03-STORAGE-AUTH-PLAN.md",
+      "sha256": "47eded5638231068048b17e0b721a028fde4ff6068cb52f0665a291cfff04d38"
+    },
+    {
+      "path": "docs/BOREALIS-PHASE-A-SECURITY-DESIGN.md",
+      "sha256": "465baeedae2e0211ba92675efe3dcbaefed709a46042aa9fdd3d9582d27e0933"
+    },
+    {
+      "path": "docs/BOREALIS-REMEDIATION-ROADMAP.md",
+      "sha256": "cae5ee50152c2e3a807054fdfd76987e353e5e78696d390f225354468aab5b55"
+    },
+    {
+      "path": "docs/security-proposals/phase-a/F01-01-cms-rpc-expand.sql.proposed",
+      "sha256": "4b42aed3841135e2fc0fb14d4ceea01d2510c7714cb99e41a34d980bb30f6760"
+    },
+    {
+      "path": "docs/security-proposals/phase-a/F01-02-cms-privilege-contract.sql.proposed",
+      "sha256": "0d5dfb0ecfa63a104d56b81fe9a513cce9bf7e02ce276f09259559a99f8faadc"
+    },
+    {
+      "path": "docs/security-proposals/phase-a/F02-internal-writer-acls.sql.proposed",
+      "sha256": "57272d8186eda720dab7549098088c080fbeb99635fd7779e9acadc4ccb85e00"
+    },
+    {
+      "path": "docs/security-proposals/phase-a/F03-media-policy-consolidation.sql.proposed",
+      "sha256": "c37193538e29df1f67a0a1fecbeba87209b40584f7b4bc08cef1c3f07febf217"
+    },
+    {
+      "path": "docs/security-proposals/phase-a/synthetic-denial-examples.sql.proposed",
+      "sha256": "1b4f8921ac2902f9a02b20d1748fb14bfc6b1b35ef7dfb3e05a83e469ffb67c7"
+    },
+    {
+      "path": "src/app/admin/content/homepage/hero-upload/route.ts",
+      "sha256": "5f5c81c68cfdb6084243bb5ff4d556d66ca34da9895fd5db180fd9f78fd5770e"
+    },
+    {
+      "path": "src/app/admin/media/upload/route.ts",
+      "sha256": "0ed11550de93d6d26ddc41e5d20d742addb19a7a32537892ec4997fea92da5bc"
+    },
+    {
+      "path": "src/components/admin/HeroImageFields.tsx",
+      "sha256": "7ddf7d17f19edff4b7f43417775a40cd722e75faadc301dbf9504b33dea79bbd"
+    },
+    {
+      "path": "src/lib/repositories/admin/languages.ts",
+      "sha256": "32eeb3e64fe25d3233c761cc91909af296106cdd234a06f04ad47617822922eb"
+    },
+    {
+      "path": "src/lib/repositories/admin/site-content.ts",
+      "sha256": "0263612f1f8bed7998ae13642823c6fd0511778433cfe6af523ea84122ba430a"
+    },
+    {
+      "path": "src/services/site-content.ts",
+      "sha256": "ecacd43128b1beaaebd428b66f65f339798b56382553bc06bfd9fdc5467d4a62"
+    }
+  ]
+}

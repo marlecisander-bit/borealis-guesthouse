@@ -30,7 +30,7 @@ function CalendarMonth({ month, value, picker }: { month: Date; value: DateRange
 export function DateRangeCalendar({ value, picker }: { value: DateRangeValue; picker: DateRangePickerController }) {
   const panelRef = useRef<HTMLDivElement>(null);
   useOutsideClick(panelRef, picker.close, picker.open);
-  useEffect(() => { if (picker.open) panelRef.current?.focus(); }, [picker.open]);
+  useEffect(() => { if (picker.open) panelRef.current?.focus({ preventScroll: true }); }, [picker.open]);
   if (!picker.open) return null;
   const instruction = picker.activeField === 'checkout' ? 'Choose a new departure date' : 'Choose arrival, then departure';
   return <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Choose your stay dates" className="booking-calendar">
