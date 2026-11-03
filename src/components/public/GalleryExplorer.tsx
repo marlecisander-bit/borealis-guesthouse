@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import{useDialogFocus}from'@/hooks/useDialogFocus';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { GalleryItem } from '@/types/public';
 
@@ -10,18 +11,17 @@ export function GalleryExplorer({ items }: { items: GalleryItem[] }) {
   const visible = category === 'All' ? items : items.filter(item => item.category === category);
   const [active, setActive] = useState<number | null>(null);
   const touchStart = useRef(0);
+  const panel=useRef<HTMLDivElement>(null);useDialogFocus(panel,active!==null,()=>setActive(null));
   const move = (direction: number) => setActive(current => current === null ? null : (current + direction + visible.length) % visible.length);
 
   useEffect(() => {
     if (active === null) return;
     const key = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setActive(null);
       if (event.key === 'ArrowRight') move(1);
       if (event.key === 'ArrowLeft') move(-1);
     };
-    document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', key);
-    return () => { document.body.style.overflow = ''; window.removeEventListener('keydown', key); };
+    return () => { window.removeEventListener('keydown', key); };
   });
 
   return <>
@@ -37,8 +37,8 @@ export function GalleryExplorer({ items }: { items: GalleryItem[] }) {
         <figcaption className="sr-only">{item.alt} · {item.category}</figcaption>
       </figure>)}
     </div>
-    {active !== null && visible[active] && <div className="fixed inset-0 z-[80] flex flex-col bg-lake/98 p-3 text-white sm:p-4" role="dialog" aria-modal="true" aria-label="Borealis photo gallery" onTouchStart={event => touchStart.current = event.changedTouches[0].clientX} onTouchEnd={event => { const delta = event.changedTouches[0].clientX - touchStart.current; if (Math.abs(delta) > 55) move(delta < 0 ? 1 : -1); }}>
-      <header className="flex items-center justify-between"><p className="text-sm">{active + 1} / {visible.length}</p><button autoFocus onClick={() => setActive(null)} className="grid size-12 place-items-center rounded-full border border-white/25 text-2xl" aria-label="Close lightbox">×</button></header>
+    {active !== null && visible[active] && <div ref={panel} tabIndex={-1} className="fixed inset-0 z-[80] flex flex-col bg-lake/98 p-3 text-white sm:p-4" role="dialog" aria-modal="true" aria-label="Borealis photo gallery" onTouchStart={event => touchStart.current = event.changedTouches[0].clientX} onTouchEnd={event => { const delta = event.changedTouches[0].clientX - touchStart.current; if (Math.abs(delta) > 55) move(delta < 0 ? 1 : -1); }}>
+      <header className="flex items-center justify-between"><p className="text-sm">{active + 1} / {visible.length}</p><button onClick={() => setActive(null)} className="grid size-12 place-items-center rounded-full border border-white/25 text-2xl" aria-label="Close lightbox">×</button></header>
       <div className="relative flex-1" onClick={() => setActive(null)} aria-label="Close gallery backdrop">
         <Image src={visible[active].src} alt={visible[active].alt} fill sizes="100vw" className="object-contain" onClick={event => event.stopPropagation()} />
       </div>

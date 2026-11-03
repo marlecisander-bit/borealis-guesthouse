@@ -1,5 +1,7 @@
 'use client';
-import { useEffect, useRef } from 'react';
+import {createPortal} from 'react-dom';
+import {useDialogFocus} from '@/hooks/useDialogFocus';
+import { useRef } from 'react';
 import { earliestCheckout, formatDateOnly, localToDateOnly, todayIso, type DateRangeValue } from '@/lib/date-range';
 import type { DateRangePickerController } from '@/hooks/useDateRangePicker';
 import { useOutsideClick } from '@/hooks/useOutsideClick';
@@ -30,11 +32,11 @@ function CalendarMonth({ month, value, picker }: { month: Date; value: DateRange
 export function DateRangeCalendar({ value, picker }: { value: DateRangeValue; picker: DateRangePickerController }) {
   const panelRef = useRef<HTMLDivElement>(null);
   useOutsideClick(panelRef, picker.close, picker.open);
-  useEffect(() => { if (picker.open) panelRef.current?.focus({ preventScroll: true }); }, [picker.open]);
+  useDialogFocus(panelRef,picker.open,picker.close);
   if (!picker.open) return null;
   const instruction = picker.activeField === 'checkout' ? 'Choose a new departure date' : 'Choose arrival, then departure';
-  return <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Choose your stay dates" className="booking-calendar">
-    <div className="flex items-center justify-between border-b border-lake/10 px-5 py-4 md:px-7"><div><p className="text-[.65rem] font-bold uppercase tracking-[.16em] text-green">Select your stay</p><p className="mt-1 text-sm text-muted">{instruction}</p></div><button type="button" onClick={picker.close} className="grid size-10 place-items-center rounded-full border border-lake/15 text-xl text-lake" aria-label="Close calendar">×</button></div>
+  return createPortal(<div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Choose your stay dates" className="booking-calendar">
+    <div className="flex items-center justify-between border-b border-lake/10 px-5 py-4 md:px-7"><div><p className="text-[.65rem] font-bold uppercase tracking-[.16em] text-green">Select your stay</p><p className="mt-1 text-sm text-muted">{instruction}</p></div><button type="button" onClick={picker.close} className="grid size-11 shrink-0 place-items-center rounded-full border border-lake/15 text-xl text-lake" aria-label="Close calendar">×</button></div>
     <div className="relative grid gap-8 p-5 md:grid-cols-2 md:p-7">
       <button type="button" onClick={picker.previousMonth} disabled={picker.month <= picker.currentMonth} className="calendar-arrow left-5 md:left-7" aria-label="Previous month">←</button>
       <button type="button" onClick={picker.nextMonth} className="calendar-arrow right-5 md:right-7" aria-label="Next month">→</button>
@@ -42,5 +44,5 @@ export function DateRangeCalendar({ value, picker }: { value: DateRangeValue; pi
       <div className="hidden md:block"><CalendarMonth month={new Date(picker.month.getFullYear(), picker.month.getMonth() + 1, 1)} value={value} picker={picker}/></div>
     </div>
     <div className="flex items-center justify-between border-t border-lake/10 px-5 py-4 text-sm md:px-7"><span className="text-muted">{formatDateOnly(value.checkIn)} <span aria-hidden="true">→</span> {formatDateOnly(value.checkOut)}</span><button type="button" onClick={picker.close} disabled={!value.checkIn || !value.checkOut} className="rounded-full bg-lake px-5 py-2.5 font-bold text-white disabled:opacity-35">Done</button></div>
-  </div>;
+  </div>,document.body);
 }

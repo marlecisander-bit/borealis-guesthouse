@@ -1,17 +1,17 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState } from 'react';
 import { saveHomepageCms } from '@/app/admin/content/homepage/actions';
 import { HeroImageFields } from '@/components/admin/HeroImageFields';
 import { MediaPicker } from '@/components/admin/MediaPicker';
-import type { CmsOption, HomepageCmsState, HomepageEditorData, HomepageKey, HomepageReview, HomepageSection } from '@/types/homepage-cms';
+import type { CmsOption, HomepageCmsState, HomepageEditorData, HomepageKey, HomepageSection } from '@/types/homepage-cms';
 
 const initial: HomepageCmsState = { ok: false, message: '' };
 const input = 'mt-2 min-h-12 w-full rounded-lg border border-slate-300 bg-white px-4 font-normal text-slate-900';
 const ctaDestinations = [
   ['', 'No link'], ['/book', 'Book now'], ['/rooms', 'View rooms'], ['/experiences', 'View experiences'],
   ['/transfers', 'View transfers'], ['/explore-koman', 'Explore Koman'], ['/gallery', 'Open gallery'],
-  ['/about', 'About Borealis'], ['/contact', 'Contact Borealis'],
+  ['/contact', 'Contact Borealis'],
 ] as const;
 
 type SectionConfig = {
@@ -31,17 +31,12 @@ const sectionConfigs: SectionConfig[] = [
   { key: 'intro', label: '2. Lakefront introduction', description: 'The image-and-copy welcome section directly below the hero.', media: true, imageAlt: true, imageLabel: true, cta: true },
   { key: 'featured_rooms', label: '3. Featured rooms', description: 'Heading, supporting copy, link label and which room cards appear.', choices: 'rooms', cta: true },
   { key: 'featured_experiences', label: '4. Experiences introduction', description: 'Heading, supporting copy, link and featured Experience cards.', choices: 'experiences', cta: true },
-  { key: 'explore_koman', label: '5. Explore Koman', description: 'Editorial introduction, link and selected guide articles.', choices: 'articles', cta: true },
-  { key: 'transfers', label: '6. Guest transfers', description: 'Editorial introduction, link and selected transfer routes.', choices: 'transfers', cta: true },
-  { key: 'gallery', label: '7. Gallery preview', description: 'Heading, link and Media Library images used in the homepage preview.', choices: 'media', cta: true },
-  { key: 'reviews', label: '8. Guest notes', description: 'Section heading and the manually curated testimonials.' },
-  { key: 'location', label: '9. Koman location', description: 'Location message and directions link. The map location is managed in Settings → Property.', cta: true },
-  { key: 'final_cta', label: '10. Final booking call to action', description: 'The closing image, message and booking button.', media: true, imageAlt: true, cta: true },
+  { key: 'location', label: '5. Koman location', description: 'Location message and directions link. The map location is managed in Settings → Property.', cta: true },
+  { key: 'final_cta', label: '6. Final booking call to action', description: 'The closing image, message and booking button.', media: true, imageAlt: true, cta: true },
 ];
 
 export function HomepageCmsForm({ data }: { data: HomepageEditorData }) {
   const [state, action, pending] = useActionState(saveHomepageCms, initial);
-  const [reviews, setReviews] = useState<HomepageReview[]>(data.reviews);
   const hero = findSection(data, 'hero');
   const updated = data.workflow?.updatedAt
     ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(data.workflow.updatedAt))
@@ -55,20 +50,6 @@ export function HomepageCmsForm({ data }: { data: HomepageEditorData }) {
     </div>
 
     {sectionConfigs.map(config => <HomepageSectionEditor key={config.key} config={config} section={findSection(data, config.key)} data={data} />)}
-
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-      <div><p className="text-xs font-bold uppercase tracking-widest text-slate-500">Homepage · Guest notes</p><h2 className="mt-1 text-2xl font-bold text-slate-950">Testimonials</h2><p className="mt-3 text-sm leading-6 text-slate-600">These quotes appear only when the Guest notes section above is visible.</p></div>
-      <input type="hidden" name="reviewCount" value={reviews.length} />
-      <div className="mt-6 grid gap-4">
-        {reviews.map((review, index) => <div key={`${review.id}-${index}`} className="grid gap-4 rounded-xl bg-slate-50 p-4 lg:grid-cols-[1fr_1fr_2fr_auto]">
-          <Field label="Guest name"><input name={`review_${index}_author`} defaultValue={review.author} className={input} /></Field>
-          <Field label="Origin"><input name={`review_${index}_origin`} defaultValue={review.origin} className={input} /></Field>
-          <Field label="Quote"><textarea name={`review_${index}_quote`} defaultValue={review.quote} rows={3} className={`${input} py-3`} /></Field>
-          <div className="flex flex-col justify-end gap-2"><input type="hidden" name={`review_${index}_order`} value={index * 10} /><label className="flex min-h-10 items-center gap-2 text-sm"><input name={`review_${index}_visible`} type="checkbox" defaultChecked={review.visible} /> Visible</label><button type="button" onClick={() => setReviews(items => items.filter((_, itemIndex) => itemIndex !== index))} className="text-left text-sm font-semibold text-red-700">Remove</button></div>
-        </div>)}
-      </div>
-      <button type="button" onClick={() => setReviews(items => [...items, emptyReview(items.length)])} className="mt-4 min-h-11 rounded-lg border border-slate-300 px-4 text-sm font-semibold">Add testimonial</button>
-    </section>
 
     <PreservedRetiredHighlights data={data} />
     <div className="sticky bottom-3 z-20 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white/95 p-4 shadow-xl backdrop-blur sm:flex-row sm:items-center sm:justify-between"><p role="status" className={`text-sm ${state.ok ? 'text-emerald-700' : 'text-red-700'}`}>{state.message}</p><div className="flex gap-2"><button name="status" value="draft" disabled={pending} className="min-h-11 rounded-lg border border-slate-300 px-4 text-sm font-semibold">Save Draft</button><button name="status" value="published" disabled={pending} className="min-h-11 rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white">Publish</button></div></div>
@@ -99,7 +80,7 @@ function HomepageSectionEditor({ config, section, data }: { config: SectionConfi
 }
 
 function Choice({ sectionKey, option, checked, order }: { sectionKey: string; option: CmsOption; checked: boolean; order: number }) {
-  return <label className="flex min-h-12 items-center gap-3 rounded-lg border border-slate-200 px-3 text-sm"><input name={`${sectionKey}_links`} value={option.id} type="checkbox" defaultChecked={checked} /><span className="min-w-0 flex-1 truncate">{option.label}</span><input name={`${sectionKey}_link_order_${option.id}`} type="number" defaultValue={order} aria-label={`${option.label} order`} className="w-16 rounded border border-slate-300 px-2 py-1" /></label>;
+  return <label className="flex min-h-12 min-w-0 items-center gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm"><input name={`${sectionKey}_links`} value={option.id} type="checkbox" defaultChecked={checked} /><span className="min-w-0 flex-1 break-words">{option.label}</span><input name={`${sectionKey}_link_order_${option.id}`} type="number" defaultValue={order} aria-label={`${option.label} order`} className="w-16 shrink-0 rounded border border-slate-300 px-2 py-1" /></label>;
 }
 
 function CtaDestination({ name, value }: { name: string; value: string }) {
@@ -120,5 +101,4 @@ function findSection(data: HomepageEditorData, key: Exclude<HomepageKey, 'proper
   return data.sections.find(section => section.key === key) || { id: '', key, title: '', subtitle: '', body: '', eyebrow: '', ctaLabel: '', ctaLink: '', backgroundMediaId: '', settings: {}, status: 'draft', visible: true, sortOrder: sectionConfigs.findIndex(config => config.key === key) * 10, links: [] };
 }
 
-function emptyReview(index: number): HomepageReview { return { id: '', author: '', origin: '', quote: '', visible: true, sortOrder: index * 10, status: 'draft' }; }
 function Field({ label, children }: { label: string; children: React.ReactNode }) { return <label className="text-sm font-semibold text-slate-800">{label}{children}</label>; }

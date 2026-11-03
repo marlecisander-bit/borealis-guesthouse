@@ -60,8 +60,8 @@ test('draft and failed save never invalidate public cache; successful publicatio
 });
 test('language dashboard uses private RPC enumeration and fails closed on private read errors',async()=>{
  const source=readFileSync('src/lib/repositories/admin/languages.ts','utf8');assert.doesNotMatch(source,/from\('cms_documents'\)/);
- const q:any={then:(resolve:any)=>Promise.resolve({data:[]}).then(resolve)};for(const k of ['select','eq','neq','order'])q[k]=()=>q;
- const repo=load('src/lib/repositories/admin/languages.ts',{'@/lib/supabase/server':{createServerSupabaseClient:async()=>({from:()=>q})},'@/lib/admin/cms-documents':{assertCmsSession:helper.assertCmsSession,readPrivateCmsDocuments:async()=>{throw Error('private failure')}}}).adminLanguagesRepository;
+ const q:any={then:(resolve:any)=>Promise.resolve({data:[]}).then(resolve)};for(const k of ['select','eq','neq','order','in'])q[k]=()=>q;
+ const repo=load('src/lib/repositories/admin/languages.ts',{'@/types/homepage-cms':load('src/types/homepage-cms.ts'),'@/lib/supabase/server':{createServerSupabaseClient:async()=>({from:()=>q})},'@/lib/admin/cms-documents':{assertCmsSession:helper.assertCmsSession,readPrivateCmsDocuments:async()=>{throw Error('private failure')}}}).adminLanguagesRepository;
  await assert.rejects(()=>repo.dashboard(session),/private failure/);
 });
 test('ten-key source contract agrees with proposed save SQL; no compatibility seed or constraint applied',()=>{

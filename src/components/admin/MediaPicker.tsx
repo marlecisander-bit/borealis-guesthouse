@@ -1,7 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { useMemo, useState } from 'react';
+import{useDialogFocus}from'@/hooks/useDialogFocus';
+import { useMemo, useState, useRef } from 'react';
 import type { CmsOption } from '@/types/homepage-cms';
 import type { AdminMediaAsset } from '@/types/media';
 import dynamic from 'next/dynamic';
@@ -28,6 +29,7 @@ export function MediaPicker({
   const [legacyUrl, setLegacyUrl] = useState(valueMode === 'url' && !initialMatch ? defaultValue : '');
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const panel=useRef<HTMLDivElement>(null);useDialogFocus(panel,open,()=>setOpen(false));
   const current = items.find(item => item.id === selected);
   const submittedValue = valueMode === 'url' ? current?.imageUrl || legacyUrl : selected;
   const shown = useMemo(
@@ -91,11 +93,12 @@ export function MediaPicker({
 
       {open && (
         <div
+          ref={panel} tabIndex={-1}
           role="dialog"
           aria-modal="true"
           aria-label={`Choose ${label.toLowerCase()}`}
           onClick={() => setOpen(false)}
-          className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 sm:items-center sm:p-5"
+          className="media-picker-dialog fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 sm:items-center sm:p-5"
         >
           <div
             onClick={event => event.stopPropagation()}

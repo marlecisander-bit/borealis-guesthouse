@@ -8,7 +8,6 @@ const publicPages = [
   ['Experiences page', 'experiences', 'Introduction to guest activities and local journeys.'],
   ['Transfers page', 'transfers', 'Introduction to guest transfer services.'],
   ['Explore Koman', 'explore-koman', 'The destination guide introduction.'],
-  ['About', 'about', 'The Borealis story and location content.'],
   ['Gallery', 'gallery', 'The public image collection and its introduction.'],
   ['Contact', 'contact', 'The contact-page introduction. Property details stay in Settings.'],
   ['Booking page', 'book', 'The welcome content shown above the booking flow.'],
@@ -26,7 +25,8 @@ export default async function ContentPage() {
 
   return (
     <div className="space-y-8">
-      <AdminPageHeader title="Website" description="Choose a public page, update its words and images, then preview before publishing."/>
+      <AdminPageHeader title="Pages" description="Edit page introductions and shared website content. Individual rooms and services are managed in Rooms and Activities & services."/>
+      <p className="rounded-xl border border-[#d5e5e2] bg-white p-4 text-sm text-slate-600">Rooms, Experiences and Transfers here edit their listing-page introductions. Product details, prices and booking rules stay in their own editors.</p>
       <section>
         <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500">Public pages</h2>
         <div className="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">

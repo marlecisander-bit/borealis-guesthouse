@@ -32,7 +32,7 @@ function RoomFilters({status}:{status:string}){
 }
 
 function RoomList({rooms}:{rooms:AdminRoomType[]}){
-  return <div className="overflow-visible rounded-2xl border border-slate-200 bg-white md:overflow-x-auto">
+  return <div role="region" aria-label="Rooms list — scroll horizontally on larger screens" tabIndex={0} className="overflow-visible rounded-2xl border border-slate-200 bg-white md:overflow-x-auto">
     <div className="admin-room-type-grid hidden min-w-[68rem] gap-4 border-b border-slate-200 px-5 py-3 text-xs font-bold uppercase tracking-wider text-slate-500 md:grid"><span>Photo</span><span>Room</span><span>Capacity</span><span>Price</span><span>Status</span><span>Actions</span></div>
     {rooms.map(room=><article key={room.id} className="admin-room-type-grid grid gap-4 border-b border-slate-100 p-5 last:border-0 md:min-w-[68rem] md:items-center">
       <div className="relative aspect-[16/9] overflow-hidden rounded-lg bg-slate-100 md:aspect-[4/3]">{room.images[0]?<Image src={room.images.find(item=>item.isFeatured)?.publicUrl||room.images[0].publicUrl} alt="" fill sizes="(max-width: 767px) calc(100vw - 3.5rem), 80px" className="object-cover"/>:<span className="absolute inset-0 grid place-items-center text-xs text-slate-400">No image</span>}</div>

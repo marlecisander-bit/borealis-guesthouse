@@ -24,7 +24,6 @@ const fallbackLinks = [
   { label: 'Journey', href: '/experiences' },
   { label: 'Explore Koman', href: '/explore-koman' },
   { label: 'Discover', href: '/gallery' },
-  { label: 'About', href: '/about' },
 ];
 
 async function getFooterContent() {

@@ -5,7 +5,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { homepageRevalidatePath as revalidatePath } from '@/lib/revalidate-public-content';
 import { requireAdmin } from '@/lib/admin/auth';
 import { adminHomepageRepository, clearHomepageDraft, saveHomepageDraft } from '@/lib/repositories/admin/homepage';
-import { homepageKeys, type HomepageCmsState, type HomepageHighlight, type HomepageReview, type HomepageSection } from '@/types/homepage-cms';
+import { editableHomepageKeys, type HomepageCmsState, type HomepageHighlight, type HomepageReview, type HomepageSection } from '@/types/homepage-cms';
 
 const focal = (data: FormData, key: string, mobile = false) => { try { return heroFocalPoint(JSON.parse(String(data.get(key) || 'null')), mobile); } catch { return heroFocalPoint(null, mobile); } };
 
@@ -17,7 +17,7 @@ export async function saveHomepageCms(_: HomepageCmsState, data: FormData): Prom
   const status = text(data, 'status') as 'draft' | 'published';
   if (!['draft', 'published'].includes(status)) return { ok: false, message: 'Choose Save Draft or Publish.' };
 
-  const sections: HomepageSection[] = homepageKeys.map((key, index) => ({
+  const sections: HomepageSection[] = editableHomepageKeys.map((key, index) => ({
     id: '', key,
     title: text(data, `${key}_title`), subtitle: text(data, `${key}_subtitle`), body: text(data, `${key}_body`), eyebrow: text(data, `${key}_eyebrow`),
     ctaLabel: text(data, `${key}_ctaLabel`), ctaLink: text(data, `${key}_ctaLink`), backgroundMediaId: text(data, `${key}_media`),
@@ -35,10 +35,7 @@ export async function saveHomepageCms(_: HomepageCmsState, data: FormData): Prom
     id: '', title: text(data, `highlight_${index}_title`), description: text(data, `highlight_${index}_description`), icon: text(data, `highlight_${index}_icon`),
     visible: data.get(`highlight_${index}_visible`) === 'on', sortOrder: Number(text(data, `highlight_${index}_order`) || index * 10), status,
   })).filter(item => item.title);
-  const reviews: HomepageReview[] = Array.from({ length: Number(text(data, 'reviewCount') || 0) }, (_, index) => ({
-    id: '', author: text(data, `review_${index}_author`), origin: text(data, `review_${index}_origin`), quote: text(data, `review_${index}_quote`),
-    visible: data.get(`review_${index}_visible`) === 'on', sortOrder: Number(text(data, `review_${index}_order`) || index * 10), status,
-  })).filter(item => item.quote);
+  const reviews: HomepageReview[] = [];
   const hero = sections.find(item => item.key === 'hero')!;
   if (!Number.isFinite(hero.settings.overlayIntensity) || Number(hero.settings.overlayIntensity) < 0 || Number(hero.settings.overlayIntensity) > 100) return { ok: false, message: 'Overlay intensity must be between 0 and 100.' };
   const intro = sections.find(item => item.key === 'intro')!;
@@ -78,7 +75,5 @@ export async function saveHomepageCms(_: HomepageCmsState, data: FormData): Prom
 function linkType(key: string) {
   if (key === 'featured_rooms') return 'room_type';
   if (key === 'featured_experiences') return 'experience';
-  if (key === 'explore_koman') return 'tourism_article';
-  if (key === 'transfers') return 'transfer_route';
   return 'media_asset';
 }

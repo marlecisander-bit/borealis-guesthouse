@@ -2,17 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import {adminNavigation,isAdminNavItemActive} from '../src/lib/admin/navigation.ts';
 
 const source = (path: string) => readFileSync(join(process.cwd(), path), 'utf8');
 
 test('Admin navigation groups owner tasks predictably', () => {
-  const navigation = source('src/lib/admin/navigation.ts');
-  for (const label of ['Dashboard', 'Bookings', 'Calendar', 'Rooms & Rates', 'Experiences & Transfers', 'Website', 'Media', 'Settings']) {
-    assert.match(navigation, new RegExp(`label: '${label.replace('&', '\\&')}'`));
-  }
-  assert.equal((navigation.match(/\{ label:/g) || []).length, 8);
+  assert.deepEqual(adminNavigation.map(item=>item.label),['Today','Bookings','Calendar','Rooms','Activities & services','Website','Settings']);
+  for(const path of ['/admin/bookings','/admin/inquiries','/admin/rooms/room-id','/admin/experiences/rental-id','/admin/transfers','/admin/media','/admin/languages','/admin/channels'])assert.equal(adminNavigation.filter(item=>isAdminNavItemActive(path,item)).length,1,`${path} has exactly one destination`);
   assert.match(source('src/components/admin/AdminWorkspaceNav.tsx'), /Guest enquiries/);
-  assert.match(source('src/components/admin/AdminWorkspaceNav.tsx'), /Property & policies/);
+  assert.match(source('src/components/admin/AdminWorkspaceNav.tsx'), /Booking policies/);
 });
 
 test('Settings is the only editor for property-wide contact details', () => {

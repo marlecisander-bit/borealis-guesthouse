@@ -10,7 +10,7 @@ import type { LanguageRecord } from '@/types/languages';
 import { isHomeNavigationItem } from '@/lib/navigation/home';
 import { BookingLink, useBookingRoutePrefetch } from './BookingLink';
 
-const fallbackLinks = [['Home', '/'], ['Rooms', '/rooms'], ['Journey', '/experiences'], ['Explore Koman', '/explore-koman'], ['Discover', '/gallery'], ['About', '/about']];
+const fallbackLinks = [['Home', '/'], ['Rooms', '/rooms'], ['Journey', '/experiences'], ['Explore Koman', '/explore-koman'], ['Discover', '/gallery']];
 const mobileFocusable = 'a[href],button:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
 export function Header({ overlay = false, navigation, languages = [], selectedLanguage = '', bookingCtaLabel = 'Book now', mobileBookingCtaLabel = 'Check availability' }: { overlay?: boolean; navigation?: { label: string; href: string }[]; languages?: LanguageRecord[]; selectedLanguage?: string; bookingCtaLabel?: string; mobileBookingCtaLabel?: string }) {
@@ -22,6 +22,7 @@ export function Header({ overlay = false, navigation, languages = [], selectedLa
   const menuButton = useRef<HTMLButtonElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const links = (navigation?.length ? navigation.map(x => [x.label, x.href]) : fallbackLinks)
+    .filter(([, href]) => !/^\/about(?:[/?#]|$)/.test(href))
     .map(([label, href]) => [label, isHomeNavigationItem(label, href) ? '/' : href]);
   const transparent = overlay && !scrolled;
   const desktopTone = transparent ? 'text-white' : 'text-lake';
@@ -107,6 +108,8 @@ export function Header({ overlay = false, navigation, languages = [], selectedLa
     };
   }, [open]);
 
+  const headerBar=useRef<HTMLDivElement>(null);
+  useEffect(()=>{const bar=headerBar.current;if(!bar)return;const update=()=>document.documentElement.style.setProperty('--public-header-height',`${bar.getBoundingClientRect().height}px`);update();const observer=new ResizeObserver(update);observer.observe(bar);return()=>{observer.disconnect();document.documentElement.style.removeProperty('--public-header-height')}},[]);
   const closeMenu = () => setOpen(false);
   const active = (href: string) => href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`) || (href === '/experiences' && (pathname === '/transfers' || pathname.startsWith('/transfers/'))) || (href === '/gallery' && pathname === '/contact');
   const scrolledOverlay = overlay && scrolled;
@@ -117,21 +120,21 @@ export function Header({ overlay = false, navigation, languages = [], selectedLa
     data-state={open ? 'menu-open' : transparent ? 'hero' : 'scrolled'}
     className={`public-header fixed inset-x-0 top-0 z-40 transition-[background-color,box-shadow] duration-300 ${transparent ? 'bg-transparent' : scrolledOverlay ? 'bg-lake/98 shadow-[0_8px_28px_rgba(9,25,15,.16)] lg:bg-ivory/95 lg:backdrop-blur-md' : 'bg-ivory/95 shadow-sm lg:backdrop-blur-md'}`}
   >
-    <div className={`public-header-bar shell flex items-center justify-between border-b transition-[height,border-color] duration-300 ${transparent ? 'border-white/20' : scrolledOverlay ? 'border-white/10 lg:border-lake/10' : 'border-lake/10'}`}>
+    <div ref={headerBar} className={`public-header-bar shell flex items-center justify-between gap-2 border-b transition-[min-height,padding,border-color] duration-300 ${transparent ? 'border-white/20' : scrolledOverlay ? 'border-white/10 lg:border-lake/10' : 'border-lake/10'}`}>
       <HomeLink ariaLabel="Borealis Guest House — Home" className="flex h-full shrink-0 items-center">
         {scrolledOverlay ? <>
           <BorealisLogo priority variant="light" className="block h-14 w-auto -translate-y-0.5 lg:hidden" />
           <BorealisLogo priority variant="dark" className="hidden h-14 w-auto lg:block" />
         </> : <BorealisLogo priority variant={transparent ? 'light' : 'dark'} className="block h-14 w-auto -translate-y-0.5 sm:translate-y-0" />}
       </HomeLink>
-      <nav data-desktop-navigation className={`hidden items-center gap-3 text-[.58rem] lg:ml-auto lg:mr-6 font-semibold uppercase tracking-[.1em] lg:flex xl:gap-5 xl:text-[.64rem] xl:tracking-[.13em] ${desktopTone}`} aria-label="Main navigation">
+      <nav data-desktop-navigation className={`hidden min-w-0 flex-wrap items-center gap-3 text-[.58rem] lg:ml-auto lg:mr-6 font-semibold uppercase tracking-[.1em] lg:flex xl:gap-5 xl:text-[.64rem] xl:tracking-[.13em] ${desktopTone}`} aria-label="Main navigation">
         {links.map(([label, href]) => href === '/' ? <HomeLink key={`${label}-${href}`} ariaCurrent={active(href) ? 'page' : undefined} className="transition-opacity hover:opacity-60">{label}</HomeLink> : <Link key={`${label}-${href}`} href={href} aria-current={active(href) ? 'page' : undefined} className="transition-opacity hover:opacity-60">{label}</Link>)}
       </nav>
-      <div className="flex items-center gap-2">
+      <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
         <span className={scrolledOverlay ? '[&_select]:border-white/40 [&_select]:text-white lg:[&_select]:border-lake/20 lg:[&_select]:text-lake' : ''}>
           <LanguageSwitcher languages={languages} selectedCode={selectedLanguage} tone={transparent ? 'light' : 'dark'} />
         </span>
-        <BookingLink href="/book" pendingLabel="Opening…" className="public-primary-cta inline-flex min-h-11 min-w-[5.8rem] items-center justify-center rounded-full px-3 py-2.5 text-[.62rem] font-bold uppercase tracking-[.13em] min-[360px]:min-w-[6.5rem] min-[360px]:px-4 min-[360px]:text-[.65rem] sm:px-5">{bookingCtaLabel}</BookingLink>
+        <BookingLink href="/book" pendingLabel="Opening…" className="public-primary-cta inline-flex w-max max-w-48 shrink-0 min-h-11 min-w-[5.8rem] items-center justify-center rounded-full px-3 py-2.5 text-[.62rem] font-bold uppercase tracking-[.13em] min-[360px]:min-w-[6.5rem] min-[360px]:px-4 min-[360px]:text-[.65rem] sm:px-5">{bookingCtaLabel}</BookingLink>
         <button
           ref={menuButton}
           data-mobile-menu-toggle

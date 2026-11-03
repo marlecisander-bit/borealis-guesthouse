@@ -8,11 +8,12 @@ type Input = NonNullable<ReturnType<typeof validateExperience>['data']>;
 const mediaUrl = (base:string,path:string) => `${base}/storage/v1/object/public/public-media/${path}`;
 
 export const adminExperiencesRepository = {
-  async summaries(session:AdminSession,page=1,status='active') {
+  async summaries(session:AdminSession,page=1,status='active',type='all') {
     const db=await createServerSupabaseClient(),pageSize=24;
     page=Math.max(1,Math.min(10000,Math.floor(page)||1));
-    let query=db.from('experiences').select('rental_config,id,name,cover_media_id,price,currency,is_featured,status',{count:'exact'}).eq('property_id',session.propertyId).order('sort_order').order('id');
-    query=status==='archived'?query.eq('status','archived'):query.neq('status','archived');
+    let query=db.from('experiences').select('rental_config,id,name,cover_media_id,price,currency,pricing_type,is_featured,status,active,bookable,book_independently,sort_order',{count:'exact'}).eq('property_id',session.propertyId).order('sort_order').order('id');
+    query=['draft','published','archived'].includes(status)?query.eq('status',status):query.neq('status','archived');
+    if(type==='rental')query=query.not('rental_config','is',null);else if(type==='experience')query=query.is('rental_config',null);
     const {data,error,count}=await query.range((page-1)*pageSize,page*pageSize-1);if(error)throw error;
     const rows=data||[],ids=rows.map(row=>row.id);
     const {data:images,error:imageError}=ids.length?await db.from('experience_images').select('experience_id,media_asset_id').eq('property_id',session.propertyId).in('experience_id',ids).neq('status','archived').order('sort_order'):{data:[],error:null};
@@ -21,7 +22,7 @@ export const adminExperiencesRepository = {
     const {data:media,error:mediaError}=mediaIds.length?await db.from('media_assets').select('id,file_path').eq('property_id',session.propertyId).in('id',mediaIds).neq('status','archived'):{data:[],error:null};
     if(mediaError)throw mediaError;
     const paths=new Map((media||[]).map(asset=>[asset.id,asset.file_path]));
-    return {page,pageSize,total:count||0,items:rows.map(row=>{const path=paths.get(row.cover_media_id)||paths.get((images||[]).find(image=>image.experience_id===row.id)?.media_asset_id);return {id:row.id,name:row.name,price:row.rental_config?(row.rental_config.modes.includes('hourly')?row.rental_config.hourlyPrice:row.rental_config.dailyPrice):row.price===null?null:Number(row.price),currency:row.currency||'EUR',featured:row.is_featured,status:row.status,imageUrl:path?mediaUrl(process.env.NEXT_PUBLIC_SUPABASE_URL||'',path):''};})};
+    return {page,pageSize,total:count||0,items:rows.map(row=>{const path=paths.get(row.cover_media_id)||paths.get((images||[]).find(image=>image.experience_id===row.id)?.media_asset_id);return {type:row.rental_config?'Equipment rental':'Experience',rentalConfig:row.rental_config,pricingType:row.pricing_type,active:row.active,bookable:row.bookable,bookIndependently:row.book_independently,sortOrder:row.sort_order,id:row.id,name:row.name,price:row.rental_config?(row.rental_config.modes.includes('hourly')?row.rental_config.hourlyPrice:row.rental_config.dailyPrice):row.price===null?null:Number(row.price),currency:row.currency||'EUR',featured:row.is_featured,status:row.status,imageUrl:path?mediaUrl(process.env.NEXT_PUBLIC_SUPABASE_URL||'',path):''};})};
   },
   async list(session:AdminSession,id?:string):Promise<AdminExperience[]> {
     const db=await createServerSupabaseClient(),base=process.env.NEXT_PUBLIC_SUPABASE_URL||'';
@@ -46,7 +47,7 @@ export const adminExperiencesRepository = {
     const result=id?await db.from('experiences').update(values).eq('id',id).eq('property_id',session.propertyId).select('id').single():await db.from('experiences').insert({...values,created_by:session.userId}).select('id').single();
     if(result.error)throw result.error;const experienceId=result.data.id;
     await db.from('experience_images').delete().eq('experience_id',experienceId);
-    const ids=Array.from(new Set([input.coverMediaId,...input.galleryMediaIds].filter(Boolean)))as string[];
+    const ids=Array.from(new Set([...input.galleryMediaIds,input.coverMediaId].filter(Boolean)))as string[];
     if(ids.length){const{error}=await db.from('experience_images').insert(ids.map((mediaId,index)=>({property_id:session.propertyId,experience_id:experienceId,media_asset_id:mediaId,sort_order:index,is_cover:mediaId===input.coverMediaId,status:input.status,created_by:session.userId})));if(error)throw error}
     const{error:seoError}=await db.from('seo_metadata').upsert({property_id:session.propertyId,entity_type:'experience',entity_id:experienceId,title:input.seoTitle||input.name,meta_description:input.seoDescription||input.shortDescription,status:input.status,created_by:session.userId,updated_by:session.userId},{onConflict:'property_id,entity_type,entity_id'});if(seoError)throw seoError;return experienceId;
   },

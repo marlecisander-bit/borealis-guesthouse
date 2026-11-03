@@ -1,5 +1,7 @@
 'use client';
 
+import{createPortal}from'react-dom';
+import{useDialogFocus}from'@/hooks/useDialogFocus';
 import { useEffect,useRef,useState } from 'react';
 import type { OccupancyCounts } from '@/types/booking';
 import { occupancyLabel,totalGuests } from '@/lib/booking/occupancy';
@@ -8,8 +10,9 @@ import { MAX_BOOKING_GUESTS } from '@/lib/booking/search-criteria';
 type GuestSelectorProps={value:OccupancyCounts;onChange:(value:OccupancyCounts)=>void;infantMaxAge?:number;childMaxAge?:number;fieldClassName?:string;submitNames?:boolean};
 
 export function GuestSelector({value,onChange,infantMaxAge=2,childMaxAge=12,fieldClassName='',submitNames=false}:GuestSelectorProps){
-  const[open,setOpen]=useState(false),root=useRef<HTMLDivElement>(null),total=totalGuests(value);
-  useEffect(()=>{const close=(event:MouseEvent)=>{if(root.current&&!root.current.contains(event.target as Node))setOpen(false)};document.addEventListener('mousedown',close);return()=>document.removeEventListener('mousedown',close)},[]);
+  const[open,setOpen]=useState(false),root=useRef<HTMLDivElement>(null),panel=useRef<HTMLDivElement>(null),total=totalGuests(value);
+  useEffect(()=>{const close=(event:MouseEvent)=>{if(root.current&&!root.current.contains(event.target as Node)&&!panel.current?.contains(event.target as Node))setOpen(false)};document.addEventListener('mousedown',close);return()=>document.removeEventListener('mousedown',close)},[]);
+  useDialogFocus(panel,open,()=>setOpen(false));
   const change=(key:keyof OccupancyCounts,delta:number)=>{const next={...value,[key]:Math.max(0,value[key]+delta)};if(totalGuests(next)<=MAX_BOOKING_GUESTS)onChange(next)};
   const adultError=value.adults<1?'At least one adult is required for bookings with children or infants.':'';
   return <div ref={root} className="relative">
@@ -17,7 +20,7 @@ export function GuestSelector({value,onChange,infantMaxAge=2,childMaxAge=12,fiel
     <button type="button" onClick={()=>setOpen(current=>!current)} aria-haspopup="dialog" aria-expanded={open} className={fieldClassName}>
       <span>Guests</span><strong className="block normal-case tracking-normal">{occupancyLabel(value)}</strong>
     </button>
-    {open&&<div role="dialog" aria-label="Choose guests" className="fixed inset-x-4 bottom-4 z-50 rounded-2xl bg-white p-5 text-left text-lake shadow-2xl md:absolute md:inset-x-auto md:bottom-auto md:right-0 md:top-[calc(100%+.5rem)] md:w-80">
+    {open&&createPortal(<div ref={panel} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Choose guests" className="guest-selector-panel">
       <div className="space-y-4">
         <Counter label="Adults" detail={`Ages ${childMaxAge+1}+`} value={value.adults} onMinus={()=>change('adults',-1)} onPlus={()=>change('adults',1)} plusDisabled={total>=MAX_BOOKING_GUESTS}/>
         <Counter label="Children" detail={`Ages ${infantMaxAge+1}–${childMaxAge}`} value={value.children} onMinus={()=>change('children',-1)} onPlus={()=>change('children',1)} plusDisabled={total>=MAX_BOOKING_GUESTS}/>
@@ -25,7 +28,7 @@ export function GuestSelector({value,onChange,infantMaxAge=2,childMaxAge=12,fiel
       </div>
       {adultError&&<p role="alert" className="mt-4 text-xs leading-5 text-red-700">{adultError}</p>}
       <button type="button" onClick={()=>setOpen(false)} className="mt-5 min-h-11 w-full rounded-full bg-brand px-5 text-sm font-bold text-white">Done</button>
-    </div>}
+    </div>,document.body)}
   </div>;
 }
 

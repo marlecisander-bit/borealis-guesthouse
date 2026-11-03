@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useActionState, useEffect } from 'react';
+import {EditorWorkspace,EditorPanel,EditorActions,useEditorForm} from './EditorWorkspace';
+import { useActionState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { saveRoomType } from '@/app/admin/rooms/actions';
 import { CurrencySelect } from '@/components/admin/CurrencySelect';
@@ -14,17 +15,16 @@ const input = 'mt-2 min-h-12 w-full rounded-lg border border-slate-300 bg-white 
 export function RoomTypeForm({ room, amenities, agePolicy={infantMaxAge:2,childMaxAge:12} }: { room: AdminRoomType | null; amenities: AdminAmenity[]; agePolicy?: { infantMaxAge:number; childMaxAge:number } }) {
   const [state, action, pending] = useActionState(saveRoomType, initial);
   const router = useRouter();
+  const editor=useEditorForm(state),formRef=useRef<HTMLFormElement>(null);
   useEffect(() => { if (state.ok && state.id && !room) router.replace(`/admin/rooms/${state.id}`); }, [state, room, router]);
   const error = (key: string) => state.errors?.[key] && <span className="mt-1 block text-xs text-red-700">{state.errors[key]}</span>;
 
-  return <form action={action} className="grid gap-6">
+  return <form ref={formRef} action={action} onChange={editor.onChange} onSubmit={editor.submit} className="grid gap-6">
     <input type="hidden" name="id" value={room?.id || ''}/>
     <input type="hidden" name="slug" value={room?.slug || ''}/>
     <input type="hidden" name="sortOrder" value={room?.sortOrder || 0}/>
 
-    <nav aria-label="Room editor sections" className="flex gap-2 overflow-x-auto rounded-xl border border-slate-200 bg-white p-2 text-sm font-semibold">
-      {['Basic information','Guests & beds','Amenities','Price','Availability','Advanced'].map((label) => <a key={label} href={`#${label.toLowerCase().replaceAll(' ','-').replace('&','and')}`} className="shrink-0 rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100">{label}</a>)}
-    </nav>
+    <EditorWorkspace tabs={['Basic information','Guests & beds','Amenities','Price','Availability','Advanced']}>
 
     <FormSection id="basic-information" step="1" title="Basic information" description="The name and description guests see on the website.">
       <div className="grid gap-5 sm:grid-cols-2">
@@ -54,7 +54,7 @@ export function RoomTypeForm({ room, amenities, agePolicy={infantMaxAge:2,childM
     </FormSection>
 
     <FormSection id="amenities" step="3" title="Amenities" description="Select the features available in this room.">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{amenities.length ? amenities.map((item) => <label key={item.id} className="flex min-h-12 items-center gap-3 rounded-lg border border-slate-200 px-4 text-sm font-medium"><input type="checkbox" name="amenityIds" value={item.id} defaultChecked={room?.amenityIds.includes(item.id)}/><span className="grid size-8 shrink-0 place-items-center rounded-lg bg-emerald-50 text-emerald-700"><AmenityIcon name={item.icon} className="size-4"/></span><span>{item.name}</span></label>) : <p className="text-sm text-slate-500">No amenities yet. Add reusable amenities from Rooms & Rates.</p>}</div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{amenities.length ? amenities.map((item) => <label key={item.id} className="flex min-h-12 items-center gap-3 rounded-lg border border-slate-200 px-4 text-sm font-medium"><input type="checkbox" name="amenityIds" value={item.id} defaultChecked={room?.amenityIds.includes(item.id)}/><span className="grid size-8 shrink-0 place-items-center rounded-lg bg-emerald-50 text-emerald-700"><AmenityIcon name={item.icon} className="size-4"/></span><span>{item.name}</span></label>) : <p className="text-sm text-slate-500">No amenities yet. Add reusable amenities from Rooms.</p>}</div>
       <Link href="/admin/amenities" className="inline-flex min-h-11 items-center text-sm font-bold text-[#164b59] underline underline-offset-4">Manage amenity list</Link>
     </FormSection>
 
@@ -68,16 +68,16 @@ export function RoomTypeForm({ room, amenities, agePolicy={infantMaxAge:2,childM
       <Link href="/admin/availability" className="inline-flex min-h-11 items-center text-sm font-bold text-[#164b59] underline underline-offset-4">Open calendar</Link>
     </FormSection>
 
-    <details id="advanced" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white">
+    <EditorPanel name="Advanced"><details open id="advanced" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white">
       <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 font-bold sm:px-6"><span>Advanced settings</span><span aria-hidden="true" className="text-slate-400">⌄</span></summary>
       <div className="grid gap-5 border-t border-slate-100 p-5 sm:p-6"><p className="text-sm text-slate-500">Optional search-engine text. Sensible property defaults are used when these fields are empty.</p><Field label="SEO title" error={error('seoTitle')}><input name="seoTitle" maxLength={70} defaultValue={room?.seoTitle || ''} className={input}/></Field><Field label="Meta description" error={error('seoDescription')}><textarea name="seoDescription" maxLength={180} rows={3} defaultValue={room?.seoDescription || ''} className={`${input} py-3`}/></Field></div>
-    </details>
+    </details></EditorPanel>
 
-    <div className="admin-form-actions sticky bottom-3 z-10 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white/95 p-4 shadow-xl backdrop-blur sm:flex-row sm:items-center sm:justify-between"><p role="status" aria-live="polite" className={`text-sm ${state.ok?'text-emerald-700':'text-red-700'}`}>{state.message}</p><div className="grid grid-cols-2 gap-2"><button name="status" value="draft" disabled={pending} className="min-h-11 rounded-lg border border-slate-300 px-4 text-sm font-semibold">Save draft</button><button name="status" value="published" disabled={pending} className="min-h-11 rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white">{pending?'Saving…':'Save & publish'}</button></div></div>
+    <EditorActions pending={pending} message={state.message} ok={state.ok} preview={room?`/admin/preview?type=room&id=${room.id}&returnTo=${encodeURIComponent('/rooms/'+room.slug)}`:undefined}/></EditorWorkspace>
   </form>;
 }
 
-function FormSection({ id, step, title, description, children }: { id:string; step:string; title:string; description:string; children:React.ReactNode }) { return <section id={id} className="scroll-mt-24 space-y-5 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"><header><p className="text-xs font-bold uppercase tracking-widest text-[#568087]">Step {step}</p><h2 className="mt-1 text-xl font-bold text-slate-950">{title}</h2><p className="mt-1 text-sm leading-6 text-slate-500">{description}</p></header>{children}</section>; }
+function FormSection({ id, step, title, description, children }: { id:string; step:string; title:string; description:string; children:React.ReactNode }) { return <EditorPanel name={title}><section id={id} className="scroll-mt-24 space-y-5 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"><header><p className="text-xs font-bold uppercase tracking-widest text-[#568087]">Step {step}</p><h2 className="mt-1 text-xl font-bold text-slate-950">{title}</h2><p className="mt-1 text-sm leading-6 text-slate-500">{description}</p></header>{children}</section></EditorPanel>; }
 function Field({ label, children, error, hint }: { label:string; children:React.ReactNode; error?:React.ReactNode; hint?:string }) { return <label className="text-sm font-semibold text-slate-800">{label}{children}{hint&&<span className="mt-1 block text-xs font-normal text-slate-500">{hint}</span>}{error}</label>; }
 function NumberField({ label, name, value, error, min=0, max }: { label:string; name:string; value:number; error?:React.ReactNode; min?:number; max?:number }) { return <Field label={label} error={error}><input name={name} type="number" min={min} max={max} defaultValue={value} className={input}/></Field>; }
 function Check({ name, label, checked }: { name:string; label:string; checked:boolean }) { return <label className="flex min-h-12 items-center gap-3 rounded-lg border border-slate-200 px-4 text-sm font-semibold"><input name={name} type="checkbox" defaultChecked={checked}/>{label}</label>; }

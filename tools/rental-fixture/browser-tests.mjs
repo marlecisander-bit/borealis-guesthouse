@@ -1,3 +1,4 @@
+import{screens}from'../responsive-audit/screens.mjs';
 // Local synthetic UI tests. Every network request is blocked at the browser.
 import {chromium} from '@playwright/test';
 import {buildFixture} from '../booking-fixture/build.mjs';
@@ -8,7 +9,7 @@ const {html,out}=await buildFixture(process.env,{rental:true});
 const browser=await chromium.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,args:['--disable-background-networking','--disable-component-update','--disable-extensions','--no-first-run']});
 const results=[];
 try{
- for(const viewport of [{width:390,height:844},{width:768,height:1024},{width:1440,height:900}]){
+ for(const viewport of screens.filter(x=>['360x800','390x844','430x932','768x1024','1024x768','1280x800','1440x900','1920x1080','844x390-landscape','zoom200-equivalent'].includes(x.id)).map(({width,height})=>({width,height}))){
   const context=await browser.newContext({viewport,serviceWorkers:'block'}),outbound=[],errors=[];
   await context.route('**/*',r=>{outbound.push(r.request().url());return r.abort('blockedbyclient')});
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));await page.evaluate(()=>{window.__BOREALIS_FIXTURE_HEADLESS__=true});await page.setContent(html,{waitUntil:'load'});
@@ -22,7 +23,7 @@ try{
   for(const[label,value]of [['First name','Synthetic'],['Last name','Guest'],['Email','synthetic@example.invalid'],['Phone','000']])await page.getByLabel(new RegExp('^'+label+'$','i')).fill(value);
   await page.getByRole('button',{name:'Review booking',exact:true}).first().click();await inspect('room-review');assert.match(await page.locator('body').innerText(),/1 equipment item/);await page.getByRole('button',{name:'Confirm reservation request',exact:true}).click();await page.waitForFunction(()=>window.__fixture.calls().some(c=>c.url==='/api/bookings/hold'));
   const calls=await page.evaluate(()=>window.__fixture.calls());assert.ok(calls.find(c=>c.url==='/api/bookings/hold').body.addons[0].rentalSelection);assert.equal((await page.evaluate(()=>window.__fixture.violations())).length,0);
-  await page.selectOption('#scenario','admin');await page.getByRole('heading',{name:'Equipment rental',exact:true}).waitFor();await inspect('owner-settings');assert.equal(await page.getByLabel('Internal equipment name',{exact:true}).count(),4);assert.equal(outbound.length,0);assert.deepEqual(errors,[]);
+  await page.selectOption('#scenario','admin');await page.getByRole('tab',{name:'Equipment',exact:true}).waitFor();await inspect('owner-settings');assert.equal(await page.getByLabel('Internal equipment name',{exact:true}).count(),4);assert.equal(outbound.length,0);assert.deepEqual(errors,[]);
   results.push({viewport,catalogue:true,standalone:true,roomAddon:true,ownerSettings:true,outbound:outbound.length,pageErrors:errors});await context.close();
  }
  if(fs.existsSync(path.join(out,'failure.txt')))fs.unlinkSync(path.join(out,'failure.txt'));

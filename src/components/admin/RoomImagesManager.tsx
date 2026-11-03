@@ -173,6 +173,7 @@ export function RoomImagesManager({ propertyId, roomTypeId, initialImages }: Roo
               <div className="flex flex-wrap gap-2">
                 <button onClick={() => void setCover(image.id)} disabled={busy || image.isFeatured} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold disabled:opacity-50">Set cover</button>
                 <button onClick={() => void reorder(index, Math.max(0, index - 1))} disabled={index === 0 || busy} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold disabled:opacity-50">Move up</button>
+                <button onClick={() => void reorder(index, index + 1)} disabled={index === images.length - 1 || busy} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold disabled:opacity-50">Move down</button>
                 <button onClick={() => void archive(image)} disabled={busy} className="rounded-lg px-3 py-2 text-xs font-bold text-red-700 disabled:opacity-50">Remove</button>
               </div>
             </div>

@@ -1,3 +1,4 @@
+import{screens}from'../responsive-audit/screens.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -8,7 +9,7 @@ const { html, out, manifest } = await buildFixture();
 const browser = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true, args: ['--disable-background-networking', '--disable-component-update', '--disable-extensions', '--no-first-run'] });
 const results = [];
 try {
-  for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+  for (const viewport of screens.filter(x=>['360x800','390x844','430x932','768x1024','1024x768','1280x800','1440x900','1920x1080','844x390-landscape','zoom200-equivalent'].includes(x.id)).map(({width,height})=>({width,height}))) {
     const context = await browser.newContext({ viewport, serviceWorkers: 'block' });
     const outbound = [], errors = [];
     await context.route('**/*', route => { outbound.push(route.request().url()); return route.abort('blockedbyclient'); });

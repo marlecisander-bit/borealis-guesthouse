@@ -1,19 +1,24 @@
 'use client';
-import { useActionState, useState } from 'react';
+import { useActionState, useState, useRef } from 'react';
 import { saveSettings } from '@/app/admin/settings/actions';
 import type { SettingsDashboard, SettingsFormState } from '@/types/settings';
 import { CurrencySelect } from '@/components/admin/CurrencySelect';
+import {EditorWorkspace,EditorPanel,useEditorForm} from './EditorWorkspace';
+import Link from 'next/link';
 import { isGoogleMapsUrl } from '@/lib/google-maps';
 
+const settingsHashes:Record<string,string>={'property':'Property details','property-details':'Property details','booking-policies':'Booking policies','payments-fees':'Payments & fees','notification-preferences':'Notifications'};
 const initial: SettingsFormState = { ok: false, message: '' };
 const input = 'mt-2 min-h-12 w-full rounded-lg border border-slate-300 bg-white px-4';
 
 export function SettingsForm({ data }: { data: SettingsDashboard }) {
   const [state, action, pending] = useActionState(saveSettings, initial);
+  const editor=useEditorForm(state);
+ const formRef=useRef<HTMLFormElement>(null);
   const s = data.settings;
   const [mapsUrl, setMapsUrl] = useState(s.mapsUrl);
   const error = (key: string) => state.errors?.[key];
-  return <form action={action} className="space-y-6">
+  return <form ref={formRef} action={action} onChange={editor.onChange} onSubmit={editor.submit} className="space-y-5"><EditorWorkspace tabs={['Property details','Booking policies','Payments & fees','Notifications']} hashTabs={settingsHashes} trailing={<Link href="/admin/channels" className="inline-flex min-h-11 items-center rounded-lg px-4 text-sm font-semibold text-[#45656a]">Integrations</Link>}><EditorPanel name="Property details">
     <Section id="property" title="Property" description="Business details reused automatically across the website, booking confirmations and emails.">
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label="Property name" error={error('name')}><input name="name" defaultValue={s.name} className={input}/></Field>
@@ -29,7 +34,7 @@ export function SettingsForm({ data }: { data: SettingsDashboard }) {
       <Field label="Google Maps location link" error={error('mapsUrl')} help="Paste the Google Maps share link for Borealis Guest House. This location will be used for the map shown on the public website."><input name="mapsUrl" type="url" inputMode="url" value={mapsUrl} onChange={event=>setMapsUrl(event.target.value)} placeholder="https://maps.app.goo.gl/..." className={input}/>{isGoogleMapsUrl(mapsUrl)&&<a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm font-semibold text-[#164b59] underline underline-offset-4">Preview map</a>}</Field>
       <details className="rounded-xl border border-slate-200"><summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-4 font-semibold">Advanced location settings <span aria-hidden="true">⌄</span></summary><div className="grid gap-5 border-t border-slate-100 p-4 sm:grid-cols-2"><Field label="Latitude (optional)" error={error('latitude')}><input name="latitude" type="number" step="0.000001" defaultValue={s.latitude} className={input}/></Field><Field label="Longitude (optional)" error={error('longitude')}><input name="longitude" type="number" step="0.000001" defaultValue={s.longitude} className={input}/></Field></div></details>
     </Section>
-    <Section id="booking-policies" title="Booking policies" description="The practical stay and guest rules used by public booking forms.">
+    </EditorPanel><EditorPanel name="Booking policies"><Section id="booking-policies" title="Booking policies" description="The practical stay and guest rules used by public booking forms.">
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4"><Field label="Check-in time"><input name="checkIn" type="time" defaultValue={s.checkIn} className={input}/></Field><Field label="Check-out time"><input name="checkOut" type="time" defaultValue={s.checkOut} className={input}/></Field><Field label="Currency" error={error('currency')}><CurrencySelect defaultValue={s.currency} className={input}/></Field><Field label="Maximum guests default" error={error('maximumGuests')}><input name="maximumGuests" type="number" min="1" defaultValue={s.maximumGuests} className={input}/></Field></div>
       <Field label="Booking notice defaults"><textarea name="bookingNotice" rows={3} defaultValue={s.bookingNotice} className={`${input} py-3`}/></Field>
       <div className="grid gap-5 sm:grid-cols-2"><Field label="Booking mode"><select name="bookingMode" defaultValue={s.bookingMode} className={input}><option value="request">Booking request</option><option value="instant">Instant booking</option></select></Field><Field label="Cancellation policy"><textarea name="cancellationPolicy" rows={2} defaultValue={s.cancellationPolicy} placeholder="Short cancellation policy" className={`${input} py-3`}/></Field></div>
@@ -39,13 +44,13 @@ export function SettingsForm({ data }: { data: SettingsDashboard }) {
       <p className="rounded-lg bg-slate-50 p-4 text-sm text-slate-600">Adult occupancy category: age {s.childMaxAge+1}+. Every booking and every room that requires an adult is validated separately.</p>
       <details className="rounded-xl border border-slate-200"><summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-4 font-semibold">Advanced booking rules <span aria-hidden="true">⌄</span></summary><div className="grid gap-5 border-t border-slate-100 p-4 sm:grid-cols-2"><Field label="Booking hold duration (minutes)" error={error('booking')}><input name="holdMinutes" type="number" min="1" defaultValue={s.holdMinutes} className={input}/></Field><Field label="Minimum advance notice (hours)"><input name="minimumAdvanceHours" type="number" min="0" defaultValue={s.minimumAdvanceHours} className={input}/></Field><Field label="Maximum booking horizon (days)"><input name="maximumHorizonDays" type="number" min="1" defaultValue={s.maximumHorizonDays} className={input}/></Field><Field label="Timezone"><input name="timezone" defaultValue={s.timezone} placeholder="Europe/Tirane" className={input}/></Field></div></details>
     </Section>
-    <details className="rounded-2xl border border-slate-200 bg-white"><summary className="flex min-h-16 cursor-pointer list-none items-center justify-between px-5 text-xl font-bold sm:px-6">Payment settings <span aria-hidden="true" className="text-slate-400">⌄</span></summary><div className="space-y-5 border-t border-slate-100 p-5 sm:p-6">
+    </EditorPanel><EditorPanel name="Payments & fees"><details open id="payments-fees" className="rounded-2xl border border-slate-200 bg-white"><summary className="flex min-h-16 cursor-pointer list-none items-center justify-between px-5 text-xl font-bold sm:px-6">Payment settings <span aria-hidden="true" className="text-slate-400">⌄</span></summary><div className="space-y-5 border-t border-slate-100 p-5 sm:p-6">
       <p className="text-sm text-slate-500">These controls describe accepted payment flows. No payment provider or secret credentials are configured in this form.</p>
       <div className="grid gap-3 sm:grid-cols-3"><Check name="payAtProperty" label="Pay at property" checked={s.payAtProperty}/><Check name="depositEnabled" label="Deposit enabled" checked={s.depositEnabled}/><Check name="onlinePaymentEnabled" label="Full online payment" checked={s.onlinePaymentEnabled} disabled={!data.paymentProviderConfigured}/></div>
       <Field label="Deposit percentage" error={error('depositPercentage')}><input name="depositPercentage" type="number" min="0" max="100" step="1" defaultValue={s.depositPercentage} className={input}/></Field>
       {!data.paymentProviderConfigured && <p className="rounded-lg bg-amber-50 p-4 text-sm text-amber-800">Full online payment remains disabled because no payment provider is configured securely in the server environment.</p>}
     </div></details>
-    <Section id="notification-preferences" title="Notification preferences" description="Choose where booking alerts are sent. Recent activity is available in the Notifications tab.">
+    <p className="rounded-xl border bg-white p-4 text-sm text-slate-600">These are stay payment defaults. Each rental retains its own explicit offline payment, advance and beach-entry rules in Activities &amp; services. Changing these defaults does not overwrite service values or enable online rental payments. Shared beach-entry inheritance is not supported.</p></EditorPanel><EditorPanel name="Notifications"><Section id="notification-preferences" title="Notification preferences" description="Choose where booking alerts are sent. Recent activity is available in the Notifications tab.">
       <p className="text-sm text-slate-500">In-app alerts are private to this property. Email provider credentials remain in secure server environment variables.</p>
       <div className="grid gap-5 sm:grid-cols-2"><Field label="Primary notification email" error={error('notificationEmail')}><input name="notificationEmail" type="email" defaultValue={s.notificationEmail} className={input}/></Field><Field label="Reply-to email" error={error('replyToEmail')}><input name="replyToEmail" type="email" defaultValue={s.replyToEmail} className={input}/></Field></div>
       <Field label="Additional recipient emails" error={error('additionalNotificationEmails')}><textarea name="additionalNotificationEmails" rows={2} defaultValue={s.additionalNotificationEmails} placeholder="manager@example.com, reception@example.com" className={`${input} py-3`}/></Field>
@@ -53,8 +58,8 @@ export function SettingsForm({ data }: { data: SettingsDashboard }) {
       <div><h3 className="mb-3 text-sm font-bold text-[#164b59]">Notify the owner about</h3><div className="grid gap-3 sm:grid-cols-3"><Check name="notifyBookingCreated" label="New booking" checked={s.notifyBookingCreated}/><Check name="notifyBookingCancelled" label="Booking cancelled" checked={s.notifyBookingCancelled}/><Check name="notifyBookingModified" label="Booking modified" checked={s.notifyBookingModified}/></div></div>
       <a href="/admin/notifications" className="inline-flex min-h-11 items-center text-sm font-bold text-[#164b59] underline underline-offset-4">Open notification activity</a>
     </Section>
-    <div className="sticky bottom-3 z-10 flex items-center justify-between rounded-xl border border-slate-200 bg-white/95 p-4 shadow-xl backdrop-blur"><p role="status" className={state.ok ? 'text-sm text-emerald-700' : 'text-sm text-red-700'}>{state.message}</p><button disabled={pending} className="min-h-11 rounded-lg bg-slate-950 px-5 text-sm font-bold text-white">{pending ? 'Saving…' : 'Save settings'}</button></div>
-  </form>;
+    </EditorPanel><div className="sticky bottom-3 z-10 flex items-center justify-between rounded-xl border border-slate-200 bg-white/95 p-4 shadow-xl backdrop-blur"><p role="status" className={state.ok ? 'text-sm text-emerald-700' : 'text-sm text-red-700'}>{state.message}</p><button disabled={pending} className="min-h-11 rounded-lg bg-slate-950 px-5 text-sm font-bold text-white">{pending ? 'Saving…' : 'Save settings'}</button></div>
+  </EditorWorkspace></form>;
 }
 
 function Section({ id, title, description, children }: { id?:string; title:string; description?:string; children:React.ReactNode }) { return <section id={id} className="scroll-mt-24 space-y-5 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"><header><h2 className="text-xl font-bold">{title}</h2>{description&&<p className="mt-1 text-sm leading-6 text-slate-500">{description}</p>}</header>{children}</section>; }

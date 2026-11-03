@@ -11,10 +11,10 @@ import { CalendarIcon } from '@/components/CalendarIcon';
 const initial:ManualBookingState={ok:false,message:''};
 const input='mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3';
 
-export function ManualBookingForm({rooms}:{rooms:ManualBookingRoom[]}) {
+export function ManualBookingForm({rooms,prefill}:{rooms:ManualBookingRoom[];prefill?:{roomTypeId:string;checkIn:string;checkOut:string}}) {
   const [state,action,pending]=useActionState(createManualBooking,initial);
   const router=useRouter();
-  const v=(key:string,fallback='')=>state.values?.[key]??fallback;
+  const v=(key:string,fallback='')=>state.values?.[key]??prefill?.[key as keyof typeof prefill]??fallback;
   const [dates,setDates]=useState<DateRangeValue>({checkIn:v('checkIn'),checkOut:v('checkOut')});
   const changeDates=useCallback((value:DateRangeValue)=>setDates(value),[]);
   const picker=useDateRangePicker({value:dates,onChange:changeDates});

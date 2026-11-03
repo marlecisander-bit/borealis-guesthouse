@@ -33,11 +33,12 @@ test('high-use datasets have touch-first alternatives instead of squeezed tables
   assert.match(bookings, /hidden overflow-x-auto[^<]+md:block/);
   assert.match(bookings, /min-h-11/);
 
-  const calendar = source('src/app/admin/availability/page.tsx');
-  assert.match(calendar, /MobileTimeline/);
-  assert.match(calendar, /Block this date/);
-  assert.match(calendar, /Previous two weeks/);
-  assert.match(calendar, /Next two weeks/);
+  const calendar = source('src/components/admin/AvailabilityCalendar.tsx');
+  assert.match(calendar, /calendar-agenda/);
+  assert.match(calendar, /Selected dates/);
+  assert.match(calendar, /Previous period/);
+  assert.match(calendar, /Next period/);
+
 });
 
 test('mobile room, editor and media actions remain comfortably tappable', () => {
@@ -45,10 +46,10 @@ test('mobile room, editor and media actions remain comfortably tappable', () => 
   assert.match(rooms, /grid grid-cols-2[^"\n]*gap-2[^"\n]*md:flex/);
   assert.match(rooms, /aspect-\[16\/9\]/);
 
-  for (const path of ['src/components/admin/RoomTypeForm.tsx', 'src/components/admin/ExperienceForm.tsx']) {
+  for (const path of ['src/components/admin/EditorWorkspace.tsx']) {
     const editor = source(path);
     assert.match(editor, /admin-form-actions/);
-    assert.match(editor, /grid grid-cols-2 gap-2/);
+    assert.match(editor, /min-h-11/);
   }
 
   const uploader = source('src/components/admin/MediaUploader.tsx');
