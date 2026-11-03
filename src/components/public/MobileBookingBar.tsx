@@ -11,5 +11,5 @@ export function MobileBookingBar({ label = 'Check availability' }: { label?: str
     window.addEventListener('scroll', update, { passive: true });
     return () => window.removeEventListener('scroll', update);
   }, []);
-  return <div className={`safe-bottom-offset fixed inset-x-3 z-30 transition duration-300 md:hidden ${visible ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-8 opacity-0'}`}><BookingLink href="/book" className="public-primary-cta flex min-h-14 rounded-full px-6 py-4 text-center text-sm font-bold uppercase tracking-[0.12em] shadow-xl shadow-lake/25">{label}</BookingLink></div>;
+  return <div data-floating-contact-active={visible} className={`safe-bottom-offset fixed inset-x-3 z-30 transition duration-300 md:hidden ${visible ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-8 opacity-0'}`}><BookingLink href="/book" className="public-primary-cta flex min-h-14 rounded-full px-6 py-4 text-center text-sm font-bold uppercase tracking-[0.12em] shadow-xl shadow-lake/25">{label}</BookingLink></div>;
 }

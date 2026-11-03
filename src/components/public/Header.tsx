@@ -8,13 +8,12 @@ import { HomeLink } from './HomeLink';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import type { LanguageRecord } from '@/types/languages';
 import { isHomeNavigationItem } from '@/lib/navigation/home';
-import {WhatsAppContact} from './WhatsAppContact';
 import { BookingLink, useBookingRoutePrefetch } from './BookingLink';
 
 const fallbackLinks = [['Home', '/'], ['Rooms', '/rooms'], ['Journey', '/experiences'], ['Explore Koman', '/explore-koman'], ['Discover', '/gallery']];
 const mobileFocusable = 'a[href],button:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
-export function Header({ overlay = false, navigation, languages = [], selectedLanguage = '', bookingCtaLabel = 'Book now', mobileBookingCtaLabel = 'Check availability', whatsappHref }: { overlay?: boolean; navigation?: { label: string; href: string }[]; languages?: LanguageRecord[]; selectedLanguage?: string; bookingCtaLabel?: string; mobileBookingCtaLabel?: string; whatsappHref?:string }) {
+export function Header({ overlay = false, navigation, languages = [], selectedLanguage = '', bookingCtaLabel = 'Book now', mobileBookingCtaLabel = 'Check availability' }: { overlay?: boolean; navigation?: { label: string; href: string }[]; languages?: LanguageRecord[]; selectedLanguage?: string; bookingCtaLabel?: string; mobileBookingCtaLabel?: string }) {
   useBookingRoutePrefetch();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -135,7 +134,7 @@ export function Header({ overlay = false, navigation, languages = [], selectedLa
         <span className={scrolledOverlay ? '[&_select]:border-white/40 [&_select]:text-white lg:[&_select]:border-lake/20 lg:[&_select]:text-lake' : ''}>
           <LanguageSwitcher languages={languages} selectedCode={selectedLanguage} tone={transparent ? 'light' : 'dark'} />
         </span>
-        <WhatsAppContact value={whatsappHref} menuOpen={open}/><BookingLink href="/book" pendingLabel="Opening…" className="public-primary-cta inline-flex w-max max-w-48 shrink-0 min-h-11 min-w-[5.8rem] items-center justify-center rounded-full px-3 py-2.5 text-[.62rem] font-bold uppercase tracking-[.13em] min-[360px]:min-w-[6.5rem] min-[360px]:px-4 min-[360px]:text-[.65rem] sm:px-5">{bookingCtaLabel}</BookingLink>
+        <BookingLink href="/book" pendingLabel="Opening…" className="public-primary-cta inline-flex w-max max-w-48 shrink-0 min-h-11 min-w-[5.8rem] items-center justify-center rounded-full px-3 py-2.5 text-[.62rem] font-bold uppercase tracking-[.13em] min-[360px]:min-w-[6.5rem] min-[360px]:px-4 min-[360px]:text-[.65rem] sm:px-5">{bookingCtaLabel}</BookingLink>
         <button
           ref={menuButton}
           data-mobile-menu-toggle
