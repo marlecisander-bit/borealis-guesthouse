@@ -1,10 +1,11 @@
 'use client';
 
 import Image from 'next/image';
+import {ResponsiveHeroImage,type ResponsiveHeroProps} from './ResponsiveHeroImage';
 import{useDialogFocus}from'@/hooks/useDialogFocus';
 import { useEffect, useState, useRef } from 'react';
 
-export function RoomGallery({ images, roomName }: { images: string[]; roomName: string }) {
+export function RoomGallery({ images, roomName, hero }: { images: string[]; roomName: string;hero?:Omit<ResponsiveHeroProps,'desktopImage'> }) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const panel=useRef<HTMLDivElement>(null);useDialogFocus(panel,open,()=>setOpen(false));
@@ -23,7 +24,7 @@ export function RoomGallery({ images, roomName }: { images: string[]; roomName: 
     <>
       <div className="grid gap-3 md:grid-cols-[1.45fr_.55fr] md:grid-rows-2">
         <button onClick={() => show(0)} className="relative min-h-[28rem] overflow-hidden rounded-[1.75rem] text-left md:row-span-2 md:min-h-[38rem]" aria-label={`Open gallery for ${roomName}`}>
-          <Image src={images[0]} alt={`${roomName}, main view`} fill priority sizes="(max-width: 768px) 100vw, 70vw" className="object-cover transition duration-500 hover:scale-[1.02]" />
+          {hero?<ResponsiveHeroImage desktopImage={images[0]} {...hero} sizes="(max-width: 767px) 100vw, 70vw" className="object-cover transition-transform duration-500 hover:scale-[1.02]"/>:<Image src={images[0]} alt={`${roomName}, main view`} fill priority sizes="(max-width: 768px) 100vw, 70vw" className="object-cover transition duration-500 hover:scale-[1.02]" />}
           <span className="absolute bottom-4 left-4 rounded-xl bg-white/90 px-4 py-3 text-xs font-bold text-lake shadow-sm backdrop-blur">Open gallery · {images.length} photos</span>
         </button>
         {images.slice(1, 3).map((image, index) => <button key={image} onClick={() => show(index + 1)} className="relative hidden min-h-0 overflow-hidden rounded-[1.75rem] md:block" aria-label={`View ${index + 2} of ${roomName}`}><Image src={image} alt={`${roomName}, view ${index + 2}`} fill sizes="30vw" className="object-cover transition duration-500 hover:scale-[1.03]" /></button>)}

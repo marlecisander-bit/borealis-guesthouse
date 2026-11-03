@@ -1,5 +1,6 @@
 'use server';
 import { contentRevalidatePath as revalidatePath } from '@/lib/revalidate-public-content';
+import {createServerSupabaseClient} from '@/lib/supabase/server';
 import {requireAdmin} from '@/lib/admin/auth';
 import {isLandingPageKey,landingPageFieldNames} from '@/lib/landing-page-content';
 import {adminSiteContentRepository} from '@/lib/repositories/admin/site-content';
@@ -29,6 +30,10 @@ export async function saveSiteDocument(key:SiteDocumentKey,_:SiteContentState,fo
   if(key==='contact'&&['primaryCtaTarget','secondaryCtaTarget'].some(field=>data[field]&&!/^\/(?:[a-z0-9-]+\/?)*$/i.test(data[field])))return{ok:false,message:'CTA destinations must use a safe internal path.'};
   if(key==='global'&&data.sharedCtaTarget&&!/^\/(?:[a-z0-9-]+\/?)*$/i.test(data.sharedCtaTarget))return{ok:false,message:'The shared CTA destination must use a safe internal path.'};
   if(key==='footer'&&data.bookingCtaTarget&&!/^\/(?:[a-z0-9-]+\/?)*$/i.test(data.bookingCtaTarget))return{ok:false,message:'The footer CTA destination must use a safe internal path.'};
+  if(isLandingPageKey(key)){
+    if(data.heroMobileImageId&&!/^[0-9a-f-]{36}$/i.test(data.heroMobileImageId))return{ok:false,message:'Choose a valid mobile image from the Media Library.'};
+    for(const name of ['heroDesktopX','heroDesktopY','heroMobileX','heroMobileY'])if(data[name]&&(!Number.isFinite(Number(data[name]))||Number(data[name])<0||Number(data[name])>100))return{ok:false,message:'Hero focal positions must be between 0 and 100.'};
+  }
   if(isLandingPageKey(key)&&status==='published'){
     if(data.eyebrow.length<2||data.heading.length<3||data.description.length<10)return{ok:false,message:'Add the eyebrow, heading and description before publishing.'};
     if(data.heroImageId&&!/^[0-9a-f-]{36}$/i.test(data.heroImageId))return{ok:false,message:'Choose a valid image from the Media Library.'};
@@ -36,6 +41,15 @@ export async function saveSiteDocument(key:SiteDocumentKey,_:SiteContentState,fo
     if(data.ctaTarget&&!/^\/(?:[a-z0-9-]+\/?)*$/i.test(data.ctaTarget))return{ok:false,message:'CTA destinations must use a safe internal path.'};
   }
   try{
+    if(isLandingPageKey(key)){
+      const ids=[...new Set([data.heroImageId,data.heroMobileImageId].filter(Boolean))];
+      if(ids.length){
+        const db=await createServerSupabaseClient();let query=db.from('media_assets').select('id').eq('property_id',session.propertyId).in('id',ids).neq('status','archived');
+        if(status==='published')query=query.eq('status','published').eq('is_visible',true);
+        const{data:assets,error}=await query;
+        if(error||(assets||[]).length!==ids.length)return{ok:false,message:'Choose available images from this property. Publish the media before publishing the page.'};
+      }
+    }
     await adminSiteContentRepository.saveDocument(session,key,data,status);
     revalidatePath('/admin/content');
     revalidatePath(`/admin/content/${key}`);

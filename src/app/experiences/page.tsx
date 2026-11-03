@@ -1,3 +1,4 @@
+import {landingHeroImageProps} from '@/lib/landing-page-content';
 import type { Metadata } from 'next';
 import {ExperienceCatalogueCard} from '@/components/public/ExperienceCatalogueCard';
 import Link from 'next/link';
@@ -14,7 +15,7 @@ export async function generateMetadata():Promise<Metadata>{const metadata = awai
 export default async function ExperiencesPage({searchParams}:{searchParams:Promise<{preview?:string}>}) {
   const [experiences,page] = await Promise.all([contentRepository.getExperiences(),getLandingPageContent('experiences')]);
   return <PublicShell>
-    <PageHero eyebrow={page.eyebrow} title="Journey" copy={page.description} image={page.heroImage||images.kayak} imageAlt={page.heroImageAlt} />
+    <PageHero {...landingHeroImageProps(page)} eyebrow={page.eyebrow} title="Journey" copy={page.description} image={page.heroImage||images.kayak} imageAlt={page.heroImageAlt} />
     <nav aria-label="Journey sections" className="shell flex flex-wrap gap-3 pt-8"><Link href="#experiences" className="rounded-full bg-lake px-6 py-3 text-sm font-bold text-white">Experiences</Link><Link href="#transfers" className="rounded-full bg-sand px-6 py-3 text-sm font-bold text-lake">Transfers</Link></nav>
     <section id="experiences" className="shell scroll-mt-24 py-20 md:py-28">
       <div className="max-w-2xl"><p className="eyebrow">{page.introEyebrow}</p><h2 className="mt-4 font-serif text-5xl leading-tight text-lake md:text-6xl">{page.introHeading}</h2>{page.introDescription&&<p className="mt-5 leading-7 text-muted">{page.introDescription}</p>}</div>

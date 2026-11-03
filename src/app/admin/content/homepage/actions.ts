@@ -26,7 +26,7 @@ export async function saveHomepageCms(_: HomepageCmsState, data: FormData): Prom
       bookingCtaLabel: text(data, `${key}_bookingCtaLabel`),
       imageAlt: text(data, `${key}_imageAlt`),
       imageLabel: text(data, `${key}_imageLabel`),
-      ...(key === 'hero' ? { desktopHeroAssetId: text(data, 'hero_desktopHeroAssetId'), mobileHeroAssetId: text(data, 'hero_mobileHeroAssetId'), desktopFocal: focal(data, 'hero_desktopFocal'), mobileFocal: focal(data, 'hero_mobileFocal', true), mobileMediaId: text(data, 'hero_mobileMedia'), overlayIntensity: Number(data.get('hero_overlayIntensity') ?? 100) } : {}),
+      ...(key === 'hero' ? { mobileImageAlt: text(data,'hero_mobileImageAlt'), desktopHeroAssetId: text(data, 'hero_desktopHeroAssetId'), mobileHeroAssetId: text(data, 'hero_mobileHeroAssetId'), desktopFocal: focal(data, 'hero_desktopFocal'), mobileFocal: focal(data, 'hero_mobileFocal', true), mobileMediaId: text(data, 'hero_mobileMedia'), overlayIntensity: Number(data.get('hero_overlayIntensity') ?? 100) } : {}),
     },
     status, visible: data.get(`${key}_visible`) === 'on', sortOrder: Number(text(data, `${key}_order`) || index * 10),
     links: data.getAll(`${key}_links`).map((id, itemIndex) => ({ type: linkType(key), id: String(id), sortOrder: Number(text(data, `${key}_link_order_${id}`) || itemIndex * 10) })).sort((a, b) => a.sortOrder - b.sortOrder),
@@ -51,6 +51,13 @@ export async function saveHomepageCms(_: HomepageCmsState, data: FormData): Prom
 
   try {
     const db = await createServerSupabaseClient();
+    const legacyIds=[...new Set([hero.backgroundMediaId,String(hero.settings.mobileMediaId||'')].filter(Boolean))];
+    if(legacyIds.length){
+      let query=db.from('media_assets').select('id').eq('property_id',session.propertyId).in('id',legacyIds).neq('status','archived');
+      if(status==='published')query=query.eq('status','published').eq('is_visible',true);
+      const{data:media,error}=await query;
+      if(error||(media||[]).length!==legacyIds.length)return{ok:false,message:'Choose available Hero images from this property. Publish the media before publishing the homepage.'};
+    }
     for (const [field, kind] of [['desktopHeroAssetId', 'desktop_hero'], ['mobileHeroAssetId', 'mobile_hero']] as const) {
       const id = hero.settings[field];
       if (!id) continue;

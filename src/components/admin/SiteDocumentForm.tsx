@@ -4,12 +4,13 @@ import { useActionState } from 'react';
 import { saveSiteDocument } from '@/app/admin/content/site-actions';
 import type { CmsOption } from '@/types/homepage-cms';
 import type { SiteDocument } from '@/types/site-content-cms';
+import {MediaHeroFields} from './MediaHeroFields';
 import { MediaPicker } from './MediaPicker';
 
 type Field = {
   name: string;
   label: string;
-  kind?: 'text' | 'textarea' | 'url' | 'email' | 'image';
+  kind?: 'text' | 'textarea' | 'url' | 'email' | 'image' | 'hero';
   help?: string;
 };
 
@@ -31,6 +32,7 @@ export function SiteDocumentForm({
     <form action={formAction} className="space-y-6">
       <div className="grid gap-5 rounded-2xl border border-slate-200 bg-white p-6 lg:grid-cols-2">
         {fields.map(field => {
+          if(field.kind==='hero')return <MediaHeroFields key={field.name} data={data} media={media}/>;
           if (field.kind === 'image') {
             return (
               <div key={field.name}>

@@ -14,6 +14,7 @@ interface MediaPickerProps {
   assets: CmsOption[];
   defaultValue?: string;
   valueMode?: 'id' | 'url';
+  onChange?: (value:string,asset?:CmsOption)=>void;
 }
 
 export function MediaPicker({
@@ -22,6 +23,7 @@ export function MediaPicker({
   assets,
   defaultValue = '',
   valueMode = 'id',
+  onChange,
 }: MediaPickerProps) {
   const initialMatch = assets.find(item => valueMode === 'url' ? item.imageUrl === defaultValue : item.id === defaultValue);
   const [items, setItems] = useState(assets);
@@ -41,11 +43,13 @@ export function MediaPicker({
     setSelected(id);
     setLegacyUrl('');
     setOpen(false);
+    const asset=items.find(item=>item.id===id);onChange?.(valueMode==='url'?asset?.imageUrl||'':id,asset);
   }
 
   function remove() {
     setSelected('');
     setLegacyUrl('');
+    onChange?.('');
   }
 
   async function useUploaded(uploaded: AdminMediaAsset[]) {
@@ -55,7 +59,7 @@ export function MediaPicker({
       imageUrl: asset.publicUrl,
     }));
     setItems(previous => [...added, ...previous]);
-    if (added[0]) select(added[0].id);
+    if (added[0]) {setSelected(added[0].id);setLegacyUrl('');setOpen(false);onChange?.(valueMode==='url'?added[0].imageUrl||'':added[0].id,added[0]);}
   }
 
   return (

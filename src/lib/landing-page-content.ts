@@ -3,7 +3,7 @@ import type { LandingPageContent, SiteDocumentKey } from '@/types/site-content-c
 export type LandingPageKey = Extract<SiteDocumentKey, 'rooms' | 'experiences' | 'transfers' | 'explore-koman' | 'gallery'>;
 export const landingPageKeys: LandingPageKey[] = ['rooms', 'experiences', 'transfers', 'explore-koman', 'gallery'];
 
-const common = ['eyebrow', 'heading', 'description', 'heroImageId', 'heroImageAlt', 'introEyebrow', 'introHeading', 'introDescription'];
+const common = ['eyebrow', 'heading', 'description', 'heroImageId', 'heroImageAlt', 'heroMobileImageId', 'heroMobileImageAlt', 'heroDesktopX', 'heroDesktopY', 'heroMobileX', 'heroMobileY', 'introEyebrow', 'introHeading', 'introDescription'];
 export const landingPageFieldNames: Record<LandingPageKey, string[]> = {
   rooms: [...common, 'detailEyebrow', 'detailHeading', 'relatedEyebrow', 'relatedHeading', 'relatedLinkLabel'],
   experiences: [...common, 'ctaEyebrow', 'ctaHeading', 'ctaDescription', 'ctaLabel', 'ctaTarget', 'detailEyebrow', 'detailHeading', 'relatedEyebrow', 'relatedHeading', 'relatedDescription', 'relatedLinkLabel'],
@@ -21,3 +21,7 @@ export const landingPageDefaults: Record<LandingPageKey, LandingPageContent> = {
 };
 
 export function isLandingPageKey(value: string): value is LandingPageKey { return landingPageKeys.includes(value as LandingPageKey); }
+
+export function landingHeroImageProps(page:LandingPageContent){
+  return{mobileImage:page.heroMobileImage,mobileAlt:page.heroMobileImageAlt,desktopFocal:{x:Number(page.heroDesktopX||50),y:Number(page.heroDesktopY||50)},mobileFocal:{x:Number(page.heroMobileX||50),y:Number(page.heroMobileY||42)}};
+}

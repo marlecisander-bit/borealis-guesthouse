@@ -1,3 +1,4 @@
+import {landingHeroImageProps} from '@/lib/landing-page-content';
 import {Suspense} from 'react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
@@ -6,7 +7,7 @@ import { Amenities } from '@/components/public/Amenities';
 import { BookingSearch } from '@/components/public/BookingSearch';
 import { BookingLink } from '@/components/public/BookingLink';
 import { CTASection, PublicShell } from '@/components/public/PageShell';
-import {CmsImage} from '@/components/public/CmsImage';
+import {ResponsiveHeroImage} from '@/components/public/ResponsiveHeroImage';
 const images={room:'/borealis-placeholder.svg'};
 import { createPageMetadata } from '@/lib/seo';
 import { contentRepository } from '@/services/content';
@@ -22,7 +23,7 @@ export default async function RoomsPage() {
     <section className="bg-ivory pb-16 pt-10 md:pb-24 md:pt-16">
       <div className="shell grid gap-10 lg:grid-cols-[.8fr_1.2fr] lg:items-end">
         <div><p className="eyebrow">{page.eyebrow}</p><h1 className="mt-4 font-serif text-5xl leading-[.98] text-lake sm:text-6xl md:text-8xl">{page.heading}</h1><p className="mt-6 max-w-lg text-lg leading-8 text-muted">{page.description}</p></div>
-        <div className="relative min-h-[28rem] overflow-hidden rounded-[2rem]"><CmsImage src={page.heroImage||images.room} fallbackSrc={images.room} alt={page.heroImageAlt} priority sizes="(max-width:1024px) 100vw,60vw" /></div>
+        <div className="relative min-h-[28rem] overflow-hidden rounded-[2rem]"><ResponsiveHeroImage desktopImage={page.heroImage||images.room} fallbackImage={images.room} alt={page.heroImageAlt} {...landingHeroImageProps(page)} sizes="(max-width:1024px) 100vw,60vw" /></div>
       </div>
     </section>
     <section className="relative z-10 -mt-6 pb-14 md:-mt-8"><div className="shell"><BookingSearch /></div></section>

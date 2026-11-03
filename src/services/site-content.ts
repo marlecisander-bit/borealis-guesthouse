@@ -16,7 +16,19 @@ export const getSiteDocument = cache(async function getSiteDocument(key:SiteDocu
   if(preview){const session=await requireAdmin(['owner','manager','editor']);const document=await adminSiteContentRepository.document(session,key);return document.data;}
   try{const db=createPublicCmsClient();const{data,error}=await db.from('cms_documents').select('id,data').eq('document_key',key).eq('status','published').returns<{id:string;data:Record<string,string>}[]>().maybeSingle();if(error)return{};const base=data?.data||{};if(!data?.id)return base;const translated=await getEntityTranslationMap('cms_document',[data.id]);return{...base,...translated.get(data.id)}}catch{return{}}
 });
-export const getLandingPageContent = cache(async function getLandingPageContent(key:LandingPageKey):Promise<LandingPageContent>{const fallback=landingPageDefaults[key];try{const data=await getSiteDocument(key),merged={...fallback,...data,heroImage:''};const mediaId=data.heroImageId||'';if(!/^[0-9a-f-]{36}$/i.test(mediaId))return merged;const db=createPublicCmsClient(),{data:asset}=await db.from('media_assets').select('file_path,storage_bucket,alt_text').eq('id',mediaId).eq('status','published').eq('is_visible',true).maybeSingle();if(!asset?.file_path)return merged;return{...merged,heroImage:resolvePublicMediaUrl(asset.file_path,asset.storage_bucket||undefined),heroImageAlt:data.heroImageAlt||asset.alt_text||fallback.heroImageAlt}}catch{return fallback}});
+export const getLandingPageContent = cache(async function getLandingPageContent(key:LandingPageKey):Promise<LandingPageContent>{
+  const fallback=landingPageDefaults[key];
+  try{
+    const data=await getSiteDocument(key),db=createPublicCmsClient();
+    const read=async(id:string)=>{
+      if(!/^[0-9a-f-]{36}$/i.test(id))return null;
+      const{data:asset}=await db.from('media_assets').select('file_path,storage_bucket,alt_text').eq('id',id).eq('status','published').eq('is_visible',true).maybeSingle();
+      return asset?.file_path?{url:resolvePublicMediaUrl(asset.file_path,asset.storage_bucket||undefined),alt:asset.alt_text}:null;
+    };
+    const[desktop,mobile]=await Promise.all([read(data.heroImageId||''),read(data.heroMobileImageId||'')]);
+    return{...fallback,...data,heroImage:desktop?.url||'',heroMobileImage:mobile?.url||'',heroImageAlt:data.heroImageAlt||desktop?.alt||fallback.heroImageAlt,heroMobileImageAlt:data.heroMobileImageAlt||mobile?.alt||data.heroImageAlt||desktop?.alt||fallback.heroImageAlt};
+  }catch{return fallback}
+});
 export const getContactInfo = cache(async function getContactInfo(preview=false):Promise<ContactInfo>{
   const d=await getSiteDocument('contact',preview);
   try{

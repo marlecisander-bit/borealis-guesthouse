@@ -7,13 +7,12 @@ import {isLandingPageKey} from '@/lib/landing-page-content';
 import {adminMediaRepository} from '@/lib/repositories/admin/media';
 import {adminSiteContentRepository} from '@/lib/repositories/admin/site-content';
 
-type Field={name:string;label:string;kind?:'text'|'textarea'|'url'|'email'|'image';help?:string};
+type Field={name:string;label:string;kind?:'text'|'textarea'|'url'|'email'|'image'|'hero';help?:string};
 const common:Field[]=[
   {name:'eyebrow',label:'Eyebrow'},
   {name:'heading',label:'Heading'},
   {name:'description',label:'Description',kind:'textarea'},
-  {name:'heroImageId',label:'Hero image',kind:'image',help:'Select or upload an image from the central Media Library.'},
-  {name:'heroImageAlt',label:'Hero image alternative text',help:'Briefly describe the image for visitors using assistive technology.'},
+  {name:'heroImageId',label:'Hero images',kind:'hero',help:'Select or upload an image from the central Media Library.'},
   {name:'introEyebrow',label:'Introduction eyebrow'},
   {name:'introHeading',label:'Introduction heading'},
   {name:'introDescription',label:'Introduction description',kind:'textarea'},

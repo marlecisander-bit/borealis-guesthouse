@@ -10,7 +10,7 @@
     min-height: 100dvh;
   }
 
-  .hero-section > picture > img {
+  .hero-responsive-image {
     /* Keep more of the lake in portrait crops, independently of desktop. */
     object-position: var(--hero-mobile-position, 50% 42%);
   }

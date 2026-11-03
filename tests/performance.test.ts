@@ -39,8 +39,8 @@ test('media usage checks are batched and retain mobile Hero archive protection',
  function db(fail=false){return{from:(table:string)=>{calls++;const query:any={};for(const name of ['select','eq','neq','in','order','range','returns'])query[name]=()=>query;
  query.then=(resolve:any)=>Promise.resolve({data:table==='media_assets'?assets:table==='homepage_sections'?[{settings:{mobileMediaId:'2'}}]:table==='room_images'?[{media_asset_id:'1'}]:[],count:24,error:fail&&table==='seo_metadata'?{message:'unavailable'}:null}).then(resolve);return query}}}
  let failing=false;
- const {adminMediaRepository:repo}=load('src/lib/repositories/admin/media.ts',{'@/lib/supabase/server':{createServerSupabaseClient:async()=>db(failing)},'@/lib/media-url':{resolvePublicMediaUrl:()=>'/thumbnail'}});
- const page=await repo.list({propertyId:'p'});assert.equal(calls,11);assert.deepEqual(page.assets.filter((a:any)=>a.referencedByPublishedContent).map((a:any)=>a.id),['1','2']);
+ const {adminMediaRepository:repo}=load('src/lib/repositories/admin/media.ts',{'@/lib/admin/cms-documents':{readPrivateCmsDocuments:async()=>[{status:'published',data:{heroMobileImageId:'4'}}]},'@/lib/supabase/server':{createServerSupabaseClient:async()=>db(failing)},'@/lib/media-url':{resolvePublicMediaUrl:()=>'/thumbnail'}});
+ const page=await repo.list({propertyId:'p'});assert.equal(calls,12);assert.deepEqual(page.assets.filter((a:any)=>a.referencedByPublishedContent).map((a:any)=>a.id),['1','2','4']);
  failing=true;await assert.rejects(()=>repo.archive({propertyId:'p'},'3'),/used by published content/);
 });
 

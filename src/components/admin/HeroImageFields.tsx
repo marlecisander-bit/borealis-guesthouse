@@ -2,18 +2,20 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import {MediaPicker} from './MediaPicker';
+import type {CmsOption} from '@/types/homepage-cms';
 import { HERO_IMAGE_CONFIG, heroFocalPoint, heroResolutionWarning, type HeroAsset, type HeroAssetKind, type HeroFocalPoint } from '@/lib/hero-image-config';
 
 type Selection = { asset?: HeroAsset; assetId?: string; legacyId: string; url: string; focal: HeroFocalPoint };
-type Props = { desktopAssetId?: string; mobileAssetId?: string; desktopAsset?: HeroAsset; mobileAsset?: HeroAsset; desktopLegacyId: string; mobileLegacyId: string; desktopUrl: string; mobileUrl: string; desktopFocal: unknown; mobileFocal: unknown };
+type Props = { media?:CmsOption[]; desktopAssetId?: string; mobileAssetId?: string; desktopAsset?: HeroAsset; mobileAsset?: HeroAsset; desktopLegacyId: string; mobileLegacyId: string; desktopUrl: string; mobileUrl: string; desktopFocal: unknown; mobileFocal: unknown };
 const previewUrl = (asset?: HeroAsset) => asset?.variants[asset.variants.length - 1]?.url || '';
 
 export function HeroImageFields(props: Props) {
   const [desktop, setDesktop] = useState<Selection>({ assetId: props.desktopAssetId, asset: props.desktopAsset, legacyId: props.desktopLegacyId, url: previewUrl(props.desktopAsset) || props.desktopUrl, focal: heroFocalPoint(props.desktopFocal) });
   const [mobile, setMobile] = useState<Selection>({ assetId: props.mobileAssetId, asset: props.mobileAsset, legacyId: props.mobileLegacyId, url: previewUrl(props.mobileAsset) || props.mobileUrl, focal: heroFocalPoint(props.mobileFocal, true) });
   return <>
-    <HeroImageControl kind="desktop_hero" value={desktop} onChange={setDesktop} />
-    <HeroImageControl kind="mobile_hero" value={mobile} onChange={setMobile} fallback={desktop.url} />
+    <HeroImageControl kind="desktop_hero" value={desktop} onChange={setDesktop} media={props.media||[]}/>
+    <HeroImageControl kind="mobile_hero" value={mobile} onChange={setMobile} fallback={desktop.url} media={props.media||[]}/>
   </>;
 }
 
@@ -26,7 +28,7 @@ async function heroRequest(body: Record<string, unknown>) {
   return result;
 }
 
-function HeroImageControl({ kind, value, onChange, fallback = '' }: { kind: HeroAssetKind; value: Selection; onChange: (value: Selection) => void; fallback?: string }) {
+function HeroImageControl({ kind, value, onChange, fallback = '', media }: {media:CmsOption[]; kind: HeroAssetKind; value: Selection; onChange: (value: Selection) => void; fallback?: string }) {
   const mobile = kind === 'mobile_hero';
   const label = mobile ? 'Mobile Hero Image' : 'Desktop Hero Image';
   const prefix = mobile ? 'mobile' : 'desktop';
@@ -102,6 +104,8 @@ function HeroImageControl({ kind, value, onChange, fallback = '' }: { kind: Hero
   const frame = mobile ? 'aspect-[3/4] max-w-60' : 'aspect-video';
   return <div className="min-w-0 text-sm text-slate-800">
     <p className="font-semibold">{label}</p>
+    <MediaPicker key={value.asset?.id||value.assetId||value.legacyId||'empty'} name={`hero_${prefix}LibrarySelection`} label={`Choose ${mobile?'mobile':'desktop'} hero image from Media Library`} assets={media} defaultValue={value.legacyId} onChange={(id,asset)=>onChange({legacyId:id,url:asset?.imageUrl||'',focal:value.focal})}/>
+
     <input type="hidden" name={mobile ? 'hero_mobileMedia' : 'hero_media'} value={value.legacyId} />
     <input type="hidden" name={`hero_${prefix}HeroAssetId`} value={value.asset?.id || value.assetId || ''} />
     <input type="hidden" name={`hero_${prefix}Focal`} value={JSON.stringify(value.focal)} />

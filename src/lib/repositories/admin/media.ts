@@ -1,3 +1,4 @@
+import {readPrivateCmsDocuments} from '@/lib/admin/cms-documents';
 import 'server-only';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { resolvePublicMediaUrl } from '@/lib/media-url';
@@ -16,10 +17,12 @@ async function publishedReferences(session: AdminSession, ids: string[]): Promis
     const result=await query.returns<Record<string,string>[]>();
     return {...result,column};
   }));
+  const documents=await readPrivateCmsDocuments(db,session);
+  const articleHeroes=await db.from('tourism_articles').select('hero_settings').eq('property_id',session.propertyId).eq('status','published').eq('is_visible',true);
   const homepage=await db.from('homepage_sections').select('background_media_id,settings').eq('property_id',session.propertyId).eq('status','published').eq('is_visible',true);
   // Fail closed on incomplete reads: archiving must never lose its protection.
-  if(homepage.error||results.some(result=>result.error||(result.data?.length||0)>=1000))return new Set(ids);
-  return new Set([...results.flatMap(result=>(result.data||[]).map(row=>row[result.column])),...(homepage.data||[]).flatMap(row=>[row.background_media_id,row.settings?.mobileMediaId])].filter((id):id is string=>typeof id==='string'));
+  if(articleHeroes.error||(articleHeroes.data?.length||0)>=1000||homepage.error||results.some(result=>result.error||(result.data?.length||0)>=1000))return new Set(ids);
+  return new Set([...documents.filter(row=>row.status==='published').flatMap(row=>[row.data.heroImageId,row.data.heroMobileImageId]),...(articleHeroes.data||[]).map(row=>row.hero_settings?.heroMobileImageId),...results.flatMap(result=>(result.data||[]).map(row=>row[result.column])),...(homepage.data||[]).flatMap(row=>[row.background_media_id,row.settings?.mobileMediaId])].filter((id):id is string=>typeof id==='string'));
 }
 
 export const adminMediaRepository = {
