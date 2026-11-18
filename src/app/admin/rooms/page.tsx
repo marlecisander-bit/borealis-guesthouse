@@ -1,4 +1,4 @@
-import Form from 'next/form';
+import { AdminStatusFilter } from '@/components/admin/AdminStatusFilter';
 import Image from 'next/image';
 import Link from 'next/link';
 import { archiveRoomType,duplicateRoomType,restoreRoomType } from '@/app/admin/rooms/actions';
@@ -19,16 +19,9 @@ export default async function RoomsPage({searchParams}:{searchParams:Promise<{st
 
   return <div className="space-y-8">
     <AdminPageHeader title="Rooms" description="Manage room details, photos and guest limits, with shortcuts to pricing and availability." actions={<Link href="/admin/rooms/new" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-950 px-5 text-center text-sm font-semibold text-white">Add room</Link>}/>
-    <RoomFilters status={status}/>
+    <AdminStatusFilter status={status}/>
     {filtered.length?<RoomList rooms={filtered} canEditRates={session.role==='owner'||session.role==='manager'}/>:<AdminEmptyState title="No rooms match this filter" description={status==='archived'?'There are no archived rooms.':'Add your first room or view archived rooms.'} action={status==='active'?<Link href="/admin/rooms/new" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-950 px-5 text-sm font-semibold text-white">Add Room</Link>:undefined}/>}
   </div>;
-}
-
-function RoomFilters({status}:{status:string}){
-  return <Form action="" className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 min-[430px]:flex min-[430px]:flex-wrap min-[430px]:items-center">
-    <label className="text-xs font-bold text-slate-600">Status<select name="status" defaultValue={status} className="ml-2 min-h-10 rounded-lg border border-slate-300 px-3 text-sm font-medium"><option value="active">Active</option><option value="archived">Archived</option></select></label>
-    <button className="inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-100 px-4 text-sm font-bold">Filter</button>
-  </Form>;
 }
 
 function RoomList({rooms,canEditRates}:{rooms:AdminRoomType[];canEditRates:boolean}){

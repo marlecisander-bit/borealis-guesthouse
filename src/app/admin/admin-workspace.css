@@ -146,3 +146,33 @@ body:has([role="dialog"][aria-modal="true"],dialog[open]) .admin-bottom-nav { vi
   [data-admin-shell] .admin-image-picker-sheet { max-height: calc(var(--dialog-viewport-height, 100dvh) - 2.5rem); }
   [data-admin-shell] :is(.admin-image-dialog-heading, .admin-image-dialog-body) { padding-inline: 1.25rem; }
 }
+
+.admin-filter-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 14rem) auto;
+  justify-content: start;
+  align-items: end;
+  gap: .75rem;
+}
+.admin-filter-bar > button { white-space: nowrap; }
+[data-admin-shell] :is(.admin-filter-bar, .admin-filter-bar-wide, .admin-inline-action) select {
+  display: block;
+  appearance: none;
+  height: 2.75rem;
+  padding-inline-end: 2.25rem;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: right 1.0625rem center, right .8125rem center;
+  background-size: .25rem .25rem;
+  background-repeat: no-repeat;
+}
+.admin-filter-bar-wide {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: .75rem;
+}
+.admin-filter-bar-wide > :first-child { grid-column: 1 / -1; }
+@media (min-width: 640px) {
+  .admin-filter-bar-wide { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+  .admin-filter-bar-wide > :first-child { grid-column: auto; }
+}
