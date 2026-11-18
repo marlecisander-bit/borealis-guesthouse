@@ -38,14 +38,6 @@
   content: "Actions";
 }
 
-@media (min-width: 768px) {
-  /* Room types use separate header and row grids. A fixed action track keeps
-     every preceding column on the exact same grid line in both elements. */
-  [data-admin-shell] .admin-room-type-grid {
-    grid-template-columns: 5rem minmax(0, 1.4fr) minmax(0, .7fr) minmax(0, .7fr) minmax(0, .6fr) 20rem;
-  }
-}
-
 /* Navigation rows retain their edge alignment under the shared CTA rule. */
 [data-admin-shell] nav[aria-label="Admin navigation"] a {
   justify-content: flex-start;

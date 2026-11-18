@@ -29,8 +29,8 @@ test('Admin mobile foundations prevent page overflow and respect phone chrome', 
 
 test('high-use datasets have touch-first alternatives instead of squeezed tables', () => {
   const bookings = source('src/app/admin/bookings/page.tsx');
-  assert.match(bookings, /aria-label="Bookings" className="grid gap-3 md:hidden"/);
-  assert.match(bookings, /hidden overflow-x-auto[^<]+md:block/);
+  assert.match(bookings, /aria-label="Bookings" className="admin-record-cards grid gap-3"/);
+  assert.match(bookings, /admin-record-wide/);
   assert.match(bookings, /min-h-11/);
 
   const calendar = source('src/components/admin/AvailabilityCalendar.tsx');
@@ -43,8 +43,8 @@ test('high-use datasets have touch-first alternatives instead of squeezed tables
 
 test('mobile room, editor and media actions remain comfortably tappable', () => {
   const rooms = source('src/app/admin/rooms/page.tsx');
-  assert.match(rooms, /grid grid-cols-2[^"\n]*gap-2[^"\n]*md:flex/);
-  assert.match(rooms, /aspect-\[16\/9\]/);
+  assert.match(rooms, /admin-record-actions/);
+  assert.match(rooms, /admin-record-title-image/);
 
   for (const path of ['src/components/admin/EditorWorkspace.tsx']) {
     const editor = source(path);

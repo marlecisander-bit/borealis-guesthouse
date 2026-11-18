@@ -176,3 +176,83 @@ body:has([role="dialog"][aria-modal="true"],dialog[open]) .admin-bottom-nav { vi
   .admin-filter-bar-wide { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
   .admin-filter-bar-wide > :first-child { grid-column: auto; }
 }
+
+.admin-record-list {
+  container: admin-records / inline-size;
+}
+.admin-record-head { display: none; }
+.admin-record-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .875rem;
+  padding: 1rem;
+}
+.admin-record-title {
+  grid-column: 1 / -1;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: .75rem;
+}
+.admin-record-actions {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .5rem;
+  align-items: start;
+  min-width: 0;
+}
+.admin-record-actions > a,
+.admin-record-actions > form > button,
+.admin-record-actions > details > summary {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 2.75rem;
+  width: 100%;
+  text-align: center;
+}
+.admin-record-actions > details { min-width: 0; }
+.admin-record-row > * { min-width: 0; }
+.admin-record-menu { overflow-wrap: anywhere; }
+.admin-record-list .admin-record-row .admin-record-title-image { flex: none; }
+.admin-record-wide { display: none; }
+
+@container admin-records (min-width: 56rem) {
+  .admin-record-head,
+  .admin-record-row { display: grid; align-items: center; gap: 1rem; padding-inline: 1.25rem; }
+  .admin-record-services .admin-record-head,
+  .admin-record-services .admin-record-row {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, .85fr) 9rem;
+  }
+  .admin-record-rooms .admin-record-head,
+  .admin-record-rooms .admin-record-row {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, .65fr) minmax(0, .6fr) minmax(0, .7fr) 19rem;
+  }
+  .admin-record-title, .admin-record-actions { grid-column: auto; }
+  .admin-record-label { display: none; }
+  .admin-record-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .admin-record-actions > a,
+  .admin-record-actions > form > button,
+  .admin-record-actions > details > summary { width: auto; }
+  .admin-record-actions > details[open] .admin-record-menu {
+    position: absolute;
+    inset-inline-end: 0;
+    z-index: 20;
+    min-width: 11rem;
+  }
+  .admin-responsive-seo .admin-record-wide { display: block; }
+  .admin-responsive-seo .admin-record-cards { display: none; }
+}
+
+@container admin-records (min-width: 72rem) {
+  .admin-responsive-bookings .admin-record-wide { display: block; }
+  .admin-responsive-bookings .admin-record-cards { display: none; }
+}
+
+[data-admin-shell] .admin-record-wide td { overflow-wrap: anywhere; }
+[data-admin-shell] .admin-record-wide th { white-space: normal; }
