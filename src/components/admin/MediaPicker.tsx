@@ -1,5 +1,7 @@
 'use client';
 
+import { useWebsiteMediaEdit } from './WebsiteEditor';
+
 import Image from 'next/image';
 import{useDialogFocus}from'@/hooks/useDialogFocus';
 import { useMemo, useState, useRef } from 'react';
@@ -25,6 +27,7 @@ export function MediaPicker({
   valueMode = 'id',
   onChange,
 }: MediaPickerProps) {
+  const markChanged = useWebsiteMediaEdit();
   const initialMatch = assets.find(item => valueMode === 'url' ? item.imageUrl === defaultValue : item.id === defaultValue);
   const [items, setItems] = useState(assets);
   const [selected, setSelected] = useState(initialMatch?.id || (valueMode === 'id' ? defaultValue : ''));
@@ -40,6 +43,7 @@ export function MediaPicker({
   );
 
   function select(id: string) {
+    markChanged?.();
     setSelected(id);
     setLegacyUrl('');
     setOpen(false);
@@ -47,6 +51,7 @@ export function MediaPicker({
   }
 
   function remove() {
+    markChanged?.();
     setSelected('');
     setLegacyUrl('');
     onChange?.('');
@@ -59,7 +64,7 @@ export function MediaPicker({
       imageUrl: asset.publicUrl,
     }));
     setItems(previous => [...added, ...previous]);
-    if (added[0]) {setSelected(added[0].id);setLegacyUrl('');setOpen(false);onChange?.(valueMode==='url'?added[0].imageUrl||'':added[0].id,added[0]);}
+    if (added[0]) {markChanged?.();setSelected(added[0].id);setLegacyUrl('');setOpen(false);onChange?.(valueMode==='url'?added[0].imageUrl||'':added[0].id,added[0]);}
   }
 
   return (

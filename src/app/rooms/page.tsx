@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
+import { getWebsiteDraft } from '@/lib/preview';
+import { PreviewBanner } from '@/components/public/PreviewBanner';
 import { Amenities } from '@/components/public/Amenities';
 import { BookingSearch } from '@/components/public/BookingSearch';
 import { BookingLink } from '@/components/public/BookingLink';
@@ -13,11 +15,14 @@ import {formatRoomRate} from '@/lib/pricing/format';
 
 export async function generateMetadata():Promise<Metadata>{return createPageMetadata('rooms')}
 
-export default async function RoomsPage() {
-  const [page, rooms] = await Promise.all([getLandingPageContent('rooms'), contentRepository.getRooms()]);
+export default async function RoomsPage({searchParams}: {searchParams: Promise<{preview?: string}>}) {
+  const draft = await getWebsiteDraft('rooms', (await searchParams).preview);
+  const [live, rooms] = await Promise.all([getLandingPageContent('rooms'), contentRepository.getRooms()]);
+  const page = draft?.data ? {...live, ...draft.data} : live;
   const heroRoom = rooms.find(room => room.slug === 'family-room-lake-view' && room.gallery.length)
     || rooms.find(room => room.gallery.length);
   return <PublicShell>
+    {draft && <PreviewBanner label={draft.saved ? "Rooms draft preview" : draft.unavailable ? "Draft unavailable" : "No saved draft"} liveHref="/rooms" showingLive={!draft.saved}/>}
     <section className="bg-ivory pb-12 pt-8 md:pb-14 md:pt-10">
       <div className="shell grid gap-10 lg:grid-cols-[.8fr_1.2fr] lg:items-center">
         <div><p className="eyebrow">{page.eyebrow}</p><h1 className="mt-4 font-serif text-5xl leading-[.98] text-lake sm:text-6xl md:text-6xl">{page.heading}</h1><p className="mt-6 max-w-lg text-lg leading-8 text-muted">Rooms by Koman Lake, with options for couples, families and small groups.</p></div>

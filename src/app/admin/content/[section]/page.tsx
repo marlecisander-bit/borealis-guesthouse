@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import {notFound} from 'next/navigation';
-import {AdminPageHeader} from '@/components/admin/ui';
+import {WebsiteEditorHeader,websiteShortcut} from '@/components/admin/WebsiteEditorHeader';
 import {SiteDocumentForm} from '@/components/admin/SiteDocumentForm';
 import {requireAdmin} from '@/lib/admin/auth';
 import {isLandingPageKey} from '@/lib/landing-page-content';
@@ -59,8 +59,18 @@ export default async function ContentSectionPage({params}:{params:Promise<{secti
   const page=config[section];
   const[document,assets]=await Promise.all([adminSiteContentRepository.document(session,section),adminMediaRepository.options(session).catch(()=>[])]);
   const media=assets.filter(asset=>asset.status!=='archived').map(asset=>({id:asset.id,label:asset.title||asset.alt_text||asset.filename||'Untitled image',imageUrl:asset.publicUrl}));
-  return <div className="space-y-8">
-    <AdminPageHeader title={`${page.label} content`} description={page.description} actions={<Link href={`/${section}`} target="_blank" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold">Preview Website</Link>}/>
-    <SiteDocumentForm documentKey={section} fields={[...page.fields]} data={document.data} media={media}/>
+  const roomSections = [
+    { id: 'main', title: 'Page heading & introduction', fields: common.filter(field => field.name !== 'heroImageId' && field.name !== 'description').map(field => field.name) },
+    { id: 'legacy', title: 'Saved photo & description fields (unused on Rooms)', fields: ['heroImageId', 'description'] },
+    { id: 'room-details', title: 'Shared room-detail headings', fields: [...detail, ...related].map(field => field.name) },
+  ];
+  return <div className="max-w-5xl space-y-4">
+    <WebsiteEditorHeader title={page.label} status={document.publication} live={`/${section}`} description={section==='rooms'?'Edit the public introduction and headings shared by room pages. Room photos, amenities and prices are managed with each room. The photo and description fields retained below are unused by the current Rooms introduction.':page.description}>
+      {section==='rooms' && <Link href="/admin/rooms" className={websiteShortcut}>Manage rooms and rates</Link>}
+      {section==='experiences' && <><Link href="/admin/experiences?type=experience" className={websiteShortcut}>Manage experiences and dinner</Link><Link href="/admin/experiences?type=rental" className={websiteShortcut}>Manage rentals</Link></>}
+      {section==='transfers' && <Link href="/admin/transfers" className={websiteShortcut}>Manage transfer listings</Link>}
+      {section==='explore-koman' && <Link href="/admin/explore-koman" className={websiteShortcut}>Manage Explore Koman articles</Link>}
+    </WebsiteEditorHeader>
+    <SiteDocumentForm documentKey={section} fields={[...page.fields]} data={document.data} media={media} sections={section==='rooms'?roomSections:undefined} preview={section==='rooms'?'/rooms?preview=rooms':undefined}/>
   </div>;
 }

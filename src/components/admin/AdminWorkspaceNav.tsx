@@ -16,6 +16,7 @@ export function AdminWorkspaceNav() {
   const pathname=usePathname(), search=useSearchParams();
   const group=groups.find(item=>item.paths.some(path=>matches(pathname,path)));
   if(pathname.startsWith('/admin/bookings/')) return null;
+  if(['/admin/content/homepage','/admin/content/rooms','/admin/content/gallery','/admin/content/contact','/admin/content/experiences','/admin/content/transfers','/admin/content/explore-koman'].includes(pathname)) return <TranslationShortcut/>;
   const back=pathname.startsWith('/admin/content/')||['/admin/media','/admin/seo'].includes(pathname)||matches(pathname,'/admin/explore-koman')
     ? ['/admin/content','Website'] : ['/admin/languages','/admin/channels','/admin/notifications'].some(path=>matches(pathname,path))
       ? ['/admin/settings','Settings'] : null;
@@ -29,7 +30,7 @@ export function AdminWorkspaceNav() {
         return <Link href={tab.href} prefetch={false} key={tab.href} aria-current={active?'page':undefined} className="admin-tab inline-flex min-h-11 items-center rounded-lg px-2.5 text-sm font-semibold">{tab.label}</Link>;
       })}
     </nav>}
-    {back&&<Link href={back[0]} className="inline-flex min-h-11 items-center text-sm font-bold text-brand">← {back[1]}</Link>}
+    {back&&<Link href={back[0]} className="inline-flex min-h-11 items-center text-sm font-bold text-brand">← Back to {back[1]}</Link>}
     <TranslationShortcut/>
   </div>;
 }

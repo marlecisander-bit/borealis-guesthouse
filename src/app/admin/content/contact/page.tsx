@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import {AdminEmptyState,AdminPageHeader} from '@/components/admin/ui';
+import {AdminEmptyState} from '@/components/admin/ui';
+import {WebsiteEditorHeader,websiteShortcut} from '@/components/admin/WebsiteEditorHeader';
 import {SiteDocumentForm} from '@/components/admin/SiteDocumentForm';
 import {requireAdmin} from '@/lib/admin/auth';
 import {adminSiteContentRepository} from '@/lib/repositories/admin/site-content';
@@ -24,9 +25,15 @@ const fields=[
 export default async function Page(){
   const session=await requireAdmin(['owner','manager','editor']);
   const document=await adminSiteContentRepository.document(session,'contact').catch(()=>null);
-  if(!document)return <AdminEmptyState title="CMS database update required" description="Run database/migrations/20260902_007_site_content_cms.sql in Supabase, then reload."/>;
-  return <div className="space-y-8">
-    <AdminPageHeader title="Contact page" description="Edit page copy and calls to action. Phone, email, social links, address and Google Maps are managed once in Settings → Property." actions={<><Link href="/admin/settings" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold">Property contact details</Link><Link href="/contact" target="_blank" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold">Preview website</Link></>}/>
-    <SiteDocumentForm documentKey="contact" fields={fields} data={document.data}/>
+  return <div className="max-w-5xl space-y-4">
+    <WebsiteEditorHeader title="Contact" status={document?.publication ?? 'Status unavailable'} live="/gallery#contact" description="Edit contact and directions copy. Phone, WhatsApp, email and address come from Property settings.">
+      <Link href="/admin/settings#property-details" className={websiteShortcut}>Property settings</Link>
+    </WebsiteEditorHeader>
+    {document ? <SiteDocumentForm documentKey="contact" fields={fields} data={document.data} preview="/gallery?preview=contact#contact" sections={[
+      {id:'main',title:'Contact introduction',fields:['eyebrow','introduction']},
+      {id:'direct-contact',title:'Direct contact & address',fields:fields.slice(3,7).map(field=>field.name)},
+      {id:'directions',title:'Directions & travel links',fields:fields.slice(7).map(field=>field.name)},
+      {id:'legacy',title:'Saved title (unused on Contact)',fields:['title']},
+    ]}/> : <AdminEmptyState title="Contact content could not be loaded" description="Reload this page before editing."/>}
   </div>;
 }

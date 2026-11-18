@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import { useWebsiteMediaEdit } from './WebsiteEditor';
 import {MediaPicker} from './MediaPicker';
 import type {CmsOption} from '@/types/homepage-cms';
 import { HERO_IMAGE_CONFIG, heroFocalPoint, heroResolutionWarning, type HeroAsset, type HeroAssetKind, type HeroFocalPoint } from '@/lib/hero-image-config';
@@ -11,11 +12,12 @@ type Props = { media?:CmsOption[]; desktopAssetId?: string; mobileAssetId?: stri
 const previewUrl = (asset?: HeroAsset) => asset?.variants[asset.variants.length - 1]?.url || '';
 
 export function HeroImageFields(props: Props) {
+  const markChanged = useWebsiteMediaEdit();
   const [desktop, setDesktop] = useState<Selection>({ assetId: props.desktopAssetId, asset: props.desktopAsset, legacyId: props.desktopLegacyId, url: previewUrl(props.desktopAsset) || props.desktopUrl, focal: heroFocalPoint(props.desktopFocal) });
   const [mobile, setMobile] = useState<Selection>({ assetId: props.mobileAssetId, asset: props.mobileAsset, legacyId: props.mobileLegacyId, url: previewUrl(props.mobileAsset) || props.mobileUrl, focal: heroFocalPoint(props.mobileFocal, true) });
   return <>
-    <HeroImageControl kind="desktop_hero" value={desktop} onChange={setDesktop} media={props.media||[]}/>
-    <HeroImageControl kind="mobile_hero" value={mobile} onChange={setMobile} fallback={desktop.url} media={props.media||[]}/>
+    <HeroImageControl kind="desktop_hero" value={desktop} onChange={value => { markChanged?.(); setDesktop(value); }} media={props.media||[]}/>
+    <HeroImageControl kind="mobile_hero" value={mobile} onChange={value => { markChanged?.(); setMobile(value); }} fallback={desktop.url} media={props.media||[]}/>
   </>;
 }
 

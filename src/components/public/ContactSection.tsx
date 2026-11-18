@@ -3,8 +3,8 @@ import { ContactForm } from '@/components/public/ContactForm';
 import { MapPlaceholder } from '@/components/public/MapPlaceholder';
 import { getContactInfo, getSiteDocument } from '@/services/site-content';
 
-export async function ContactSection() {
-  const [contact, page] = await Promise.all([getContactInfo(), getSiteDocument('contact')]);
+export async function ContactSection({draft}: {draft?: Record<string,string>} = {}) {
+  const [contact, page] = await Promise.all([getContactInfo(), draft ?? getSiteDocument('contact')]);
   const directDescription = /managed in Borealis settings/i.test(page.directDescription || '') ? '' : page.directDescription;
 
   return <>

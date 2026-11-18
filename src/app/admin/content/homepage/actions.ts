@@ -13,7 +13,7 @@ const text = (data: FormData, key: string) => String(data.get(key) || '').trim()
 
 export async function saveHomepageCms(_: HomepageCmsState, data: FormData): Promise<HomepageCmsState> {
   const session = await requireAdmin(['owner', 'manager', 'editor']);
-  if (data.get('hero_desktopUploading') === 'yes' || data.get('hero_mobileUploading') === 'yes') return { ok: false, message: 'Wait for the Hero image upload to finish before saving.' };
+  if (data.get('hero_desktopUploading') === 'yes' || data.get('hero_mobileUploading') === 'yes') return { ok: false, section: 'hero', message: 'Wait for the Hero image upload to finish before saving.' };
   const status = text(data, 'status') as 'draft' | 'published';
   if (!['draft', 'published'].includes(status)) return { ok: false, message: 'Choose Save Draft or Publish.' };
 
@@ -37,17 +37,18 @@ export async function saveHomepageCms(_: HomepageCmsState, data: FormData): Prom
   })).filter(item => item.title);
   const reviews: HomepageReview[] = [];
   const hero = sections.find(item => item.key === 'hero')!;
-  if (!Number.isFinite(hero.settings.overlayIntensity) || Number(hero.settings.overlayIntensity) < 0 || Number(hero.settings.overlayIntensity) > 100) return { ok: false, message: 'Overlay intensity must be between 0 and 100.' };
+  if (!Number.isFinite(hero.settings.overlayIntensity) || Number(hero.settings.overlayIntensity) < 0 || Number(hero.settings.overlayIntensity) > 100) return { ok: false, section: 'hero', message: 'Overlay intensity must be between 0 and 100.' };
   const intro = sections.find(item => item.key === 'intro')!;
 
-  if (status === 'published' && hero.title.length < 3) return { ok: false, message: 'Add a hero headline before publishing.' };
-  if (status === 'published' && intro.visible && intro.title.length < 3) return { ok: false, message: 'Add an introduction heading before publishing.' };
-  if (hero.ctaLabel && !hero.ctaLink) return { ok: false, message: 'Add a destination for the primary button, or leave both button fields blank.' };
-  if (hero.ctaLink && !hero.ctaLabel) return { ok: false, message: 'Add a label for the primary button, or leave both button fields blank.' };
-  if (intro.ctaLabel && !intro.ctaLink) return { ok: false, message: 'Add a destination for the introduction button.' };
-  if (intro.ctaLink && !intro.ctaLabel) return { ok: false, message: 'Add a label for the introduction button.' };
-  if (intro.backgroundMediaId && !intro.settings.imageAlt) return { ok: false, message: 'Add alternative text for the introduction image.' };
-  if (sections.some(item => item.ctaLink && !/^\/(?:[a-z0-9-]+\/?)*$/i.test(item.ctaLink))) return { ok: false, message: 'Homepage button destinations must use a safe internal path beginning with /.' };
+  if (status === 'published' && hero.title.length < 3) return { ok: false, section: 'hero', message: 'Add a hero headline before publishing.' };
+  if (status === 'published' && intro.visible && intro.title.length < 3) return { ok: false, section: 'intro', message: 'Add an introduction heading before publishing.' };
+  if (hero.ctaLabel && !hero.ctaLink) return { ok: false, section: 'hero', message: 'Add a destination for the primary button, or leave both button fields blank.' };
+  if (hero.ctaLink && !hero.ctaLabel) return { ok: false, section: 'hero', message: 'Add a label for the primary button, or leave both button fields blank.' };
+  if (intro.ctaLabel && !intro.ctaLink) return { ok: false, section: 'intro', message: 'Add a destination for the introduction button.' };
+  if (intro.ctaLink && !intro.ctaLabel) return { ok: false, section: 'intro', message: 'Add a label for the introduction button.' };
+  if (intro.backgroundMediaId && !intro.settings.imageAlt) return { ok: false, section: 'intro', message: 'Add alternative text for the introduction image.' };
+  const invalidLink = sections.find(item => item.ctaLink && !/^\/(?:[a-z0-9-]+\/?)*$/i.test(item.ctaLink));
+  if (invalidLink) return { ok: false, section: invalidLink.key, message: 'Homepage button destinations must use a safe internal path beginning with /.' };
 
   try {
     const db = await createServerSupabaseClient();
@@ -56,14 +57,14 @@ export async function saveHomepageCms(_: HomepageCmsState, data: FormData): Prom
       let query=db.from('media_assets').select('id').eq('property_id',session.propertyId).in('id',legacyIds).neq('status','archived');
       if(status==='published')query=query.eq('status','published').eq('is_visible',true);
       const{data:media,error}=await query;
-      if(error||(media||[]).length!==legacyIds.length)return{ok:false,message:'Choose available Hero images from this property. Publish the media before publishing the homepage.'};
+      if(error||(media||[]).length!==legacyIds.length)return{ok:false,section:'hero', message:'Choose available Hero images from this property. Publish the media before publishing the homepage.'};
     }
     for (const [field, kind] of [['desktopHeroAssetId', 'desktop_hero'], ['mobileHeroAssetId', 'mobile_hero']] as const) {
       const id = hero.settings[field];
       if (!id) continue;
-      if (typeof id !== 'string' || !/^[0-9a-f-]{36}$/i.test(id)) return { ok: false, message: 'Choose a valid Hero image.' };
+      if (typeof id !== 'string' || !/^[0-9a-f-]{36}$/i.test(id)) return { ok: false, section: 'hero', message: 'Choose a valid Hero image.' };
       const { data: asset, error } = await db.from('homepage_hero_assets').select('id').eq('id', id).eq('property_id', session.propertyId).eq('kind', kind).eq('status', 'ready').maybeSingle();
-      if (error || !asset) return { ok: false, message: 'The selected Hero image is not ready. Please upload it again.' };
+      if (error || !asset) return { ok: false, section: 'hero', message: 'The selected Hero image is not ready. Please upload it again.' };
     }
     if (status === 'draft') await saveHomepageDraft(session, { sections, highlights, reviews });
     else {
@@ -72,8 +73,8 @@ export async function saveHomepageCms(_: HomepageCmsState, data: FormData): Prom
     }
     revalidatePath('/admin/content');
     revalidatePath('/admin/content/homepage');
-    revalidatePath('/');
-    return { ok: true, message: status === 'published' ? 'Homepage content published.' : 'Draft saved. The public website has not changed.' };
+    if (status === 'published') revalidatePath('/');
+    return { ok: true, message: status === 'published' ? 'Changes are live.' : 'Draft saved.' };
   } catch (error) {
     return { ok: false, message: error instanceof Error ? error.message : 'Homepage could not be saved.' };
   }

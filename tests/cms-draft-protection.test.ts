@@ -8,6 +8,7 @@ function load(file:string,mocks:Record<string,unknown>={}):any {
  const m={exports:{}};new Function('require','module','exports',code)((id:string)=>{if(id==='server-only')return{};if(id in mocks)return mocks[id];throw Error('Unexpected dependency '+id);},m,m.exports);return m.exports;
 }
 const contract=load('src/types/site-content-cms.ts');
+const publication=load('src/lib/admin/website-status.ts');
 const helper=load('src/lib/admin/cms-documents.ts',{'@/types/site-content-cms':contract});
 const property='10000000-0000-4000-8000-000000000001',other='10000000-0000-4000-8000-000000000002',id='20000000-0000-4000-8000-000000000001';
 const session={propertyId:property,userId:'30000000-0000-4000-8000-000000000001',role:'editor',email:'fixture@example.test'};
@@ -34,9 +35,36 @@ test('private responses reject cross-property/key, duplicate, malformed and RPC 
 test('repository draft/save/publish uses RPC server-owned merge with no direct-table fallback',async()=>{
  let current=row();const calls:any[]=[];
  const db={from:()=>{throw Error('Direct table forbidden')},rpc:async(name:string,args:any)=>{calls.push(name);if(name==='borealis_admin_cms_documents')return{data:[structuredClone(current)],error:null};const merged={...current.data,...current.draft_data,...args.input_data};if(args.target_status==='draft')current={...current,draft_data:merged};else current={...current,data:merged,draft_data:null as any,status:'published'};return{data:id,error:null}}};
- const repo=load('src/lib/repositories/admin/site-content.ts',{'@/lib/admin/cms-documents':helper,'@/lib/supabase/server':{createServerSupabaseClient:async()=>db}}).adminSiteContentRepository;
- await repo.saveDocument(session,'about',{title:'new draft'},'draft');assert.equal(current.data.title,'published');assert.equal((await repo.document(session,'about')).data.title,'new draft');
- await repo.saveDocument(session,'about',{extra:'submitted'},'published');assert.deepEqual(current.data,{title:'new draft',unchanged:'kept',extra:'submitted'});assert.equal(current.draft_data,null);assert.equal((await repo.document(session,'about')).status,'published');assert.equal(calls.length,4);
+ const repo=load('src/lib/repositories/admin/site-content.ts',{'@/types/site-content-cms':contract,'@/lib/admin/website-status':publication,'@/lib/admin/cms-documents':helper,'@/lib/supabase/server':{createServerSupabaseClient:async()=>db}}).adminSiteContentRepository;
+ await repo.saveDocument(session,'about',{title:'new draft'},'draft');assert.equal(current.data.title,'published');const draft=await repo.document(session,'about');assert.equal(draft.data.title,'new draft');assert.equal(draft.publication,'Unpublished changes');
+ await repo.saveDocument(session,'about',{extra:'submitted'},'published');assert.deepEqual(current.data,{title:'new draft',unchanged:'kept',extra:'submitted'});assert.equal(current.draft_data,null);const published=await repo.document(session,'about');assert.equal(published.status,'published');assert.equal(published.publication,'Live');assert.equal(calls.length,4);
+});
+test('Website marks saved drafts, falls back to live defaults, and reports lookup failures',async()=>{
+ let unavailable=false;
+ const navigation={data:[],error:null};
+ const db={
+  rpc:async()=>unavailable?{data:null,error:new Error('offline')}:{data:[row(),{...row(),document_key:'footer',status:'archived',draft_data:null}],error:null},
+  from(table:string){
+   const result=table==='homepage_drafts'?{data:{property_id:property},error:null}
+    :table==='homepage_sections'?{data:{status:'published'},error:unavailable?new Error('offline'):null}:navigation;
+   const query:any={select:()=>query,eq:()=>query,maybeSingle:async()=>result,then:(resolve:any)=>Promise.resolve(result).then(resolve)};
+   return query;
+  },
+ };
+ const {adminSiteContentRepository:repo}=load('src/lib/repositories/admin/site-content.ts',{
+  '@/types/site-content-cms':contract,'@/lib/admin/website-status':publication,
+  '@/lib/admin/cms-documents':helper,'@/lib/supabase/server':{createServerSupabaseClient:async()=>db},
+ });
+ const statuses=await repo.statuses(session);
+ assert.equal(statuses.about,'Unpublished changes');
+ assert.equal(statuses.footer,'Archived');
+ assert.equal(statuses.rooms,'Live');
+ assert.equal(statuses.homepage,'Unpublished changes');
+ unavailable=true;
+ const failed=await repo.statuses(session);
+ assert.equal(failed.homepage,'Status unavailable');
+ assert.equal(failed.rooms,'Status unavailable');
+ assert.equal(failed.navigation,'Live');
 });
 test('preview requires O/M/E and propagates failures; public reader keeps published projection/translations',async()=>{
  let fail=false,privateCalls=0,publicCalls=0;const query:any={};const ops:any[]=[];for(const name of ['select','eq','returns'])query[name]=(...args:any[])=>{ops.push([name,...args]);return query};query.maybeSingle=async()=>({data:{id,data:{title:'public'}},error:null});

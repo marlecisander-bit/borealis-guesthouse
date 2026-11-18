@@ -30,7 +30,8 @@ export const getHomepageCms = cache(async function getHomepageCms(preview = fals
     ? await createServerSupabaseClient()
     : createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 
-  if (admin) {
+  if (preview) {
+    if (!admin || !['owner','manager','editor'].includes(admin.role)) return null;
     const { data: draft } = await db.from('homepage_drafts').select('payload').eq('property_id', admin.propertyId).maybeSingle();
     if (draft?.payload) {
       const payload = draft.payload as { sections: HomepageSection[]; reviews: HomepageReview[] };
@@ -46,14 +47,16 @@ export const getHomepageCms = cache(async function getHomepageCms(preview = fals
         mediaUrls: Object.fromEntries((mediaResult.data || []).map(item => [item.id, `${url}/storage/v1/object/public/public-media/${item.file_path}`])),
       };
     }
+    return null;
   }
 
-  let sectionsQuery = db
+  const sectionsQuery = db
     .from('homepage_sections')
     .select('id,section_key,title,subtitle,body,eyebrow,cta_label,cta_link,background_media_id,settings,status,is_visible,sort_order')
     .in('section_key', publicHomepageKeys)
-    .order('sort_order');
-  if (!admin) sectionsQuery = sectionsQuery.eq('status', 'published').eq('is_visible', true);
+    .order('sort_order')
+    .eq('status', 'published')
+    .eq('is_visible', true);
   const { data: sections, error } = await sectionsQuery;
   if (error || !sections?.length) return null;
 

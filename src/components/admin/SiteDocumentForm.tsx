@@ -6,9 +6,10 @@ import type { CmsOption } from '@/types/homepage-cms';
 import type { SiteDocument } from '@/types/site-content-cms';
 import {MediaHeroFields} from './MediaHeroFields';
 import { MediaPicker } from './MediaPicker';
+import { WebsiteEditor, WebsiteSection } from './WebsiteEditor';
 import { useEditorForm } from './EditorWorkspace';
 
-type Field = {
+export type SiteDocumentField = {
   name: string;
   label: string;
   kind?: 'text' | 'textarea' | 'url' | 'email' | 'image' | 'hero';
@@ -20,21 +21,23 @@ export function SiteDocumentForm({
   fields,
   data,
   media = [],
+  sections,
+  preview,
 }: {
   documentKey: SiteDocument['key'];
-  fields: Field[];
+  fields: SiteDocumentField[];
   data: Record<string, string>;
   media?: CmsOption[];
+  sections?: {id:string; title:string; fields:readonly string[]}[];
+  preview?: string;
 }) {
   const action = saveSiteDocument.bind(null, documentKey);
   const [state, formAction, pending] = useActionState(action, { ok: false, message: '' });
 
-  const editor=useEditorForm(state);
+  const editor = useEditorForm(state);
 
-  return (
-    <form action={formAction} onChange={editor.onChange} onSubmit={editor.submit} className="space-y-6">
-      <div className="grid gap-5 rounded-2xl border border-slate-200 bg-white p-6 lg:grid-cols-2">
-        {fields.map(field => {
+  const renderFields = (shown: SiteDocumentField[]) => <div className="grid gap-4 lg:grid-cols-2">
+        {shown.map(field => {
           if(field.kind==='hero')return <MediaHeroFields key={field.name} data={data} media={media}/>;
           if (field.kind === 'image') {
             return (
@@ -67,16 +70,22 @@ export function SiteDocumentForm({
             </label>
           );
         })}
-      </div>
+      </div>;
+  if (sections && preview) return <WebsiteEditor result={state} dispatch={formAction} pending={pending} preview={preview}>
+    {sections.map(section => <WebsiteSection key={section.id} id={section.id} title={section.title}>
+      {renderFields(fields.filter(field => section.fields.includes(field.name)))}
+    </WebsiteSection>)}
+  </WebsiteEditor>;
+  return <form action={formAction} onChange={editor.onChange} onSubmit={editor.submit} className="space-y-6">
+    <div className="rounded-xl border border-stone-200 bg-white p-4 sm:p-6">{renderFields(fields)}</div>
       {state.message && (
         <p role="status" className={`rounded-lg px-4 py-3 text-sm ${state.ok ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'}`}>
           {state.message}
         </p>
       )}
       <div className="admin-form-actions sticky bottom-4 z-10 flex flex-wrap justify-end gap-3 rounded-xl border border-slate-200 bg-white/95 p-4 shadow-lg backdrop-blur">
-        <button name="status" value="draft" disabled={pending} className="min-h-11 rounded-lg border border-slate-300 px-5 font-semibold">Save Draft</button>
-        <button name="status" value="published" disabled={pending} className="min-h-11 rounded-lg bg-brand px-5 font-semibold text-white">{pending ? 'Saving…' : 'Publish'}</button>
+        <button name="status" value="draft" disabled={pending} className="min-h-11 rounded-lg border border-slate-300 px-5 font-semibold">Save draft</button>
+        <button name="status" value="published" disabled={pending} className="min-h-11 rounded-lg bg-brand px-5 font-semibold text-white">{pending ? 'Saving…' : 'Publish changes'}</button>
       </div>
     </form>
-  );
 }

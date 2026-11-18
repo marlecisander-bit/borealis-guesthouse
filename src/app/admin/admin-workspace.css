@@ -32,3 +32,15 @@ body:has([role="dialog"][aria-modal="true"],dialog[open]) .admin-bottom-nav { vi
 [data-admin-shell] .calendar-primary { background: #24523e; border-color: #24523e; color: white; }
 [data-admin-shell] .admin-attention-item { justify-content: space-between; text-align: left; }
 [data-admin-shell] .admin-bottom-nav .admin-tab { justify-content: center; text-align: center; }
+
+@media (max-width: 767px) and (min-height: 500px) {
+  [data-admin-shell] .website-editor-actions {
+    position: sticky;
+    bottom: calc(var(--admin-bottom-clearance) + .5rem);
+    z-index: 15;
+  }
+
+  [data-admin-shell] form:has(:is(input:not([type]), input:is([type=text],[type=number],[type=email],[type=url],[type=search]), textarea):focus) .website-editor-actions {
+    position: static;
+  }
+}

@@ -5,8 +5,8 @@ export interface HomepageSection{id:string;key:HomepageKey;title:string;subtitle
 export interface HomepageHighlight{id:string;title:string;description:string;icon:string;visible:boolean;sortOrder:number;status:ContentStatus}
 export interface HomepageReview{id:string;author:string;origin:string;quote:string;visible:boolean;sortOrder:number;status:ContentStatus}
 export interface CmsOption{id:string;label:string;imageUrl?:string}
-export interface HomepageEditorData{heroAssets?:Record<string,HeroAsset>;sections:HomepageSection[];highlights:HomepageHighlight[];reviews:HomepageReview[];media:CmsOption[];rooms:CmsOption[];experiences:CmsOption[];articles:CmsOption[];transfers:CmsOption[];workflow?:{hasDraft:boolean;updatedAt:string;publishedAt:string}}
-export interface HomepageCmsState{ok:boolean;message:string;errors?:Record<string,string>}
+export interface HomepageEditorData{heroAssets?:Record<string,HeroAsset>;sections:HomepageSection[];highlights:HomepageHighlight[];reviews:HomepageReview[];media:CmsOption[];rooms:CmsOption[];experiences:CmsOption[];articles:CmsOption[];transfers:CmsOption[]}
+export interface HomepageCmsState{ok:boolean;message:string;section?:string;errors?:Record<string,string>}
 
 // Keep legacy keys for stored content compatibility; these sections are retired from the homepage.
 export const retiredHomepageKeys = ['explore_koman', 'transfers', 'gallery', 'reviews'] as const;

@@ -23,14 +23,15 @@ export const viewport: Viewport = { width: 'device-width', initialScale: 1, view
 export async function generateMetadata():Promise<Metadata>{return createPageMetadata('homepage')}
 
 export default async function Home({searchParams}:{searchParams:Promise<{preview?:string}>}) {
-  const preview=Boolean(await authorizePreview('homepage',(await searchParams).preview));
-  const [liveProperty, homepageCmsRaw, publishedHero, navigation,language,globalContent,agePolicy] = await Promise.all([
-    contentRepository.getProperty(),
-    getHomepageCms(preview),
-    preview?Promise.resolve(null):getPublishedHomepageHero(),
-    getNavigation('header'),getLanguageContext(),getSiteDocument('global'),getOccupancyAgePolicy(),
+  const authorization = await authorizePreview('homepage', (await searchParams).preview);
+  const previewRequested = Boolean(authorization && ['owner', 'manager', 'editor'].includes(authorization.session.role));
+  const [liveProperty, liveCms, publishedHero, navigation, language, globalContent, agePolicy, draft] = await Promise.all([
+    contentRepository.getProperty(), getHomepageCms(), getPublishedHomepageHero(),
+    getNavigation('header'), getLanguageContext(), getSiteDocument('global'), getOccupancyAgePolicy(),
+    previewRequested ? getHomepageCms(true) : null,
   ]);
-  const homepageCms=await localizeHomepageCms(homepageCmsRaw);
+  const preview = Boolean(draft);
+  const homepageCms = await localizeHomepageCms(draft ?? liveCms);
   const section=(key:HomepageKey)=>homepageCms?.sections.find(item=>item.key===key);
   const visible=(key:HomepageKey)=>!section(key)||section(key)!.visible;
   const order=(key:HomepageKey,fallback:number)=>section(key)?.sortOrder??fallback;
@@ -40,7 +41,7 @@ export default async function Home({searchParams}:{searchParams:Promise<{preview
   return (
     <>
       <Header overlay navigation={navigation} languages={language.enabled} selectedLanguage={language.selected?.code||''} bookingCtaLabel={globalContent.headerCtaLabel||'Book now'} mobileBookingCtaLabel={globalContent.mobileMenuCtaLabel||'Check availability'}/>
-      <main className="flex flex-col">{preview&&<PreviewBanner label="Homepage draft preview"/>}
+      <main className="flex flex-col">{previewRequested && <PreviewBanner label={preview ? "Homepage draft preview" : "No saved draft"} liveHref="/" showingLive={!preview}/>}
         {visible('hero')&&<section data-homepage-section="hero" style={{order:order('hero',0)}} className="hero-section relative z-30 min-h-[88svh] bg-lake text-white lg:min-h-[94svh]">
           <HeroImage desktopAsset={homepageCms?.heroAssets[String(heroSettings?.desktopHeroAssetId || '')]} mobileAsset={homepageCms?.heroAssets[String(heroSettings?.mobileHeroAssetId || '')]} desktopFocal={heroSettings?.desktopFocal} mobileFocal={heroSettings?.mobileFocal} desktopImage={!preview&&publishedHero?.imageUrl?publishedHero.imageUrl:hero?.backgroundMediaId?homepageCms?.mediaUrls[hero.backgroundMediaId]||liveProperty.heroImage:liveProperty.heroImage} mobileImage={homepageCms?.mediaUrls[String(heroSettings?.mobileMediaId || '')]} mobileAlt={String(heroSettings?.mobileImageAlt||heroSettings?.imageAlt||'')} alt={String(heroSettings?.imageAlt || hero?.title || 'Koman Lake surrounded by mountain slopes')} overlayIntensity={heroSettings?.overlayIntensity} />
           <div className="hero-content shell relative flex min-h-[88svh] flex-col justify-end pb-7 pt-28 lg:min-h-[94svh] lg:pb-8">
