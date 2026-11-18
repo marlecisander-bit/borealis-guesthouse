@@ -6,7 +6,7 @@ export function RoomCard({room,variant='standard'}:{room:Room;variant?:'standard
   return <article className={`group flex h-full flex-col ${featured?'w-[84vw] shrink-0 snap-center md:w-auto':''}`}>
     <Link href={`/rooms/${room.slug}`} className="block shrink-0 overflow-hidden rounded-[1.75rem]">
       <div className="relative aspect-[4/5] overflow-hidden">
-        <Image src={room.image} alt={`${room.name} at Borealis Guest House`} fill sizes={featured?'(max-width: 768px) 84vw, 33vw':'(max-width: 768px) 92vw, 33vw'} className="object-cover transition duration-700 group-hover:scale-105"/>
+        <Image src={room.image} alt={`${room.name} at Borealis Guest House`} fill sizes={featured?'(width < 768px) 84vw, (width < 1344px) calc((100vw - 6.5rem) / 3), 25.833rem':'(max-width: 768px) 92vw, 33vw'} className="object-cover transition duration-700 group-hover:scale-105"/>
         {featured&&room.viewType.toLowerCase().includes('lake')&&<span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-2 text-xs font-bold text-lake">Lake view</span>}
       </div>
     </Link>

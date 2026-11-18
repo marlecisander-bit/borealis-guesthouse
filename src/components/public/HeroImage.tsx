@@ -16,7 +16,7 @@ export function HeroImage({ desktopImage, mobileImage, alt, overlayIntensity, de
     ? Math.max(0, Math.min(100, overlayIntensity)) : 100;
 
   return <>
-    <ResponsiveHeroImage desktopImage={desktopImage} mobileImage={mobileImage} alt={alt} mobileAlt={mobileAlt} desktopAsset={desktopAsset} mobileAsset={mobileAsset} desktopFocal={desktopFocal} mobileFocal={mobileFocal} quality={93}/>
+    <ResponsiveHeroImage desktopImage={desktopImage} mobileImage={mobileImage} alt={alt} mobileAlt={mobileAlt} desktopAsset={desktopAsset} mobileAsset={mobileAsset} desktopFocal={desktopFocal} mobileFocal={mobileFocal}/>
     <div aria-hidden="true" style={{ opacity: intensity / 100 }} className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,25,18,.58)_0%,rgba(10,25,18,.10)_38%,rgba(10,25,18,.72)_100%)]" />
   </>;
 }

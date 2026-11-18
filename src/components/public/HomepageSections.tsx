@@ -25,7 +25,7 @@ export async function HomepageSections({homepageCms,liveProperty}:{homepageCms:P
   return <>        {visible('intro')&&<section data-homepage-section="intro" style={{order:order('intro',20)}} className="py-20 md:py-32">
           <div className="shell grid items-center gap-12 lg:grid-cols-[1.15fr_.85fr] lg:gap-20">
             <div className="relative min-h-[32rem] overflow-hidden rounded-[2rem] md:min-h-[42rem]">
-              <Image src={intro?.backgroundMediaId?homepageCms?.mediaUrls[intro.backgroundMediaId]||liveProperty.heroImage:liveProperty.heroImage} alt={String(intro?.settings.imageAlt||'A peaceful terrace surrounded by nature')} fill sizes="(max-width: 1024px) 100vw, 58vw" className="object-cover" />
+              <Image src={intro?.backgroundMediaId?homepageCms?.mediaUrls[intro.backgroundMediaId]||liveProperty.heroImage:liveProperty.heroImage} alt={String(intro?.settings.imageAlt||'A peaceful terrace surrounded by nature')} fill sizes="(width < 768px) calc(100vw - 2rem), (width < 1024px) calc(100vw - 4rem), (width < 1344px) calc(57.5vw - 4.8875rem), 43.125rem" className="object-cover" />
               <div className="absolute bottom-5 left-5 rounded-xl bg-white/90 px-4 py-3 text-xs font-bold uppercase tracking-widest text-lake backdrop-blur">{String(intro?.settings.imageLabel||'Slow mornings · Open air')}</div>
             </div>
             <div>

@@ -60,5 +60,19 @@
   "styles_loaded": [
     "normal"
   ],
-  "italic_behavior": "Original loader requested normal only; existing CSS synthesis is preserved. Official italic asset not downloaded or added."
+  "italic_behavior": "Original loader requested normal only; existing CSS synthesis is preserved. Official italic asset not downloaded or added.",
+  "webfont_derivatives": [
+    {
+      "path": "src/app/fonts/manrope/Manrope-variable.woff2",
+      "derived_from": "src/app/fonts/manrope/Manrope[wght].ttf",
+      "sha256": "c601883b808b11d32f70ad4dc865ec910e14b9765431f65aec8690eede73eb79",
+      "conversion": "FontTools WOFF2 with no subsetting"
+    },
+    {
+      "path": "src/app/fonts/cormorantgaramond/CormorantGaramond-variable.woff2",
+      "derived_from": "src/app/fonts/cormorantgaramond/CormorantGaramond[wght].ttf",
+      "sha256": "ae1ccee3fa8d4ce8b0348414b8bae22603951d63baff7b9bc511a9e025cbd272",
+      "conversion": "FontTools WOFF2 with no subsetting"
+    }
+  ]
 }
