@@ -44,7 +44,7 @@
 [data-admin-shell] .admin-mobile-drawer{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);overscroll-behavior:contain}
 [data-admin-shell] .admin-mobile-drawer>aside{width:100%}
 @media(max-width:767px){
-  [data-admin-shell] .admin-translation-shortcut{bottom:calc(5.75rem + env(safe-area-inset-bottom))}
+  [data-admin-shell] .admin-translation-shortcut{bottom:calc(var(--admin-bottom-clearance) + 2.25rem)}
   [data-admin-shell] .admin-mobile-header{padding-top:max(.5rem,env(safe-area-inset-top))}
   [data-admin-shell] .admin-content{padding-inline:.75rem}
   [data-admin-shell] input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),[data-admin-shell] select,[data-admin-shell] textarea{max-width:100%;font-size:1rem}

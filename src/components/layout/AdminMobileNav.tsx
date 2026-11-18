@@ -13,13 +13,15 @@ const icons = [
 
 export function AdminMobileNav() {
   const pathname = usePathname();
-  return <nav aria-label="Admin navigation" data-admin-bottom-nav className="admin-bottom-nav fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-[#dedbd0] bg-white lg:hidden">
+  return <nav aria-label="Admin navigation" data-admin-bottom-nav className="admin-bottom-nav fixed inset-x-0 bottom-0 z-30 border-t border-[#dedbd0] bg-white lg:hidden">
+    <div className="admin-bottom-nav-tabs">
     {adminNavigation.map((item,index)=>{
       const active=isAdminNavItemActive(pathname,item);
-      return <Link key={item.href} href={item.href} prefetch={false} aria-current={active?'page':undefined} className="admin-tab flex min-h-14 flex-col items-center justify-center gap-1 px-1 text-xs font-semibold">
-        <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth={index===3?3:1.7} strokeLinecap="round" strokeLinejoin="round"><path d={icons[index]}/></svg>
+      return <Link key={item.href} href={item.href} prefetch={false} aria-current={active?'page':undefined} className="admin-tab">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={index===3?3:1.7} strokeLinecap="round" strokeLinejoin="round"><path d={icons[index]}/></svg>
         {item.label}
       </Link>;
     })}
+    </div>
   </nav>;
 }

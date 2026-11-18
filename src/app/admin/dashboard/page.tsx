@@ -13,7 +13,7 @@ export default async function DashboardPage() {
 
   return <div className="space-y-5 sm:space-y-6">
     <AdminPageHeader title="Today at Borealis" description={formatDate(data.date,true)}/>
-    <section aria-label="Today's stays" className="grid grid-cols-3 gap-2 sm:gap-4">
+    <section aria-label="Today's stays" className="admin-today-metrics grid grid-cols-3 gap-2 sm:gap-4">
       <TodayCard title="Arrivals" metric={data.today.arrivals}/>
       <TodayCard title="Departures" metric={data.today.departures}/>
       <TodayCard title="Guests staying" metric={data.today.guestsStaying}/>
@@ -31,7 +31,7 @@ export default async function DashboardPage() {
       {quickActions.map(([label,href],index)=><Link key={href} href={href} className={`flex min-h-12 items-center justify-center rounded-xl px-3 text-center text-sm font-bold ${index?'border border-stone-300 bg-white text-brand':'bg-brand text-white'}`}>{label}</Link>)}
     </section>
     <section aria-labelledby="upcoming-heading" className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
-      <div className="flex items-center justify-between gap-3 border-b border-stone-200 px-4 py-2"><h2 id="upcoming-heading" className="text-lg font-bold text-lake">Next arrivals</h2><Link href="/admin/bookings?period=upcoming" className="inline-flex min-h-11 shrink-0 items-center text-sm font-bold text-brand underline">View all</Link></div>
+      <div className="flex flex-wrap items-center justify-between gap-x-3 border-b border-stone-200 px-4 py-2"><h2 id="upcoming-heading" className="text-lg font-bold text-lake">Next arrivals</h2><Link href="/admin/bookings?period=upcoming" className="inline-flex min-h-11 shrink-0 items-center text-sm font-bold text-brand underline">View all</Link></div>
       {data.arrivalsUnavailable?<p role="status" className="p-4 text-sm text-amber-900">Next arrivals could not be loaded.</p>:data.upcomingBookings.length?<div className="divide-y divide-stone-100">{data.upcomingBookings.map(booking=><Link href={bookingDetailHref(booking.id,{period:'upcoming'})} key={booking.id} className="flex min-h-16 flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3 hover:bg-ivory">
         <div><strong className="block text-lake">{booking.guestName}</strong><span className="block text-sm text-slate-600">{formatDate(booking.checkIn)} · {booking.booking}</span></div><StatusBadge status={booking.status}/>
       </Link>)}</div>:<p className="p-4 text-sm text-slate-600">No upcoming arrivals.</p>}
@@ -39,7 +39,7 @@ export default async function DashboardPage() {
   </div>;
 }
 function TodayCard({title,metric}:{title:string;metric:TodayMetric}) {
-  return <Link data-admin-metric href={metric.href} className="flex min-h-24 flex-col justify-between rounded-xl border border-stone-200 bg-white p-2.5 hover:bg-ivory sm:p-4">
+  return <Link data-admin-metric href={metric.href} className="flex min-h-24 min-w-0 flex-col justify-between gap-2 rounded-xl border border-stone-200 bg-white p-2.5 hover:bg-ivory sm:p-4">
     <span className="text-xs font-semibold text-slate-700 sm:text-sm">{title}</span>
     {metric.value===null?<span className="text-xs font-semibold text-amber-900">Unavailable</span>:<strong className="text-2xl text-lake sm:text-3xl">{metric.value}</strong>}
   </Link>;
