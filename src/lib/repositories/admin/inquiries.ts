@@ -24,6 +24,11 @@ export const adminInquiriesRepository = {
     if (error) throw error;
     return (data || []).map(row => ({ id: row.id, name: row.name, email: row.email, phone: row.phone || '', subject: row.subject, message: row.message, status: row.status, createdAt: row.created_at }));
   },
+  async countNew(session: AdminSession) {
+    const db=await createServerSupabaseClient();
+    const {count,error}=await db.from('contact_inquiries').select('id',{head:true,count:'exact'}).eq('property_id',session.propertyId).eq('status','new');
+    return error?null:count;
+  },
   async setStatus(session: AdminSession, id: string, status: ContactInquiry['status']) {
     const db = await createServerSupabaseClient();
     const { error } = await db.from('contact_inquiries').update({ status }).eq('property_id', session.propertyId).eq('id', id);

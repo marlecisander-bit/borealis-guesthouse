@@ -1,3 +1,5 @@
+import * as bookingViews from '../src/lib/admin/booking-views.ts';
+import * as availabilityCalendar from '../src/lib/admin/availability-calendar.ts';
 import {publicRentalConfig} from '../src/lib/rentals/model.ts';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import test from 'node:test';
@@ -28,7 +30,7 @@ test('booking pagination keeps filtered matches across batch boundaries and boun
  const ranges:number[][]=[];
  const query:any={};for(const name of ['select','eq','neq','order'])query[name]=()=>query;
  query.range=(from:number,to:number)=>{ranges.push([from,to]);return Promise.resolve({data:rows.slice(from,to+1),error:null})};
- const {adminBookingsRepository:repo}=load('src/lib/repositories/admin/bookings.ts',{'@/lib/supabase/server':{createServerSupabaseClient:async()=>({from:()=>query})}});
+ const {adminBookingsRepository:repo}=load('src/lib/repositories/admin/bookings.ts',{'@/lib/admin/booking-views':bookingViews,'@/lib/admin/availability-calendar':availabilityCalendar,'@/lib/supabase/server':{createServerSupabaseClient:async()=>({from:()=>query})}});
  const first=await repo.list({propertyId:'p'},{page:1});assert.equal(first.rows.length,25);assert.equal(first.hasNext,true);assert.deepEqual(ranges,[[0,99]]);
  ranges.length=0;const third=await repo.list({propertyId:'p'},{page:3,query:'target',from:'2030-01-01',to:'2030-01-01'});
  assert.deepEqual(third.rows.map((r:any)=>r.id),Array.from({length:25},(_,i)=>String(100+i*2)));assert.equal(third.hasNext,true);assert.deepEqual(ranges,[[0,99],[100,199]]);

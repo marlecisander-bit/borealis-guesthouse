@@ -3,6 +3,8 @@
 import {Suspense} from 'react';
 import { usePathname } from 'next/navigation';
 import AdminSidebar from '@/components/layout/AdminSidebar';
+import { AdminMobileNav } from '@/components/layout/AdminMobileNav';
+import './admin-workspace.css';
 import AdminHeader from '@/components/layout/AdminHeader';
 import { SlugChangeGuard } from '@/components/admin/SlugChangeGuard';
 import { AdminFormValueGuard } from '@/components/admin/AdminFormValueGuard';
@@ -29,6 +31,7 @@ export default function AdminLayout({
           <div className="admin-content mx-auto w-full max-w-[90rem] p-4 pb-24 sm:p-6 sm:pb-24 lg:p-8 lg:pb-12"><Suspense><AdminWorkspaceNav /></Suspense>{children}</div>
         </main>
       </div>
+      <AdminMobileNav/>
     </div>
   );
 }

@@ -6,6 +6,7 @@ import type { CmsOption } from '@/types/homepage-cms';
 import type { SiteDocument } from '@/types/site-content-cms';
 import {MediaHeroFields} from './MediaHeroFields';
 import { MediaPicker } from './MediaPicker';
+import { useEditorForm } from './EditorWorkspace';
 
 type Field = {
   name: string;
@@ -28,8 +29,10 @@ export function SiteDocumentForm({
   const action = saveSiteDocument.bind(null, documentKey);
   const [state, formAction, pending] = useActionState(action, { ok: false, message: '' });
 
+  const editor=useEditorForm(state);
+
   return (
-    <form action={formAction} className="space-y-6">
+    <form action={formAction} onChange={editor.onChange} onSubmit={editor.submit} className="space-y-6">
       <div className="grid gap-5 rounded-2xl border border-slate-200 bg-white p-6 lg:grid-cols-2">
         {fields.map(field => {
           if(field.kind==='hero')return <MediaHeroFields key={field.name} data={data} media={media}/>;
@@ -70,9 +73,9 @@ export function SiteDocumentForm({
           {state.message}
         </p>
       )}
-      <div className="sticky bottom-4 flex justify-end gap-3 rounded-xl border border-slate-200 bg-white/95 p-4 shadow-lg backdrop-blur">
+      <div className="admin-form-actions sticky bottom-4 z-10 flex flex-wrap justify-end gap-3 rounded-xl border border-slate-200 bg-white/95 p-4 shadow-lg backdrop-blur">
         <button name="status" value="draft" disabled={pending} className="min-h-11 rounded-lg border border-slate-300 px-5 font-semibold">Save Draft</button>
-        <button name="status" value="published" disabled={pending} className="min-h-11 rounded-lg bg-slate-950 px-5 font-semibold text-white">{pending ? 'Saving…' : 'Publish'}</button>
+        <button name="status" value="published" disabled={pending} className="min-h-11 rounded-lg bg-brand px-5 font-semibold text-white">{pending ? 'Saving…' : 'Publish'}</button>
       </div>
     </form>
   );

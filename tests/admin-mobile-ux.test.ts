@@ -5,15 +5,15 @@ import { join } from 'node:path';
 
 const source = (path: string) => readFileSync(join(process.cwd(), path), 'utf8');
 
-test('mobile Admin navigation is modal, keyboard-safe and locks page scroll', () => {
-  const drawer = source('src/components/layout/AdminMobileNav.tsx');
-  assert.match(drawer, /role="dialog"/);
-  assert.match(drawer, /aria-modal="true"/);
-  assert.match(drawer, /document\.body\.style\.overflow = 'hidden'/);
-  assert.match(drawer, /event\.key === 'Escape'/);
-  assert.match(drawer, /event\.key !== 'Tab'/);
-  assert.match(drawer, /h-\[100dvh\]/);
-  assert.match(drawer, /onNavigate=\{\(\) => setOpen\(false\)\}/);
+test('mobile Admin navigation uses the shared destinations and clears dialogs and forms', () => {
+  const navigation = source('src/components/layout/AdminMobileNav.tsx');
+  const workspace = source('src/app/admin/admin-workspace.css');
+  assert.match(navigation, /data-admin-bottom-nav/);
+  assert.match(navigation, /adminNavigation.map/);
+  assert.match(navigation, /aria-current/);
+  assert.match(workspace, /safe-area-inset-bottom/);
+  assert.match(workspace, /dialog\[open\]/);
+  assert.match(workspace, /--admin-bottom-clearance/);
 });
 
 test('Admin mobile foundations prevent page overflow and respect phone chrome', () => {
@@ -62,6 +62,6 @@ test('mobile room, editor and media actions remain comfortably tappable', () => 
 
 test('mobile booking detail prioritizes the common lifecycle action', () => {
   const detail = source('src/app/admin/bookings/[id]/page.tsx');
-  assert.match(detail, /order-1 space-y-6 lg:order-2/);
+  assert.ok(detail.indexOf('>Guest</h2>') < detail.indexOf('>Change status</h2>'));
   assert.ok(detail.indexOf('>Change status</h2>') < detail.indexOf('>Payment</h2>'));
 });

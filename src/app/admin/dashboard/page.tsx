@@ -1,48 +1,48 @@
 import Link from 'next/link';
 import { AdminEmptyState, AdminPageHeader, StatusBadge } from '@/components/admin/ui';
+import { bookingDetailHref } from '@/lib/admin/booking-views';
 import { requireAdmin } from '@/lib/admin/auth';
 import { getDashboardOverview, type TodayMetric } from '@/lib/repositories/admin/dashboard';
-import { formatMoney } from '@/lib/pricing/format';
 
-const quickActions = [
-  ['New booking', '/admin/bookings/new'], ['Block dates', '/admin/availability#block-dates'],
-  ['Change prices', '/admin/rates'], ['Edit website', '/admin/content'], ['Upload photos', '/admin/media'],
-] as const;
+const quickActions = [['New booking','/admin/bookings/new'],['Block dates','/admin/availability#block-dates']] as const;
 
 export default async function DashboardPage() {
-  const session = await requireAdmin();
-  const data = await getDashboardOverview(session);
-  return <div className="space-y-7 sm:space-y-8">
-    <AdminPageHeader title="Today at Borealis" description="Everything you need for today, without the technical details." actions={<Link href="/" target="_blank" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-800">View website</Link>}/>
+  const session=await requireAdmin();
+  const data=await getDashboardOverview(session).catch(()=>null);
+  if(!data) return <><AdminPageHeader title="Today"/><AdminEmptyState title="Could not load Today" description="Reload the dashboard to check bookings and alerts." action={<a href="/admin/dashboard" className="font-semibold underline">Reload Today</a>}/></>;
 
-    <section aria-labelledby="today-heading">
-      <h2 id="today-heading" className="mb-3 text-sm font-bold uppercase tracking-widest text-slate-500 sm:mb-4">Today</h2>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-        <TodayCard title="Arrivals" metric={data.today.arrivals}/><TodayCard title="Departures" metric={data.today.departures}/>
-        <div className="col-span-2 sm:col-span-1"><TodayCard title="Guests staying" metric={data.today.guestsStaying}/></div>
-      </div>
+  return <div className="space-y-5 sm:space-y-6">
+    <AdminPageHeader title="Today at Borealis" description={formatDate(data.date,true)}/>
+    <section aria-label="Today's stays" className="grid grid-cols-3 gap-2 sm:gap-4">
+      <TodayCard title="Arrivals" metric={data.today.arrivals}/>
+      <TodayCard title="Departures" metric={data.today.departures}/>
+      <TodayCard title="Guests staying" metric={data.today.guestsStaying}/>
     </section>
-
-    <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(19rem,.6fr)]">
-      <section aria-labelledby="attention-heading" className="order-1 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5 xl:order-2">
-        <h2 id="attention-heading" className="text-xl font-bold text-slate-950">Needs attention</h2>
-        {data.attention.length ? <div className="mt-4 grid gap-3">{data.attention.map(item => <Link key={item.label} href={item.href} className="flex min-h-16 items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 p-4"><div><strong className="text-sm text-amber-950">{item.label}</strong><p className="mt-1 text-xs leading-5 text-amber-800">{item.detail}</p></div><span className="grid size-9 shrink-0 place-items-center rounded-full bg-white text-sm font-bold text-amber-900">{item.count}</span></Link>)}</div> : <div className="mt-4 rounded-xl bg-emerald-50 p-4 sm:p-5"><p className="font-bold text-emerald-900">Everything looks good.</p><p className="mt-1 text-sm leading-6 text-emerald-800">There are no booking or notification issues requiring action.</p></div>}
-      </section>
-      <section aria-labelledby="upcoming-heading" className="order-2 rounded-2xl border border-slate-200 bg-white shadow-sm xl:order-1">
-        <div className="flex items-center justify-between gap-3 border-b border-slate-100 p-4 sm:p-5"><div><h2 id="upcoming-heading" className="text-xl font-bold text-slate-950">Upcoming bookings</h2><p className="mt-1 text-sm text-slate-500">The next five arrivals.</p></div><Link href="/admin/bookings?period=upcoming" className="inline-flex min-h-11 shrink-0 items-center text-sm font-bold text-[#164b59] underline underline-offset-4">View all</Link></div>
-        {data.upcomingBookings.length ? <div className="divide-y divide-slate-100">{data.upcomingBookings.map(booking => <Link href={`/admin/bookings/${booking.id}`} key={booking.id} className="grid min-h-20 gap-3 p-4 transition hover:bg-slate-50 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:p-5"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><strong className="text-slate-950">{booking.guestName}</strong><StatusBadge status={booking.status}/></div><p className="mt-1 truncate text-sm text-slate-600">{booking.booking}</p><p className="mt-1 text-xs text-slate-500">{formatDate(booking.checkIn)} → {formatDate(booking.checkOut)} · {booking.reference}</p></div><strong className="text-sm text-slate-900">{formatMoney(booking.total, booking.currency)}</strong></Link>)}</div> : <div className="p-4 sm:p-5"><AdminEmptyState title="No upcoming bookings" description="Future bookings will appear here automatically."/></div>}
-      </section>
-    </div>
-
-    <section aria-labelledby="quick-actions-heading">
-      <h2 id="quick-actions-heading" className="mb-3 text-sm font-bold uppercase tracking-widest text-slate-500 sm:mb-4">Quick actions</h2>
-      <div className="grid gap-3 min-[430px]:grid-cols-2 lg:grid-cols-5">{quickActions.map(([label, href]) => <Link data-admin-quick-action key={href} href={href} className="flex min-h-16 items-center justify-between rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-900 transition hover:-translate-y-0.5 hover:border-slate-400 hover:shadow-sm"><span>{label}</span><span aria-hidden="true" className="text-lg text-slate-400">→</span></Link>)}</div>
+    <section aria-labelledby="attention-heading" className="rounded-2xl border border-stone-200 bg-white p-4 sm:p-5">
+      <h2 id="attention-heading" className="text-lg font-bold text-lake">Needs attention</h2>
+      {data.attentionUnavailable&&<p className="mt-2 text-sm text-amber-900" role="status">Some alerts could not be loaded. <a href="/admin/dashboard" className="underline">Reload Today</a></p>}
+      {data.attention.length>0?<div className="mt-3 grid gap-2">{data.attention.map(item=><Link key={item.href} href={item.href} className="admin-attention-item flex min-h-14 items-center justify-between gap-3 rounded-xl bg-amber-50 px-3 py-2 text-amber-950">
+        <span><strong className="block text-sm">{item.label}</strong><span className="block text-xs">{item.detail}</span></span>
+        <strong className="rounded-full bg-white px-3 py-1 text-sm">{item.count}</strong>
+      </Link>)}</div>:!data.attentionUnavailable&&<p className="mt-2 text-sm text-slate-600">No open booking or notification issues.</p>}
+    </section>
+    <section aria-label="Quick actions" className="grid grid-cols-2 gap-2 sm:gap-4">
+      {quickActions.map(([label,href],index)=><Link key={href} href={href} className={`flex min-h-12 items-center justify-center rounded-xl px-3 text-center text-sm font-bold ${index?'border border-stone-300 bg-white text-brand':'bg-brand text-white'}`}>{label}</Link>)}
+    </section>
+    <section aria-labelledby="upcoming-heading" className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
+      <div className="flex items-center justify-between gap-3 border-b border-stone-200 px-4 py-2"><h2 id="upcoming-heading" className="text-lg font-bold text-lake">Next arrivals</h2><Link href="/admin/bookings?period=upcoming" className="inline-flex min-h-11 shrink-0 items-center text-sm font-bold text-brand underline">View all</Link></div>
+      {data.arrivalsUnavailable?<p role="status" className="p-4 text-sm text-amber-900">Next arrivals could not be loaded.</p>:data.upcomingBookings.length?<div className="divide-y divide-stone-100">{data.upcomingBookings.map(booking=><Link href={bookingDetailHref(booking.id,{period:'upcoming'})} key={booking.id} className="flex min-h-16 flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3 hover:bg-ivory">
+        <div><strong className="block text-lake">{booking.guestName}</strong><span className="block text-sm text-slate-600">{formatDate(booking.checkIn)} · {booking.booking}</span></div><StatusBadge status={booking.status}/>
+      </Link>)}</div>:<p className="p-4 text-sm text-slate-600">No upcoming arrivals.</p>}
     </section>
   </div>;
 }
-
-function TodayCard({ title, metric }: { title: string; metric: TodayMetric }) {
-  return <article data-admin-metric className="h-full rounded-2xl border border-slate-200 bg-white p-4 sm:p-5"><p className="text-sm font-semibold text-slate-600">{title}</p><p className="mt-2 text-3xl font-bold tracking-tight text-slate-950 sm:mt-3 sm:text-4xl">{metric.value}</p><p className="mt-1 text-xs text-slate-500 sm:mt-2">{metric.note}</p></article>;
+function TodayCard({title,metric}:{title:string;metric:TodayMetric}) {
+  return <Link data-admin-metric href={metric.href} className="flex min-h-24 flex-col justify-between rounded-xl border border-stone-200 bg-white p-2.5 hover:bg-ivory sm:p-4">
+    <span className="text-xs font-semibold text-slate-700 sm:text-sm">{title}</span>
+    {metric.value===null?<span className="text-xs font-semibold text-amber-900">Unavailable</span>:<strong className="text-2xl text-lake sm:text-3xl">{metric.value}</strong>}
+  </Link>;
 }
-
-function formatDate(value: string) { return new Intl.DateTimeFormat('en', { day: 'numeric', month: 'short' }).format(new Date(`${value}T00:00:00Z`)); }
+function formatDate(value:string,full=false) {
+  return new Intl.DateTimeFormat('en',{timeZone:'UTC',day:'numeric',month:full?'long':'short',weekday:full?'long':undefined,year:full?'numeric':undefined}).format(new Date(value+'T12:00:00Z'));
+}

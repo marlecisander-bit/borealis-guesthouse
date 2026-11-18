@@ -1,58 +1,25 @@
 'use client';
 
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
-import AdminSidebar from './AdminSidebar';
+import { adminNavigation, isAdminNavItemActive } from '@/lib/admin/navigation';
+
+const icons = [
+  'M3 10l9-7 9 7v10H3zM9 20v-6h6v6',
+  'M4 5h16v15H4zM8 9h8M8 13h8M8 17h5',
+  'M4 6h16v14H4zM8 3v6m8-6v6M4 11h16',
+  'M4 12h.01M12 12h.01M20 12h.01',
+];
 
 export function AdminMobileNav() {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-  const panel = useRef<HTMLDivElement>(null);
-  const trigger = useRef<HTMLButtonElement>(null);
-  const closeButton = useRef<HTMLButtonElement>(null);
-  const previousPath = useRef(pathname);
-
-  useEffect(() => {
-    if (previousPath.current !== pathname) setOpen(false);
-    previousPath.current = pathname;
-  }, [pathname]);
-
-  useEffect(() => {
-    if (!open) return;
-    const previousOverflow = document.body.style.overflow;
-    const triggerElement = trigger.current;
-    document.body.style.overflow = 'hidden';
-    closeButton.current?.focus();
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
-      if (event.key !== 'Tab' || !panel.current) return;
-      const controls = [...panel.current.querySelectorAll<HTMLElement>('a[href], button:not(:disabled)')];
-      if (!controls.length) return;
-      const first = controls[0];
-      const last = controls[controls.length - 1];
-      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
-    };
-    document.addEventListener('keydown', handleKey);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener('keydown', handleKey);
-      triggerElement?.focus();
-    };
-  }, [open]);
-
-  return <>
-    <button ref={trigger} type="button" onClick={() => setOpen(true)} className="grid size-11 shrink-0 place-items-center rounded-lg border border-[#9ebfbc] bg-[#e8f4f5] text-[#164b59] lg:hidden" aria-expanded={open} aria-controls="admin-mobile-menu" aria-label="Open admin navigation">
-      <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-    </button>
-    {open && <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Admin navigation">
-      <button type="button" className="absolute inset-0 size-full bg-[#123b46]/55" onClick={() => setOpen(false)} aria-label="Close navigation"/>
-      <div ref={panel} id="admin-mobile-menu" className="admin-mobile-drawer relative h-[100dvh] w-[min(20rem,88vw)] overflow-hidden shadow-2xl">
-        <AdminSidebar onNavigate={() => setOpen(false)}/>
-        <button ref={closeButton} type="button" onClick={() => setOpen(false)} className="absolute right-3 grid size-11 place-items-center rounded-full border border-slate-200 bg-white text-[#164b59]" style={{ top: 'max(.75rem, env(safe-area-inset-top))' }} aria-label="Close navigation">
-          <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-        </button>
-      </div>
-    </div>}
-  </>;
+  return <nav aria-label="Admin navigation" data-admin-bottom-nav className="admin-bottom-nav fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-[#dedbd0] bg-white lg:hidden">
+    {adminNavigation.map((item,index)=>{
+      const active=isAdminNavItemActive(pathname,item);
+      return <Link key={item.href} href={item.href} prefetch={false} aria-current={active?'page':undefined} className="admin-tab flex min-h-14 flex-col items-center justify-center gap-1 px-1 text-xs font-semibold">
+        <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth={index===3?3:1.7} strokeLinecap="round" strokeLinejoin="round"><path d={icons[index]}/></svg>
+        {item.label}
+      </Link>;
+    })}
+  </nav>;
 }

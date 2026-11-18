@@ -7,10 +7,10 @@ import {adminNavigation,isAdminNavItemActive} from '../src/lib/admin/navigation.
 const source = (path: string) => readFileSync(join(process.cwd(), path), 'utf8');
 
 test('Admin navigation groups owner tasks predictably', () => {
-  assert.deepEqual(adminNavigation.map(item=>item.label),['Today','Bookings','Calendar','Rooms','Activities & services','Website','Settings']);
+  assert.deepEqual(adminNavigation.map(item=>item.label),['Today','Bookings','Calendar','More']);
   for(const path of ['/admin/bookings','/admin/inquiries','/admin/rooms/room-id','/admin/experiences/rental-id','/admin/transfers','/admin/media','/admin/languages','/admin/channels'])assert.equal(adminNavigation.filter(item=>isAdminNavItemActive(path,item)).length,1,`${path} has exactly one destination`);
   assert.match(source('src/components/admin/AdminWorkspaceNav.tsx'), /Guest enquiries/);
-  assert.match(source('src/components/admin/AdminWorkspaceNav.tsx'), /Booking policies/);
+  assert.match(source('src/app/admin/settings/page.tsx'), /Booking policies/);
 });
 
 test('Settings is the only editor for property-wide contact details', () => {
@@ -47,7 +47,7 @@ test('Dashboard focuses on daily booking operations', () => {
   assert.match(repository, /\.limit\(5\)/);
   assert.doesNotMatch(repository, /from\('content_pages'\)/);
   assert.match(page, /Needs attention/);
-  assert.match(page, /href={`\/admin\/bookings\/\$\{booking\.id\}`}/);
+  assert.match(page, /bookingDetailHref\(booking\.id/);
 });
 
 test('Room editor keeps technical identifiers out of the owner workflow', () => {

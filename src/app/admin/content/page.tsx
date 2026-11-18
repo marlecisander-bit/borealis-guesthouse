@@ -1,56 +1,32 @@
-import { AdminButton, AdminPageHeader, StatusBadge } from '@/components/admin/ui';
+import Link from 'next/link';
+import { AdminPageHeader, StatusBadge } from '@/components/admin/ui';
 import { requireAdmin } from '@/lib/admin/auth';
 import { adminSiteContentRepository } from '@/lib/repositories/admin/site-content';
 
-const publicPages = [
-  ['Homepage', 'homepage', 'Homepage sections, imagery and calls to action.'],
-  ['Rooms page', 'rooms', 'Introduction shown above the room collection.'],
-  ['Experiences page', 'experiences', 'Introduction to guest activities and local journeys.'],
-  ['Transfers page', 'transfers', 'Introduction to guest transfer services.'],
-  ['Explore Koman', 'explore-koman', 'The destination guide introduction.'],
-  ['Gallery', 'gallery', 'The public image collection and its introduction.'],
-  ['Contact', 'contact', 'The contact-page introduction. Property details stay in Settings.'],
-  ['Booking page', 'book', 'The welcome content shown above the booking flow.'],
+const publicPages=[
+  ['Homepage','homepage'],['Rooms page','rooms'],['Experiences page','experiences'],['Transfers page','transfers'],
+  ['Explore Koman introduction','explore-koman'],['Gallery','gallery'],['Contact','contact'],['Booking page','book'],
 ] as const;
-
-const sharedAreas = [
-  ['Shared sections', 'global', 'Calls to action and labels reused across public pages.'],
-  ['Footer', 'footer', 'Footer description and supporting links.'],
-  ['Navigation', 'navigation', 'Public menu labels and destinations.'],
-] as const;
+const sharedAreas=[['Shared sections','global'],['Footer','footer'],['Navigation','navigation']] as const;
+const websiteTools=[['Explore Koman articles','/admin/explore-koman'],['Media','/admin/media'],['Search appearance','/admin/seo']] as const;
 
 export default async function ContentPage() {
-  const session = await requireAdmin();
-  const statuses = await adminSiteContentRepository.statuses(session).catch(() => ({} as Record<string, 'draft' | 'published' | 'archived'>));
-
-  return (
-    <div className="space-y-8">
-      <AdminPageHeader title="Pages" description="Edit page introductions and shared website content. Individual rooms and services are managed in Rooms and Activities & services."/>
-      <p className="rounded-xl border border-[#d5e5e2] bg-white p-4 text-sm text-slate-600">Rooms, Experiences and Transfers here edit their listing-page introductions. Product details, prices and booking rules stay in their own editors.</p>
-      <section>
-        <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500">Public pages</h2>
-        <div className="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {publicPages.map(([label, slug, description]) => (
-            <article key={slug} className="rounded-2xl border border-slate-200 bg-white p-6">
-              <div className="flex items-start justify-between gap-3"><h3 className="text-xl font-bold text-slate-950">{label}</h3><StatusBadge status={statuses[slug] || 'draft'}/></div>
-              <p className="mt-3 min-h-12 text-sm leading-6 text-slate-500">{description}</p>
-              <div className="mt-6"><AdminButton href={`/admin/content/${slug}`} variant="secondary">Edit page</AdminButton></div>
-            </article>
-          ))}
-        </div>
-      </section>
-      <details className="rounded-2xl border border-slate-200 bg-white">
-        <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between px-5 font-bold sm:px-6">More website settings <span aria-hidden="true" className="text-slate-400">⌄</span></summary>
-        <div className="grid gap-4 border-t border-slate-100 p-5 sm:grid-cols-3 sm:p-6">
-          {sharedAreas.map(([label, slug, description]) => (
-            <article key={slug} className="rounded-xl border border-slate-200 p-4">
-              <div className="flex items-start justify-between gap-2"><h3 className="font-bold">{label}</h3><StatusBadge status={statuses[slug] || 'draft'}/></div>
-              <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>
-              <div className="mt-4"><AdminButton href={`/admin/content/${slug}`} variant="secondary">Edit</AdminButton></div>
-            </article>
-          ))}
-        </div>
-      </details>
-    </div>
-  );
+  const session=await requireAdmin();
+  const statuses=await adminSiteContentRepository.statuses(session).catch(()=>null);
+  return <div className="max-w-4xl space-y-5">
+    <AdminPageHeader title="Website"/>
+    <nav aria-label="Website tools" className="flex flex-wrap gap-2">{websiteTools.map(([label,href])=><Link href={href} key={href} className="inline-flex min-h-11 items-center rounded-lg border border-stone-200 bg-white px-3 text-sm font-bold text-brand">{label}</Link>)}</nav>
+    {!statuses&&<p role="status" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Page statuses could not be loaded. <Link href="/admin/content" className="underline">Reload Website</Link></p>}
+    <PageRows title="Public pages" pages={publicPages} statuses={statuses}/>
+    <PageRows title="Shared content" pages={sharedAreas} statuses={statuses}/>
+  </div>;
+}
+function PageRows({title,pages,statuses}:{title:string;pages:readonly (readonly [string,string])[];statuses:Record<string,string>|null}) {
+  return <section className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
+    <h2 className="border-b border-stone-200 px-4 py-3 text-sm font-bold text-lake">{title}</h2>
+    <ul className="divide-y divide-stone-100">{pages.map(([label,slug])=><li key={slug} className="flex min-h-14 items-center justify-between gap-3 px-4 py-1.5">
+      <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1"><span className="text-sm font-semibold text-lake">{label}</span>{statuses?.[slug]&&<StatusBadge status={statuses[slug]}/>}</div>
+      <Link href={'/admin/content/'+slug} aria-label={'Edit '+label} className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center text-sm font-bold text-brand underline">Edit</Link>
+    </li>)}</ul>
+  </section>;
 }

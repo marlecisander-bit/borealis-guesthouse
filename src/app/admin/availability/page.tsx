@@ -8,6 +8,7 @@ export default async function AvailabilityPage({ searchParams }: {
     searchParams: Promise<{
         from?: string;
         view?: string;
+        room?: string;
         blockStart?: string;
         blockEnd?: string;
     }>;
@@ -21,5 +22,5 @@ export default async function AvailabilityPage({ searchParams }: {
     catch {
         return <div className="space-y-5"><AdminPageHeader title="Calendar"/><AdminEmptyState title="Calendar unavailable" description="Room availability could not be loaded. Refresh before making changes."/><a href="/admin/availability" className="inline-flex min-h-11 items-center rounded-lg border px-4">Reload calendar</a></div>;
     }
-    return <div data-availability-page className="space-y-5"><AdminPageHeader title="Calendar" description="Stays, arrivals and room closures · Europe/Tirane"/><AvailabilityCalendar rooms={rooms} blocks={blocks} bookings={bookings} daily={daily} from={from} today={today} initialView={query.view === 'type' ? 'type' : 'room'} blockStart={validDay(query.blockStart) ? query.blockStart : undefined} blockEnd={validDay(query.blockEnd) ? query.blockEnd : undefined}/></div>;
+    return <div data-availability-page className="space-y-5"><AdminPageHeader title="Calendar" description="Stays, arrivals and room closures · Europe/Tirane"/><AvailabilityCalendar rooms={rooms} blocks={blocks} bookings={bookings} daily={daily} from={from} today={today} selectedRoom={rooms.find(room=>room.id===query.room)?.id} initialView={query.view === 'type' ? 'type' : 'room'} blockStart={validDay(query.blockStart) ? query.blockStart : undefined} blockEnd={validDay(query.blockEnd) ? query.blockEnd : undefined}/></div>;
 }

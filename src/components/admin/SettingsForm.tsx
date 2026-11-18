@@ -20,7 +20,7 @@ export function SettingsForm({ data }: { data: SettingsDashboard }) {
   const [mapsUrl, setMapsUrl] = useState(s.mapsUrl);
   const error = (key: string) => state.errors?.[key];
   return <form ref={formRef} action={action} onChange={editor.onChange} onSubmit={editor.submit} className="space-y-5"><EditorWorkspace tabs={['Property details','Booking policies','Payments & fees','Notifications']} hashTabs={settingsHashes} trailing={<Link href="/admin/channels" className="inline-flex min-h-11 items-center rounded-lg px-4 text-sm font-semibold text-[#45656a]">Integrations</Link>}><EditorPanel name="Property details">
-    <Section id="property" title="Property" description="Business details reused automatically across the website, booking confirmations and emails.">
+    <div id="property-details" className="scroll-mt-24"/><Section id="property" title="Property" description="Business details reused automatically across the website, booking confirmations and emails.">
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label="Property name" error={error('name')}><input name="name" defaultValue={s.name} className={input}/></Field>
         <Field label="Legal / business name (optional)"><input name="legalName" defaultValue={s.legalName} className={input}/></Field>
