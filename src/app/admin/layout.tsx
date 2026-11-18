@@ -18,7 +18,7 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const installMetadata=<><link rel="manifest" href="/admin/manifest.webmanifest"/><link rel="apple-touch-icon" sizes="180x180" href="/admin/apple-touch-icon.png"/><meta name="apple-mobile-web-app-title" content="Borealis Admin"/></>;
-  if (pathname === '/admin/login') return <>{installMetadata}{children}</>;
+  if (pathname === '/admin/login' || pathname === '/admin/mfa' || pathname.startsWith('/admin/workspace')) return <>{installMetadata}{children}</>;
 
   return (
     <div data-admin-shell className="flex min-h-screen">{installMetadata}<SlugChangeGuard/><AdminFormValueGuard/><AdminMobileInputEnhancer/>

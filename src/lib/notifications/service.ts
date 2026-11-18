@@ -58,6 +58,10 @@ export class NotificationService {
     for (const delivery of deliveries) {
       const channel = this.channels.find(item => item.name === delivery.channel);
       if (!channel) continue;
+      const {data:recipientAllowed,error:eligibilityError}=await db.rpc('team_email_recipient_allowed',{
+        target_property:booking.property_id,recipient_email:delivery.recipient,
+      });
+      if (eligibilityError || recipientAllowed !== true) continue;
       const {data:claimed}=await db.from('notification_deliveries')
         .update({attempt_count:1,attempted_at:new Date().toISOString()})
         .eq('id',delivery.id).eq('status','pending').eq('attempt_count',0).select('id').maybeSingle();

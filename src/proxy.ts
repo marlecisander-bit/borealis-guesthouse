@@ -56,14 +56,14 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = '/admin/login';
     url.search = '';
-    url.searchParams.set('returnTo', requested);
+    url.searchParams.set('returnTo', path === '/admin/mfa' ? adminReturnTo(request.nextUrl.searchParams.get('returnTo')) : requested);
     return adminRedirect(url);
   }
 
   if (user) {
     const { data: profile } = await supabase
       .from('admin_profiles')
-      .select('id')
+      .select('id,role,team_permissions')
       .eq('user_id', user.id)
       .eq('is_active', true)
       .order('created_at', { ascending: true })
@@ -75,6 +75,14 @@ export async function proxy(request: NextRequest) {
       url.search = '';
       url.searchParams.set('error', 'not-authorized');
       return adminRedirect(url);
+    }
+    if (profile?.team_permissions && path !== '/admin/mfa' && !path.startsWith('/admin/workspace')) {
+      const workspace = path.startsWith('/admin/bookings') ? '/bookings'
+        : path.startsWith('/admin/availability') ? '/calendar'
+        : path.startsWith('/admin/content') ? '/website'
+        : path.startsWith('/admin/rooms') ? '/rooms'
+        : path.startsWith('/admin/rates') ? '/rates' : '';
+      return adminRedirect(new URL('/admin/workspace'+workspace, request.url));
     }
     if (profile && isLogin) {
       return adminRedirect(new URL(adminReturnTo(request.nextUrl.searchParams.get('returnTo')), request.url));

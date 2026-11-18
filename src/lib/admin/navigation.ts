@@ -23,6 +23,7 @@ export function isAdminNavItemActive(pathname: string, item: AdminNavItem) {
 }
 
 const screenTitles: Record<string,string> = {
+  '/admin/settings/team':'Team & Access',
   '/admin/inquiries':'Guest enquiries', '/admin/bookings/new':'New booking',
   '/admin/rooms/new':'New room', '/admin/room-types':'Room types',
   '/admin/rates':'Rates', '/admin/rate-rules':'Rate rules', '/admin/amenities':'Amenities',

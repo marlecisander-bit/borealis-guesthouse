@@ -1,6 +1,7 @@
 import 'server-only';
 import { cache } from 'react';
 import { redirect } from 'next/navigation';
+import type { TeamPermission } from './team-permissions';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 export type AdminRole = 'owner' | 'manager' | 'editor' | 'staff';
@@ -14,14 +15,19 @@ export interface AdminSession {
 
 const adminRoles: AdminRole[] = ['owner', 'manager', 'editor', 'staff'];
 
-export const getCurrentAdmin = cache(async (): Promise<AdminSession | null> => {
+export interface AdminIdentity extends AdminSession {
+  permissions: TeamPermission[] | null;
+  preset: string | null;
+}
+
+export const getAdminIdentity = cache(async (): Promise<AdminIdentity | null> => {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user?.email) return null;
 
   const { data: profile, error } = await supabase
     .from('admin_profiles')
-    .select('role,property_id')
+    .select('role,property_id,team_permissions,team_preset')
     .eq('user_id', user.id)
     .eq('is_active', true)
     .order('created_at', { ascending: true })
@@ -30,6 +36,8 @@ export const getCurrentAdmin = cache(async (): Promise<AdminSession | null> => {
   if (error || !profile?.property_id || !adminRoles.includes(profile.role as AdminRole)) return null;
 
   return {
+    permissions: profile.team_permissions as TeamPermission[] | null ?? null,
+    preset: profile.team_preset ?? null,
     userId: user.id,
     email: user.email,
     role: profile.role as AdminRole,
@@ -37,11 +45,17 @@ export const getCurrentAdmin = cache(async (): Promise<AdminSession | null> => {
   };
 });
 
+export const getCurrentAdmin = cache(async (): Promise<AdminSession | null> => {
+  const identity = await getAdminIdentity();
+  return identity && identity.permissions === null ? identity : null;
+});
+
 // Compatibility name used by preview and existing server components.
 export const getAdminSession = getCurrentAdmin;
 
 export async function requireAdmin(roles?: AdminRole[]): Promise<AdminSession> {
-  const session = await getCurrentAdmin();
+  const session = await getAdminIdentity();
+  if (session?.permissions) redirect('/admin/workspace');
   if (!session) redirect('/admin/login?error=not-authorized');
   if (roles && !roles.includes(session.role)) redirect('/admin/dashboard?error=forbidden');
   return session;
