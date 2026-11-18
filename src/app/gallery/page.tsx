@@ -5,10 +5,10 @@ import {ContactSection} from '@/components/public/ContactSection';
 import type {Metadata} from 'next';
 import {GalleryExplorer} from '@/components/public/GalleryExplorer';
 import {PageHero,PublicShell} from '@/components/public/PageShell';
-import {createMetadata} from '@/lib/seo';
+import {createPageMetadata} from '@/lib/seo';
 import {publicContentRepository} from '@/lib/repositories/public/content';
 import {getLandingPageContent} from '@/services/site-content';
-export const metadata:Metadata=createMetadata({title:'Gallery & Contact',description:'Explore Borealis and Koman in photos, contact the guesthouse and find directions for your stay.'},'/gallery');
+export async function generateMetadata(): Promise<Metadata> { return createPageMetadata('contact'); }
 export default async function GalleryPage({searchParams}: {searchParams: Promise<{preview?: string}>}) {
   const requested = (await searchParams).preview;
   const key = requested === 'contact' ? 'contact' : 'gallery';

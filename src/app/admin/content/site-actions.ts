@@ -38,7 +38,7 @@ export async function saveSiteDocument(key:SiteDocumentKey,_:SiteContentState,fo
   if(isLandingPageKey(key)&&status==='published'){
     if(data.eyebrow.length<2)return{ok:false,section:'main',message:'Add an eyebrow before publishing.'};
     if(data.heading.length<3)return{ok:false,section:key==='gallery'?'legacy':'main',message:'Add a heading before publishing.'};
-    if(data.description.length<10)return{ok:false,section:key==='rooms'?'legacy':'main',message:'Add a description before publishing.'};
+    if(data.description.length<10)return{ok:false,section:'main',message:'Add a description before publishing.'};
     if(data.heroImageId&&!/^[0-9a-f-]{36}$/i.test(data.heroImageId))return{ok:false,section:photoSection,message:'Choose a valid image from the Media Library.'};
     if(data.heroImageId&&data.heroImageAlt.length<3)return{ok:false,section:photoSection,message:'Add alternative text describing the hero image.'};
     if(data.ctaTarget&&!/^\/(?:[a-z0-9-]+\/?)*$/i.test(data.ctaTarget))return{ok:false,section:'main',message:'CTA destinations must use a safe internal path.'};

@@ -9,7 +9,7 @@ function forTables(tables: readonly string[] | null) {
     if(!path.startsWith('/admin'))for(const tag of tables?.map(table=>`public-cms:${table}`)||[PUBLIC_CMS_TAG])revalidateTag(tag,{expire:0});
   };
 }
-export const roomsRevalidatePath = forTables(["room_types","room_images","room_type_amenities","amenities","seo_metadata"]);
+export const roomsRevalidatePath = forTables(["rates","room_types","room_images","room_type_amenities","amenities","seo_metadata"]);
 export const experiencesRevalidatePath = forTables(["experiences","experience_images","seo_metadata"]);
 export const transfersRevalidatePath = forTables(["transfer_routes","transfer_images","seo_metadata"]);
 export const exploreRevalidatePath = forTables(["tourism_articles","tourism_article_images","tourism_categories","seo_metadata"]);

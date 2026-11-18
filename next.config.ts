@@ -18,7 +18,13 @@ const nextConfig: NextConfig = {
         { key: "Cache-Control", value: "private, no-store" },
         { key: "X-Robots-Tag", value: "noindex, nofollow" },
       ],
-    }, ...["/", "/rooms", "/gallery"].map(source => ({
+    }, ...["/admin/:path*", "/api/admin/:path*"].map(source => ({
+      source,
+      headers: [
+        { key: "Cache-Control", value: "private, no-store" },
+        { key: "X-Robots-Tag", value: "noindex, nofollow" },
+      ],
+    })), ...["/", "/rooms", "/gallery"].map(source => ({
       source,
       has: [{ type: "query" as const, key: "preview" }],
       headers: [

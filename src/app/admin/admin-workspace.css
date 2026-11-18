@@ -44,3 +44,58 @@ body:has([role="dialog"][aria-modal="true"],dialog[open]) .admin-bottom-nav { vi
     position: static;
   }
 }
+
+[data-admin-shell] .website-action-buttons,
+[data-admin-shell] .website-shortcut-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .5rem;
+}
+[data-admin-shell] :is(.website-action-buttons, .website-shortcut-buttons) > * {
+  width: 100%;
+  padding-block: .55rem;
+}
+[data-admin-shell] .website-publish-button { grid-column: 1 / -1; }
+@media (min-width: 640px) {
+  [data-admin-shell] :is(.website-action-buttons, .website-shortcut-buttons) {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  [data-admin-shell] :is(.website-action-buttons, .website-shortcut-buttons) > * { width: auto; }
+  [data-admin-shell] .website-publish-button { margin-inline-start: auto; }
+}
+[data-admin-shell] .admin-image-picker-sheet {
+  display: flex;
+  min-width: 0;
+  max-height: calc(var(--dialog-viewport-height, 100dvh) - max(.75rem, env(safe-area-inset-top)));
+  flex-direction: column;
+  overflow: hidden;
+}
+[data-admin-shell] dialog.admin-hero-image-dialog {
+  inset: 0;
+  margin: auto;
+  width: min(42rem, calc(100% - 1rem));
+  max-width: calc(100% - 1rem);
+  max-height: min(90dvh, calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 1rem));
+  overflow: hidden;
+}
+[data-admin-shell] dialog.admin-hero-image-dialog[open] { display: flex; flex-direction: column; }
+[data-admin-shell] .admin-image-dialog-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  flex: none;
+  gap: .75rem;
+  padding: .75rem 1rem;
+  border-bottom: 1px solid #e7e5e4;
+}
+[data-admin-shell] .admin-image-dialog-body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1rem 1rem max(1rem, env(safe-area-inset-bottom));
+}
+@media (min-width: 640px) {
+  [data-admin-shell] .admin-image-picker-sheet { max-height: calc(var(--dialog-viewport-height, 100dvh) - 2.5rem); }
+  [data-admin-shell] :is(.admin-image-dialog-heading, .admin-image-dialog-body) { padding-inline: 1.25rem; }
+}

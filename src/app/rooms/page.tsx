@@ -25,7 +25,7 @@ export default async function RoomsPage({searchParams}: {searchParams: Promise<{
     {draft && <PreviewBanner label={draft.saved ? "Rooms draft preview" : draft.unavailable ? "Draft unavailable" : "No saved draft"} liveHref="/rooms" showingLive={!draft.saved}/>}
     <section className="bg-ivory pb-12 pt-8 md:pb-14 md:pt-10">
       <div className="shell grid gap-10 lg:grid-cols-[.8fr_1.2fr] lg:items-center">
-        <div><p className="eyebrow">{page.eyebrow}</p><h1 className="mt-4 font-serif text-5xl leading-[.98] text-lake sm:text-6xl md:text-6xl">{page.heading}</h1><p className="mt-6 max-w-lg text-lg leading-8 text-muted">Rooms by Koman Lake, with options for couples, families and small groups.</p></div>
+        <div><p className="eyebrow">{page.eyebrow}</p><h1 className="mt-4 font-serif text-5xl leading-[.98] text-lake sm:text-6xl md:text-6xl">{page.heading}</h1><p className="mt-6 max-w-lg text-lg leading-8 text-muted">{page.description}</p></div>
         {heroRoom && <div className="relative aspect-video max-h-72 overflow-hidden rounded-3xl"><ResponsiveHeroImage desktopImage={heroRoom.gallery[0]} alt={heroRoom.name} sizes="(max-width:1024px) 100vw,60vw" /></div>}
       </div>
     </section>

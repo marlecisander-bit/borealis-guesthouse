@@ -49,7 +49,7 @@ export default async function RoomPage({ params,searchParams }: { params: Promis
           <p className="eyebrow">Book direct</p><div className="mt-5 flex items-baseline justify-between"><p className="text-sm text-muted">{room.priceFrom===null?'Pricing':'From'}</p><p className="font-serif text-4xl text-lake">{formatRoomRate(room.priceFrom,room.currency)}{room.priceFrom!==null&&<span className="font-sans text-xs text-muted"> / night</span>}</p></div>
           <div className="my-6 h-px bg-lake/10"/><p className="text-sm leading-6 text-muted">{room.priceFrom===null ? "Choose dates to check availability and pricing." : "Choose your dates to see availability and the rate for your stay."}</p>
           <BookingLink href={`/book?room=${room.slug}`} pendingLabel="Opening…" className="public-primary-cta mt-6 flex min-h-14 w-full rounded-xl px-6 py-4 text-center text-sm font-bold">Check availability</BookingLink>
-          <p className="mt-4 text-center text-xs text-muted">Direct enquiry · No payment taken</p>
+          <p className="mt-4 text-center text-xs text-muted">Book direct · No online payment</p>
           </aside>
         </div>
         {room.gallery.length > 0 && <div className="lg:col-start-1 lg:row-start-1"><RoomGallery images={room.gallery} roomName={room.name} /></div>}

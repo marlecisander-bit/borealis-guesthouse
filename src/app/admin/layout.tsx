@@ -17,7 +17,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const installMetadata=<><link rel="manifest" href="/admin/manifest.webmanifest"/><link rel="apple-touch-icon" href="/admin/push-icon-192.png"/></>;
+  const installMetadata=<><link rel="manifest" href="/admin/manifest.webmanifest"/><link rel="apple-touch-icon" sizes="180x180" href="/admin/apple-touch-icon.png"/><meta name="apple-mobile-web-app-title" content="Borealis Admin"/></>;
   if (pathname === '/admin/login') return <>{installMetadata}{children}</>;
 
   return (

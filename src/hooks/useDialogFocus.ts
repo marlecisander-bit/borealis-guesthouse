@@ -8,6 +8,7 @@ export function useDialogFocus(
   open: boolean,
   onClose: () => void,
   opener?: RefObject<HTMLElement | null>,
+  constrainHeight = true,
 ) {
   const close = useRef(onClose);
   useLayoutEffect(() => { close.current = onClose; }, [onClose]);
@@ -29,7 +30,7 @@ export function useDialogFocus(
       const height = viewport?.height ?? window.innerHeight;
       panel.style.setProperty('--dialog-viewport-height', `${height}px`);
       panel.style.setProperty('--dialog-viewport-top', `${viewport?.offsetTop ?? 0}px`);
-      panel.style.maxHeight = `${Math.max(0, height - 32)}px`;
+      if (constrainHeight) panel.style.maxHeight = `${Math.max(0, height - 32)}px`;
     };
     const key = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -65,5 +66,5 @@ export function useDialogFocus(
       window.removeEventListener('resize', bounds);
       if (previous?.isConnected) previous.focus({ preventScroll: true });
     };
-  }, [open, opener, ref]);
+  }, [open, opener, ref, constrainHeight]);
 }

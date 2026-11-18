@@ -12,12 +12,11 @@ export function validateSettings(data: FormData): { data?: PropertySettings; sta
     address: text(data, 'address'), mapsUrl: text(data, 'mapsUrl'), latitude: text(data, 'latitude'), longitude: text(data, 'longitude'),
     phone: text(data, 'phone'), whatsapp: text(data, 'whatsapp'), email: text(data, 'email'), instagram: text(data, 'instagram'), facebook: text(data, 'facebook'),
     checkIn: text(data, 'checkIn'), checkOut: text(data, 'checkOut'), currency: text(data, 'currency').toUpperCase(), timezone: text(data, 'timezone'),
-    maximumGuests: number(data, 'maximumGuests', 4), bookingNotice: text(data, 'bookingNotice'), bookingMode: text(data, 'bookingMode') === 'instant' ? 'instant' : 'request',
-    holdMinutes: number(data, 'holdMinutes', 15), minimumAdvanceHours: number(data, 'minimumAdvanceHours', 24), maximumHorizonDays: number(data, 'maximumHorizonDays', 365),
-    infantMaxAge:number(data,'infantMaxAge',2),childMaxAge:number(data,'childMaxAge',12),minimumBookingHolderAge:number(data,'minimumBookingHolderAge',18),
-    cancellationPolicy: text(data, 'cancellationPolicy'), payAtProperty: data.get('payAtProperty') === 'on', depositEnabled: data.get('depositEnabled') === 'on',
-    depositPercentage: number(data, 'depositPercentage'), onlinePaymentEnabled: data.get('onlinePaymentEnabled') === 'on', notificationEmail: text(data, 'notificationEmail'), additionalNotificationEmails: text(data, 'additionalNotificationEmails'),
-    replyToEmail: text(data, 'replyToEmail'), guestConfirmationEnabled: data.get('guestConfirmationEnabled') === 'on', ownerNotificationEnabled: data.get('ownerNotificationEnabled') === 'on',
+    bookingNotice: text(data, 'bookingNotice'), bookingMode: text(data, 'bookingMode') === 'instant' ? 'instant' : 'request',
+    holdMinutes: number(data, 'holdMinutes', 15), minimumAdvanceHours: number(data, 'minimumAdvanceHours', 0), maximumHorizonDays: number(data, 'maximumHorizonDays', 730),
+    infantMaxAge:number(data,'infantMaxAge',2),childMaxAge:number(data,'childMaxAge',12),
+    cancellationPolicy: text(data, 'cancellationPolicy'), notificationEmail: text(data, 'notificationEmail'), additionalNotificationEmails: text(data, 'additionalNotificationEmails'),
+    replyToEmail: text(data, 'replyToEmail'), ownerNotificationEnabled: data.get('ownerNotificationEnabled') === 'on',
     notifyBookingCreated: data.get('notifyBookingCreated') === 'on', notifyBookingCancelled: data.get('notifyBookingCancelled') === 'on', notifyBookingModified: data.get('notifyBookingModified') === 'on',
   };
   const errors: Record<string, string> = {};
@@ -34,11 +33,8 @@ export function validateSettings(data: FormData): { data?: PropertySettings; sta
   if (!isSupportedCurrency(value.currency)) errors.currency = 'Choose EUR, USD, GBP or ALL.';
   if (value.latitude && (Number(value.latitude) < -90 || Number(value.latitude) > 90)) errors.latitude = 'Latitude must be between -90 and 90.';
   if (value.longitude && (Number(value.longitude) < -180 || Number(value.longitude) > 180)) errors.longitude = 'Longitude must be between -180 and 180.';
-  if (value.depositPercentage < 0 || value.depositPercentage > 100) errors.depositPercentage = 'Deposit percentage must be between 0 and 100.';
-  if (value.maximumGuests < 1) errors.maximumGuests = 'Maximum guests must be at least 1.';
-  if (value.holdMinutes < 1 || value.minimumAdvanceHours < 0 || value.maximumHorizonDays < 1) errors.booking = 'Enter valid booking limits.';
+  if (![value.holdMinutes,value.minimumAdvanceHours,value.maximumHorizonDays].every(Number.isInteger) || value.holdMinutes < 1 || value.minimumAdvanceHours < 0 || value.maximumHorizonDays < 1) errors.booking = 'Enter valid booking limits.';
   if(!Number.isInteger(value.infantMaxAge)||value.infantMaxAge<0)errors.infantMaxAge='Infant maximum age must be zero or higher.';
   if(!Number.isInteger(value.childMaxAge)||value.childMaxAge<=value.infantMaxAge)errors.childMaxAge='Child maximum age must be greater than the infant maximum age.';
-  if(!Number.isInteger(value.minimumBookingHolderAge)||value.minimumBookingHolderAge<18)errors.minimumBookingHolderAge='Booking holders must be at least 18.';
   return Object.keys(errors).length ? { state: { ok: false, message: 'Review the highlighted settings.', errors } } : { data: value };
 }

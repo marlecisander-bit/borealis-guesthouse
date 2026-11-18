@@ -4,7 +4,8 @@ import { MapPlaceholder } from '@/components/public/MapPlaceholder';
 import { getContactInfo, getSiteDocument } from '@/services/site-content';
 
 export async function ContactSection({draft}: {draft?: Record<string,string>} = {}) {
-  const [contact, page] = await Promise.all([getContactInfo(), draft ?? getSiteDocument('contact')]);
+  const [contact, live] = await Promise.all([getContactInfo(), getSiteDocument('contact')]);
+  const page = draft ? {...live,...draft} : live;
   const directDescription = /managed in Borealis settings/i.test(page.directDescription || '') ? '' : page.directDescription;
 
   return <>
@@ -19,18 +20,18 @@ export async function ContactSection({draft}: {draft?: Record<string,string>} = 
           <h3 className="font-serif text-3xl">{page.directHeading || 'Talk to us directly.'}</h3>
           {directDescription && <p className="mt-4 text-sm leading-6 text-white/80">{directDescription}</p>}
           <div className="mt-5 grid gap-3">
-            {contact.mapsUrl && <ContactAction label="Open in Google Maps" value={contact.address} href={contact.mapsUrl} newTab/>}
+            {contact.mapsUrl && <ContactAction label="Open in Google Maps" value={contact.address || 'Get directions'} href={contact.mapsUrl} newTab/>}
             {contact.phone && <ContactAction label="Call" value={contact.phoneLabel} href={`tel:${contact.phone}`}/>}
             {contact.whatsapp && <ContactAction label="WhatsApp" value={contact.whatsappLabel} href={contact.whatsapp} newTab/>}
             {contact.email && <ContactAction label="Email" value={contact.email} href={`mailto:${contact.email}`}/>}
             {contact.instagram && <ContactAction label="Instagram" value={contact.instagramLabel} href={contact.instagram} newTab/>}
             {contact.facebook && <ContactAction label="Facebook" value={contact.facebookLabel} href={contact.facebook} newTab/>}
           </div>
-          <div className="mt-6 border-t border-white/20 pt-5">
-            <p className="text-xs font-bold uppercase tracking-widest text-sand">{page.addressLabel || 'Address'}</p>
-            <p className="mt-2 text-sm leading-6 text-white/85">{contact.address}</p>
+          {(contact.address || page.directionsText) && <div className="mt-6 border-t border-white/20 pt-5">
+            {contact.address && <><p className="text-xs font-bold uppercase tracking-widest text-sand">{page.addressLabel || 'Address'}</p>
+            <p className="mt-2 text-sm leading-6 text-white/85">{contact.address}</p></>}
             {page.directionsText && <p className="mt-3 text-sm leading-6 text-white/80">{page.directionsText}</p>}
-          </div>
+          </div>}
         </aside>
         <ContactForm/>
       </div>

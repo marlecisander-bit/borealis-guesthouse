@@ -12,6 +12,6 @@ export function WebsiteEditorHeader({ title, status, live, children, description
     <Link href="/admin/content" className="inline-flex min-h-11 items-center text-sm font-semibold text-brand">← Back to Website</Link>
     <AdminPageHeader title={title} description={description} actions={<a href={live} target="_blank" rel="noreferrer" className={websiteShortcut}>View live page ↗</a>}/>
     {status && <WebsiteStatusLabel status={status}/>}
-    {children && <div className="flex flex-wrap gap-2">{children}</div>}
+    {children && <div className="website-shortcut-buttons">{children}</div>}
   </div>;
 }

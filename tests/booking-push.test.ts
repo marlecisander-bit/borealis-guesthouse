@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { runInNewContext } from 'node:vm';
 import { bookingPushPayload, validPushEndpoint, pushFailure } from '../src/lib/notifications/push-contract.ts';
+import { adminReturnTo } from '../src/lib/admin/return-to.ts';
 import { deliverBookingPush, type PushJob } from '../src/lib/notifications/push-worker.ts';
 
 const id='00000000-0000-4000-8000-000000000001';
@@ -42,4 +43,39 @@ test('service worker opens only the expected same-origin admin booking',async()=
     await completion;
   }
   assert.deepEqual(opened,[origin+'/admin/bookings/'+id,origin+'/admin/notifications']);
+});
+
+
+test('standalone Borealis Admin starts at the dashboard and advertises its own scope and icon',async()=>{
+  const manifest=JSON.parse(await readFile(new URL('../public/admin/manifest.webmanifest',import.meta.url),'utf8'));
+  assert.equal(manifest.name,'Borealis Admin');
+  assert.equal(manifest.scope,'/admin/');
+  assert.equal(manifest.start_url,'/admin/dashboard');
+  assert.equal(manifest.display,'standalone');
+  assert.ok(manifest.icons.every((icon:{src:string})=>icon.src.startsWith(manifest.scope)));
+  const icon=await readFile(new URL('../public/admin/apple-touch-icon.png',import.meta.url));
+  assert.equal(icon.readUInt32BE(16),180);
+  assert.equal(icon.readUInt32BE(20),180);
+});
+
+test('the notification booking destination survives authentication and rejects external or recursive paths',()=>{
+  const booking='/admin/bookings/'+id;
+  assert.equal(adminReturnTo(booking),booking);
+  for(const suspect of ['//example.invalid/admin','/administrator','/admin/../../book','/admin/%2e%2e/book','/admin/login?returnTo=/admin','/admin/mfa/','/admin'+String.fromCharCode(92)+'example.invalid']) {
+    assert.equal(adminReturnTo(suspect),'/admin/dashboard');
+  }
+});
+
+test('the push worker strips private message fields and never registers a fetch handler',async()=>{
+  const listeners:Record<string,(event:unknown)=>void>={};
+  const notifications:{title:string;body:string;path:string}[]=[];
+  const self={addEventListener:(name:string,handler:(event:unknown)=>void)=>{listeners[name]=handler;},
+    registration:{showNotification:async(title:string,options:{body:string;data:{path:string}})=>notifications.push({title,body:options.body,path:options.data.path})}};
+  runInNewContext(await readFile(new URL('../public/admin/sw.js',import.meta.url),'utf8'),{self,URL});
+  assert.equal(listeners.fetch,undefined);
+  let completion:Promise<unknown>|undefined;
+  listeners.push({data:{json:()=>({title:'Guest name',body:'guest@example.invalid',path:'/admin/bookings/'+id})},
+    waitUntil(promise:Promise<unknown>){completion=promise;}});
+  await completion;
+  assert.deepEqual(notifications,[{title:'Borealis booking activity',body:'Open the Borealis admin to see details.',path:'/admin/bookings/'+id}]);
 });

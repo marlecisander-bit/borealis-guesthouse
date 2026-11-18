@@ -2,6 +2,7 @@ import { previewEnabled } from '@/lib/readonly-preview/policy';
 import { previewServerResponse } from '@/lib/readonly-preview/server-request';
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { adminReturnTo } from '@/lib/admin/return-to';
 import { fetchSupabase } from '@/lib/supabase/fetch';
 
 export async function proxy(request: NextRequest) {
@@ -38,18 +39,25 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  const isAdmin = request.nextUrl.pathname.startsWith('/admin');
+  const isAdmin = path === '/admin' || path.startsWith('/admin/');
   if (!isAdmin) return response;
 
   const { data: { user } } = await supabase.auth.getUser();
-  const isLogin = request.nextUrl.pathname === '/admin/login';
+  const isLogin = path === '/admin/login';
+  const requested = adminReturnTo(path + request.nextUrl.search, '/admin/dashboard');
+  function adminRedirect(url: URL) {
+    const redirect = NextResponse.redirect(url);
+    response.cookies.getAll().forEach(cookie => redirect.cookies.set(cookie));
+    redirect.headers.set('Cache-Control','private, no-store');
+    return redirect;
+  }
 
   if (!user && !isLogin) {
     const url = request.nextUrl.clone();
     url.pathname = '/admin/login';
     url.search = '';
-    url.searchParams.set('returnTo', `${request.nextUrl.pathname}${request.nextUrl.search}`);
-    return NextResponse.redirect(url);
+    url.searchParams.set('returnTo', requested);
+    return adminRedirect(url);
   }
 
   if (user) {
@@ -66,12 +74,10 @@ export async function proxy(request: NextRequest) {
       url.pathname = '/admin/login';
       url.search = '';
       url.searchParams.set('error', 'not-authorized');
-      return NextResponse.redirect(url);
+      return adminRedirect(url);
     }
     if (profile && isLogin) {
-      const returnTo = request.nextUrl.searchParams.get('returnTo');
-      const destination = returnTo?.startsWith('/admin') && !returnTo.startsWith('//') ? returnTo : '/admin/dashboard';
-      return NextResponse.redirect(new URL(destination, request.url));
+      return adminRedirect(new URL(adminReturnTo(request.nextUrl.searchParams.get('returnTo')), request.url));
     }
   }
 

@@ -51,7 +51,7 @@ export async function Footer() {
         <div>
           <h2 className="text-xs font-bold uppercase tracking-widest text-sand">{cms.findUsHeading||'Find us'}</h2>
           <div className="mt-5 grid gap-3 text-sm text-white/70">
-            <p>{contact.address}</p>
+            {contact.address && <p>{contact.address}</p>}
             {contact.email && <a href={`mailto:${contact.email}`}>{contact.email}</a>}
             {contact.phone && <a href={`tel:${contact.phone}`}>Call us</a>}
             {contact.whatsapp && <a href={contact.whatsapp}>WhatsApp</a>}
@@ -114,7 +114,7 @@ export async function HomepageFooter({
           <div>
             <h2 className="text-xs font-bold uppercase tracking-widest text-sand">{cms.findUsHeading || 'Find us'}</h2>
             <div className="mt-4 grid gap-2.5 text-sm text-white/75">
-              <p>{contact.address}</p>
+              {contact.address && <p>{contact.address}</p>}
               {contact.mapsUrl && <a href={contact.mapsUrl} target="_blank" rel="noopener noreferrer">Google Maps</a>}
               {contact.email && <a href={`mailto:${contact.email}`}>{contact.email}</a>}
               {contact.phone && <a href={`tel:${contact.phone}`}>Call us</a>}

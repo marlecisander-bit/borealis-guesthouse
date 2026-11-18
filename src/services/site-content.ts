@@ -1,3 +1,4 @@
+import { resolvePropertyContact } from '@/lib/property-contact';
 import {whatsAppHref} from '@/lib/whatsapp';
 import {cache} from 'react';
 import {createPublicCmsClient} from '@/lib/supabase/public-cms';
@@ -33,24 +34,34 @@ export const getContactInfo = cache(async function getContactInfo(preview=false)
   const d=await getSiteDocument('contact',preview);
   try{
     const db=createPublicCmsClient();
-    const{data:property}=await db.from('properties').select('address_line,location,google_maps_url,phone,whatsapp,email,instagram_url,facebook_url').eq('status','published').order('created_at').limit(1).maybeSingle();
+    const{data:property,error}=await db.from('properties').select('address_line,location,google_maps_url,phone,whatsapp,email,instagram_url,facebook_url').eq('status','published').order('created_at').limit(1).maybeSingle();
+    if(error)return fallback;
     const hasContent=Object.keys(d).length>0||Boolean(property);
-    const phone=property?.phone||d.phone||'',whatsapp=whatsAppHref(property?.whatsapp),instagram=property?.instagram_url||d.instagram||'',facebook=property?.facebook_url||'';
+    const {phone,email,instagram,address}=resolvePropertyContact(property,d);
+    const whatsapp=whatsAppHref(property?.whatsapp),facebook=property?.facebook_url||'';
     return hasContent?{
-      email:property?.email||d.email||fallback.email,
-      phone,phoneLabel:phone||'Phone number to be confirmed',
-      whatsapp,whatsappLabel:whatsapp?'Message us on WhatsApp':'WhatsApp number to be confirmed',
-      instagram,instagramLabel:instagram?'Borealis on Instagram':'Instagram profile to be confirmed',
-      facebook,facebookLabel:facebook?'Borealis on Facebook':'Facebook profile to be confirmed',
-      address:property?.address_line||property?.location||d.address||fallback.address,
-      mapsUrl:property?.google_maps_url||'',placeholder:false,
+      email, phone, phoneLabel:phone,
+      whatsapp, whatsappLabel:whatsapp?'Message us on WhatsApp':'',
+      instagram, instagramLabel:instagram?'Borealis on Instagram':'',
+      facebook, facebookLabel:facebook?'Borealis on Facebook':'',
+      address, mapsUrl:property?.google_maps_url||'',placeholder:false,
     }:fallback;
-  }catch{
-    return Object.keys(d).length?{email:d.email||fallback.email,phone:d.phone||'',phoneLabel:d.phone||'Phone number to be confirmed',whatsapp:'',whatsappLabel:'',instagram:d.instagram||'',instagramLabel:d.instagram?'Borealis on Instagram':'Instagram profile to be confirmed',facebook:'',facebookLabel:'',address:d.address||fallback.address,mapsUrl:'',placeholder:false}:fallback;
-  }
+  }catch{return fallback}
 });
 export const getNavigation = cache(async function getNavigation(location:'header'|'footer'){try{const db=createPublicCmsClient(),{data}=await db.from('navigation_items').select('id,label,href').eq('location',location).eq('status','published').eq('is_visible',true).order('sort_order'),rows=data||[],translated=await getEntityTranslationMap('navigation_item',rows.map(x=>x.id));return rows.filter(x=>!/^\/about(?:[/?#]|$)/.test(x.href)).filter(x=>(x.href!=='/transfers'||!rows.some(item=>item.href==='/experiences'))&&(x.href!=='/contact'||!rows.some(item=>item.href==='/gallery'))).map(x=>({label:x.href==='/experiences'||x.href==='/transfers'?'Experiences & Transfers':x.href==='/gallery'||x.href==='/contact'?'Gallery':translated.get(x.id)?.label||x.label,href:x.href==='/transfers'?'/experiences':x.href==='/contact'?'/gallery':x.href})).sort((a,b)=>['/','/rooms','/experiences','/explore-koman','/gallery'].indexOf(a.href)-['/','/rooms','/experiences','/explore-koman','/gallery'].indexOf(b.href))}catch{return[]}});
 export const getOccupancyAgePolicy = cache(async function getOccupancyAgePolicy():Promise<OccupancyAgePolicy>{
   const fallback={infantMaxAge:2,childMaxAge:12,minimumBookingHolderAge:18};
   try{const db=createPublicCmsClient(),{data:property}=await db.from('properties').select('id').eq('status','published').order('created_at').limit(1).maybeSingle();if(!property)return fallback;const{data}=await db.from('site_settings').select('setting_key,value_number').eq('property_id',property.id).in('setting_key',['infant_max_age','child_max_age','minimum_booking_holder_age']);const value=(key:string,defaultValue:number)=>{const result=data?.find(item=>item.setting_key===key)?.value_number;return result==null?defaultValue:Number(result)};return{infantMaxAge:value('infant_max_age',2),childMaxAge:value('child_max_age',12),minimumBookingHolderAge:value('minimum_booking_holder_age',18)}}catch{return fallback}
+});
+
+
+export const getStayBookingNotice = cache(async function getStayBookingNotice(): Promise<string> {
+  try {
+    const db = createPublicCmsClient();
+    const {data:property} = await db.from('properties').select('id').eq('status','published').order('created_at').limit(1).maybeSingle();
+    if (!property) return '';
+    const {data} = await db.from('site_settings').select('value_text')
+      .eq('property_id',property.id).eq('setting_key','booking_notice_default').eq('status','published').eq('is_public',true).maybeSingle();
+    return data?.value_text?.trim() || '';
+  } catch { return ''; }
 });

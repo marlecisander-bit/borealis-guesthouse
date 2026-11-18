@@ -170,3 +170,34 @@ test('push queues committed changes per eligible device, retries and retires exp
     assert.equal(state.status,'confirmed');
   }finally{await db.close();}
 });
+
+test('stay rate, hold duration, booking window and request mode are enforced by the existing engine', async () => {
+  const {db, hold, actor}=await setup();
+  try {
+    await db.query('UPDATE rates SET base_price=138 WHERE room_type_id=$1',[roomType]);
+    await db.query("UPDATE site_settings SET value_text='request' WHERE property_id=$1 AND setting_key='booking_mode'",[property]);
+    await db.query(`INSERT INTO site_settings(property_id,setting_key,value_number) VALUES
+      ($1,'booking_hold_minutes',43),($1,'minimum_advance_hours',48),($1,'maximum_booking_horizon_days',30)`,[property]);
+    const {rows:[price]}=await db.query<{subtotal:string}>(
+      "SELECT calculate_room_stay_price($1,$2,$3,$4,1)->>'roomSubtotal' AS subtotal",
+      [property,roomType,date(7),date(9)]);
+    assert.equal(Number(price.subtotal),276);
+    await assert.rejects(()=>hold(1,2),/outside the configured booking window/);
+    await assert.rejects(()=>hold(31,32),/outside the configured booking window/);
+    const booking=await hold(7,9);
+    const {rows:[held]}=await db.query<{minutes:string}>(
+      'SELECT EXTRACT(epoch FROM hold_expires_at - now()) / 60 AS minutes FROM bookings WHERE id=$1',[booking.booking_id]);
+    assert.ok(Number(held.minutes)>42.9 && Number(held.minutes)<=43);
+    await db.query('SELECT confirm_booking_hold($1,$2)',[booking.booking_id,booking.hold_token]);
+    assert.equal((await db.query<{booking_status:string}>('SELECT booking_status FROM bookings WHERE id=$1',[booking.booking_id])).rows[0].booking_status,'pending');
+    await db.query("INSERT INTO rooms(id,property_id,room_type_id,room_number,title) VALUES($1,$2,$3,'2','Second test room')",[randomUUID(),property,roomType]);
+    const allocation=[{roomTypeId:roomType,occupancies:[{adults:2,children:0,infants:0},{adults:2,children:0,infants:0}]}];
+    const {rows:[multi]}=await db.query<{booking_id:string;hold_token:string}>(
+      'SELECT * FROM create_multi_room_booking_package_hold($1,$2,$3,4,$4)',[JSON.stringify(allocation),date(10),date(12),{...guest,adults:4}]);
+    const {rows:[combined]}=await db.query<{room_subtotal:string}>('SELECT room_subtotal FROM bookings WHERE id=$1',[multi.booking_id]);
+    assert.equal(Number(combined.room_subtotal),552);
+    await actor(staff);
+    const {rows:[manual]}=await db.query<{booking_id:string}>('SELECT * FROM create_admin_booking($1,$2,$3,1,0,0,$4)',[roomType,date(13),date(15),guest]);
+    assert.equal((await db.query<{booking_status:string}>('SELECT booking_status FROM bookings WHERE id=$1',[manual.booking_id])).rows[0].booking_status,'confirmed');
+  } finally { await db.close(); }
+});

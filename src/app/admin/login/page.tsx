@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { BorealisLogo } from '@/components/brand/BorealisLogo';
+import { adminReturnTo } from '@/lib/admin/return-to';
 import { isValidEmail } from '@/utils/helpers';
 
 function LoginForm() {
@@ -42,9 +43,7 @@ function LoginForm() {
       if (!response.ok) throw new Error(result.error || 'Login failed. Please try again.');
 
       const requested = new URLSearchParams(window.location.search).get('returnTo');
-      const destination = requested?.startsWith('/admin') && !requested.startsWith('//')
-        ? requested
-        : '/admin/dashboard';
+      const destination = adminReturnTo(requested, '/admin');
       window.location.assign(destination);
     } catch (err) {
       const rawMessage = err instanceof Error ? err.message : '';

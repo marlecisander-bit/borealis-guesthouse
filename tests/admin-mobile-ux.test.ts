@@ -57,7 +57,10 @@ test('mobile room, editor and media actions remain comfortably tappable', () => 
   assert.match(uploader, /multiple/);
   assert.match(uploader, /Upload queue/);
   assert.match(uploader, /w-full rounded-lg bg-slate-950/);
-  assert.match(source('src/components/admin/MediaPicker.tsx'), /admin-mobile-sheet/);
+  const picker = source('src/components/admin/MediaPicker.tsx');
+  assert.match(picker, /admin-image-picker-sheet/);
+  assert.match(picker, /admin-image-dialog-heading/);
+  assert.match(picker, /admin-image-dialog-body/);
 });
 
 test('mobile booking detail prioritizes the common lifecycle action', () => {

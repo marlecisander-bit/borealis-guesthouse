@@ -5,7 +5,7 @@ import { PublicShell } from '@/components/public/PageShell';
 import { validateBookingSearch } from '@/lib/booking/search-criteria';
 import { createMetadata } from '@/lib/seo';
 import { contentRepository } from '@/services/content';
-import { getOccupancyAgePolicy, getSiteDocument } from '@/services/site-content';
+import { getOccupancyAgePolicy, getSiteDocument, getStayBookingNotice } from '@/services/site-content';
 import { Suspense } from 'react';
 
 export const metadata: Metadata = {
@@ -15,11 +15,11 @@ export const metadata: Metadata = {
 
 export default async function BookPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
-  const [page,agePolicy] = await Promise.all([getSiteDocument('book'),getOccupancyAgePolicy()]);
+  const [page,agePolicy,notice] = await Promise.all([getSiteDocument('book'),getOccupancyAgePolicy(),getStayBookingNotice()]);
   const value = (key: string) => typeof params[key] === 'string' ? params[key] : undefined;
   const search = validateBookingSearch({ checkIn:value('checkIn'), checkOut:value('checkOut'), guests:value('guests'),adults:value('adults'),children:value('children'),infants:value('infants') });
   return <PublicShell mobileBooking={false}>
-    <BookingStage intro={page}><Suspense fallback={<BookingFlowSkeleton/>}><BookingConfigurator
+    <BookingStage intro={page} notice={notice}><Suspense fallback={<BookingFlowSkeleton/>}><BookingConfigurator
       initialRoom={value('room')}
       initialTransfer={value('transfer')}
       initialExperience={value('experience')||value('addon')}

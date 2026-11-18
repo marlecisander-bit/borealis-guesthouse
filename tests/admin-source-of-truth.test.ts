@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import {resolvePropertyContact} from '../src/lib/property-contact.ts';
 import {adminNavigation,isAdminNavItemActive} from '../src/lib/admin/navigation.ts';
 
 const source = (path: string) => readFileSync(join(process.cwd(), path), 'utf8');
@@ -34,7 +35,7 @@ test('Languages and global SEO are not duplicated in Settings', () => {
 test('Public contact data prefers the canonical property record', () => {
   const service = source('src/services/site-content.ts');
   assert.match(service, /phone,whatsapp,email,instagram_url,facebook_url/);
-  assert.match(service, /property\?\.email\|\|d\.email/);
+  assert.match(service, /resolvePropertyContact\(property,d\)/);
   assert.match(service, /property\?\.facebook_url/);
 });
 
@@ -56,7 +57,9 @@ test('Room editor keeps technical identifiers out of the owner workflow', () => 
   assert.match(form, /type="hidden" name="slug"/);
   assert.match(form, /Guests & beds/);
   assert.match(form, /Advanced/);
-  assert.match(list, /QuickRoomRateForm/);
+  assert.doesNotMatch(list, /QuickRoomRateForm/);
+  assert.match(list, /Edit rate/);
+  assert.match(form, /Edit rate/);
 });
 
 test('Room gallery browser mutations remain explicitly property scoped', () => {
@@ -64,4 +67,12 @@ test('Room gallery browser mutations remain explicitly property scoped', () => {
   const propertyFilters = manager.match(/\.eq\('property_id', propertyId\)/g) || [];
   assert.ok(propertyFilters.length >= 6);
   assert.match(manager, /\.eq\('room_type_id', roomTypeId\)/);
+});
+
+test('property contact compatibility preserves legacy-only values and respects deliberate blanks', () => {
+  const legacy = {phone:'+12025550101', email:'old@example.invalid', instagram:'https://example.invalid/old',address:'Legacy address'};
+  assert.deepEqual(resolvePropertyContact({phone:null,email:null},legacy),legacy);
+  assert.deepEqual(resolvePropertyContact({phone:'',email:'',instagram_url:'',address_line:'',location:'Old location'},legacy),{phone:'',email:'',instagram:'',address:''});
+  assert.equal(resolvePropertyContact({phone:'+12025550102'},legacy).phone,'+12025550102');
+  assert.equal(resolvePropertyContact({location:'Property location'},legacy).address,'Property location');
 });

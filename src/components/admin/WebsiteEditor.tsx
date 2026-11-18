@@ -56,10 +56,10 @@ export function WebsiteEditor({ children, result, dispatch, pending, preview }: 
       {result.message && <p ref={feedback} tabIndex={-1} role={result.ok ? 'status' : 'alert'} className={result.ok ? 'text-sm text-emerald-900' : 'text-sm font-medium text-red-800'}>
         {result.message}{!result.ok && result.section && <> <a href={'#' + result.section} className="underline">Go to section</a></>}
       </p>}
-      <div className="flex flex-wrap gap-2">
+      <div className="website-action-buttons">
         <button name="status" value="draft" disabled={pending} className="min-h-11 rounded-lg border border-stone-300 px-3 text-sm font-semibold">Save draft</button>
         <a href={preview} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center rounded-lg border border-stone-300 px-3 text-sm font-semibold">Preview draft ↗</a>
-        <button name="status" value="published" disabled={pending} className="min-h-11 rounded-lg bg-brand px-3 text-sm font-semibold text-white">{pending ? 'Saving…' : 'Publish changes'}</button>
+        <button name="status" value="published" disabled={pending} className="website-publish-button min-h-11 rounded-lg bg-brand px-3 text-sm font-semibold text-white">{pending ? 'Saving…' : 'Publish changes'}</button>
       </div>
       <p className="text-xs text-slate-600">Save your edits before previewing. Preview opens the last saved draft in a new tab.</p>
     </div>

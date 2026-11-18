@@ -18,7 +18,7 @@ export const adminRoomsRepository={
     const db=await createServerSupabaseClient();
     const[{data:types,error},{data:rates},{data:seo},{data:links},{data:images}]=await Promise.all([
       db.from('room_types').select('id,name,slug,short_description,long_description,capacity,adults,children,max_adults,max_children,max_infants,max_total_occupancy,min_adults,infants_count_toward_capacity,beds,bed_configuration,size_sqm,view_type,base_occupancy,inventory_count,is_featured,is_visible,status,sort_order,updated_at').eq('property_id',session.propertyId).order('sort_order'),
-      db.from('rates').select('room_type_id,base_price,currency,active,created_at').eq('property_id',session.propertyId).neq('status','archived').order('created_at'),
+      db.from('rates').select('room_type_id,base_price,currency,active,updated_at').eq('property_id',session.propertyId).neq('status','archived').order('updated_at',{ascending:false}).order('id'),
       db.from('seo_metadata').select('entity_id,title,meta_description').eq('property_id',session.propertyId).eq('entity_type','room_type'),
       db.from('room_type_amenities').select('room_type_id,amenity_id').eq('property_id',session.propertyId),
       db.from('room_images').select('id,room_type_id,media_asset_id,sort_order,is_featured,status,media_assets(file_path,alt_text)').eq('property_id',session.propertyId).order('sort_order'),
@@ -38,8 +38,18 @@ export const adminRoomsRepository={
     const{error:inventoryError}=await db.rpc('sync_room_inventory',{target_room_type:roomTypeId,target_count:input.inventoryCount,actor:session.userId});if(inventoryError)throw inventoryError;
     await db.from('room_type_amenities').delete().eq('room_type_id',roomTypeId);
     if(input.amenityIds.length){const{error}=await db.from('room_type_amenities').insert(input.amenityIds.map(amenityId=>({property_id:session.propertyId,room_type_id:roomTypeId,amenity_id:amenityId,created_by:session.userId})));if(error)throw error}
-    const{data:rate}=await db.from('rates').select('id').eq('property_id',session.propertyId).eq('room_type_id',roomTypeId).neq('status','archived').maybeSingle();
-    if(input.basePrice!==null){const rateValues={property_id:session.propertyId,room_type_id:roomTypeId,title:'Base rate',base_price:input.basePrice,currency:input.currency,status:input.status,is_visible:input.visible,updated_by:session.userId};const rateResult=rate?await db.from('rates').update(rateValues).eq('id',rate.id):await db.from('rates').insert({...rateValues,created_by:session.userId});if(rateResult.error)throw rateResult.error}
+    if (!id && input.basePrice !== null) {
+      const {error} = await db.from('rates').insert({
+        property_id:session.propertyId,room_type_id:roomTypeId,title:'Base rate',base_price:input.basePrice,currency:input.currency,
+        status:input.status,is_visible:input.visible,created_by:session.userId,updated_by:session.userId,
+      });
+      if (error) throw error;
+    }
+    if (id && input.status === 'published' && input.visible) {
+      const {error} = await db.from('rates').update({status:'published',is_visible:true})
+        .eq('property_id',session.propertyId).eq('room_type_id',id).eq('status','draft');
+      if (error) throw error;
+    }
     const seoValues={property_id:session.propertyId,entity_type:'room_type',entity_id:roomTypeId,title:input.seoTitle||null,meta_description:input.seoDescription||null,status:input.status,updated_by:session.userId};const{error:seoError}=await db.from('seo_metadata').upsert({...seoValues,created_by:session.userId},{onConflict:'property_id,entity_type,entity_id'});if(seoError)throw seoError;return roomTypeId;
   },
   async setRoomTypeStatus(session:AdminSession,id:string,status:'archived'|'draft'){const db=await createServerSupabaseClient(),room=await this.getRoomType(session,id);if(!room)throw new Error('Room not found');const{error}=await db.from('room_types').update({status,archived_at:status==='archived'?new Date().toISOString():null,is_visible:status!=='archived',updated_by:session.userId}).eq('id',id).eq('property_id',session.propertyId);if(error)throw error;const{error:inventoryError}=await db.rpc('sync_room_inventory',{target_room_type:id,target_count:room.inventoryCount,actor:session.userId});if(inventoryError)throw inventoryError},

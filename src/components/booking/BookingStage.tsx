@@ -6,8 +6,9 @@ const defaultIntro = {
   description: 'Choose your room, add anything useful and review everything clearly before confirming.',
 };
 
-export function BookingStage({ intro, children }: {
+export function BookingStage({ intro, notice, children }: {
   intro?: Partial<typeof defaultIntro>;
+  notice?: string;
   children: ReactNode;
 }) {
   return <div data-booking-stage className="min-h-[calc(100svh-var(--public-header-height,4.5rem)-env(safe-area-inset-top))] bg-[#fbfaf7]">
@@ -16,6 +17,7 @@ export function BookingStage({ intro, children }: {
         <p className="eyebrow">{intro?.eyebrow || defaultIntro.eyebrow}</p>
         <h1 className="mt-2 max-w-3xl font-serif text-4xl leading-none text-lake md:text-5xl">{intro?.heading || defaultIntro.heading}</h1>
         <p className="mt-3 max-w-xl leading-6 text-muted">{intro?.description || defaultIntro.description}</p>
+        {notice && <p className="mt-4 max-w-xl whitespace-pre-line rounded-xl border border-lake/10 bg-white px-4 py-3 text-sm text-lake">{notice}</p>}
       </div>
     </section>
     <section className="py-5 md:py-8"><div className="shell">{children}</div></section>

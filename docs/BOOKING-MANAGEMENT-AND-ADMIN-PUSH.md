@@ -32,3 +32,11 @@ For an iPhone or iPad running iOS/iPadOS 16.4 or later:
 Use **Disable on this device** before handing a shared browser to someone else. Admin sign-out attempts server revocation and browser unsubscribe for this device. Revoking the admin's property access also prevents future queued deliveries when the worker rechecks membership. Removing a Home Screen app or clearing its data can invalidate the endpoint. Definitive provider expiration responses retire that device, and the panel can register a fresh subscription. Keep VAPID keys stable across deploys. Rotating them requires device re-enrollment.
 
 Pending delivery is retried up to five attempts on rate limiting and temporary provider responses. Network failures with unknown acceptance are marked uncertain. An abandoned lease may be retried with the same notification tag. The admin inbox and existing admin email channel continue independently of push.
+
+## Borealis Admin installation release
+
+The manifest is `/admin/manifest.webmanifest`. The install identity and scope are `/admin/`, the start URL is `/admin/dashboard`, and the display mode is standalone. The Apple touch icon is `/admin/apple-touch-icon.png`. The existing push-only service worker at `/admin/sw.js` uses the same admin scope. It does not intercept requests or use Cache Storage. Admin pages and admin APIs send private, no-store cache instructions.
+
+For an existing installation with working booking alerts, keep the installed migrations, VAPID pair and worker secret. This installation update adds no database migration. For a fresh isolated environment, use the release setup above.
+
+Deploy the application and scheduled function to an HTTPS test site, sign in through Safari, and complete the Home Screen steps above. Confirm that the icon opens the admin dashboard. Use a synthetic booking to verify an alert with the app closed and again while signed out. The app should return to that booking after sign-in. The booking still uses the signed-in account's current property access. Verify the server-confirmed device state, delivery status and disablement on the same installation. When the test environment is ready for a production release, publish the tested build through the existing Netlify workflow.

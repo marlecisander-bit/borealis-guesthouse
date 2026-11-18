@@ -1,8 +1,8 @@
 {
   "id": "/admin/",
-  "name": "Borealis Guest House Admin",
+  "name": "Borealis Admin",
   "short_name": "Borealis Admin",
-  "start_url": "/admin/notifications",
+  "start_url": "/admin/dashboard",
   "scope": "/admin/",
   "display": "standalone",
   "background_color": "#f6f4ef",

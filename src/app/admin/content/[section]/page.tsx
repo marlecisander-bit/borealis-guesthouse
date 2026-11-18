@@ -60,12 +60,12 @@ export default async function ContentSectionPage({params}:{params:Promise<{secti
   const[document,assets]=await Promise.all([adminSiteContentRepository.document(session,section),adminMediaRepository.options(session).catch(()=>[])]);
   const media=assets.filter(asset=>asset.status!=='archived').map(asset=>({id:asset.id,label:asset.title||asset.alt_text||asset.filename||'Untitled image',imageUrl:asset.publicUrl}));
   const roomSections = [
-    { id: 'main', title: 'Page heading & introduction', fields: common.filter(field => field.name !== 'heroImageId' && field.name !== 'description').map(field => field.name) },
-    { id: 'legacy', title: 'Saved photo & description fields (unused on Rooms)', fields: ['heroImageId', 'description'] },
+    { id: 'main', title: 'Page heading & introduction', fields: common.filter(field => field.name !== 'heroImageId').map(field => field.name) },
+    { id: 'legacy', title: 'Saved photo fields (unused on Rooms)', fields: ['heroImageId'] },
     { id: 'room-details', title: 'Shared room-detail headings', fields: [...detail, ...related].map(field => field.name) },
   ];
   return <div className="max-w-5xl space-y-4">
-    <WebsiteEditorHeader title={page.label} status={document.publication} live={`/${section}`} description={section==='rooms'?'Edit the public introduction and headings shared by room pages. Room photos, amenities and prices are managed with each room. The photo and description fields retained below are unused by the current Rooms introduction.':page.description}>
+    <WebsiteEditorHeader title={page.label} status={document.publication} live={`/${section}`} description={section==='rooms'?'Edit the public introduction and headings shared by room pages. Room photos, amenities and prices are managed with each room. The page photo fields are retained for compatibility. The public hero uses photos assigned to rooms.':page.description}>
       {section==='rooms' && <Link href="/admin/rooms" className={websiteShortcut}>Manage rooms and rates</Link>}
       {section==='experiences' && <><Link href="/admin/experiences?type=experience" className={websiteShortcut}>Manage experiences and dinner</Link><Link href="/admin/experiences?type=rental" className={websiteShortcut}>Manage rentals</Link></>}
       {section==='transfers' && <Link href="/admin/transfers" className={websiteShortcut}>Manage transfer listings</Link>}

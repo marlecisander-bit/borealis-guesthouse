@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { formatRoomRate } from '@/lib/pricing/format';
 import {EditorWorkspace,EditorPanel,EditorActions,useEditorForm} from './EditorWorkspace';
 import { useActionState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -12,7 +13,7 @@ import type { AdminAmenity, AdminRoomType, RoomFormState } from '@/types/rooms-a
 const initial: RoomFormState = { ok: false, message: '' };
 const input = 'mt-2 min-h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-slate-900';
 
-export function RoomTypeForm({ room, amenities, agePolicy={infantMaxAge:2,childMaxAge:12} }: { room: AdminRoomType | null; amenities: AdminAmenity[]; agePolicy?: { infantMaxAge:number; childMaxAge:number } }) {
+export function RoomTypeForm({ room, amenities, agePolicy={infantMaxAge:2,childMaxAge:12}, canEditRates=false }: { room: AdminRoomType | null; amenities: AdminAmenity[]; agePolicy?: { infantMaxAge:number; childMaxAge:number }; canEditRates?:boolean }) {
   const [state, action, pending] = useActionState(saveRoomType, initial);
   const router = useRouter();
   const editor=useEditorForm(state),formRef=useRef<HTMLFormElement>(null);
@@ -59,7 +60,11 @@ export function RoomTypeForm({ room, amenities, agePolicy={infantMaxAge:2,childM
     </FormSection>
 
     <FormSection id="price" step="4" title="Price" description="This standard nightly price is reused on the website and in booking calculations.">
-      <div className="grid max-w-2xl gap-5 sm:grid-cols-2"><Field label="Standard nightly price" error={error('basePrice')}><input name="basePrice" type="number" min="0" step="0.01" defaultValue={room?.basePrice ?? ''} className={input}/></Field><Field label="Currency" error={error('currency')}><CurrencySelect defaultValue={room?.currency || 'EUR'} className={input}/></Field></div>
+      {room ? <div className="flex flex-wrap items-center justify-between gap-3">
+        <p>Standard nightly price <strong className="block">{formatRoomRate(room.basePrice,room.currency)}{room.basePrice!==null&&!room.rateActive?' · Inactive':''}</strong></p>
+        {canEditRates && <Link href={`/admin/rates#base-rate-${room.id}`} className="min-h-11 rounded-lg border border-slate-300 px-4 text-sm font-semibold">Edit rate</Link>}
+      </div> : <div className="grid max-w-2xl gap-5 sm:grid-cols-2"><Field label="Initial nightly price" error={error('basePrice')}><input name="basePrice" type="number" min="0" step="0.01" className={input}/></Field><Field label="Currency" error={error('currency')}><CurrencySelect defaultValue="EUR" className={input}/></Field></div>}
+
       <Link href="/admin/rates" className="inline-flex min-h-11 items-center text-sm font-bold text-[#164b59] underline underline-offset-4">Manage seasonal rates</Link>
     </FormSection>
 

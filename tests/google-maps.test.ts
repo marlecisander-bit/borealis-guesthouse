@@ -53,10 +53,9 @@ test('Admin settings rejects an invalid map link with a field-level message', ()
 
 test('Admin settings validates independent guest age bands',()=>{
   const data=new FormData();data.set('name','Borealis Guest House');data.set('currency','EUR');
-  data.set('infantMaxAge','2');data.set('childMaxAge','2');data.set('minimumBookingHolderAge','17');
+  data.set('infantMaxAge','2');data.set('childMaxAge','2');
   const result=validateSettings(data);
   assert.equal(result.state?.errors?.childMaxAge,'Child maximum age must be greater than the infant maximum age.');
-  assert.equal(result.state?.errors?.minimumBookingHolderAge,'Booking holders must be at least 18.');
-  data.set('childMaxAge','12');data.set('minimumBookingHolderAge','18');
+  data.set('childMaxAge','12');
   assert.equal(validateSettings(data).state,undefined);
 });

@@ -36,9 +36,10 @@ test('actual BookPage transfers validated URL props through configurator into Bo
   const page = load('src/app/book/page.tsx', {
     'react/jsx-runtime': { jsx,jsxs:jsx }, react:{Suspense:'Suspense'}, '@/components/booking/BookingFlow':{BookingFlow:'BookingFlow'}, '@/components/booking/BookingStage':{BookingStage:'BookingStage',BookingFlowSkeleton:'BookingFlowSkeleton'}, '@/components/public/PageShell':{PublicShell:'PublicShell'},
     '@/lib/booking/search-criteria':{...criteria,validateBookingSearch:(input:any)=>criteria.validateBookingSearch(input,'2026-10-21')}, '@/lib/seo':{createMetadata:()=>({})},
-    '@/services/content':{contentRepository:{getExperiences:async()=>[],getTransfers:async()=>[]}}, '@/services/site-content':{getSiteDocument:async()=>({}),getOccupancyAgePolicy:async()=>({infantMaxAge:2,childMaxAge:12})},
+    '@/services/content':{contentRepository:{getExperiences:async()=>[],getTransfers:async()=>[]}}, '@/services/site-content':{getSiteDocument:async()=>({}),getStayBookingNotice:async()=>'Fixture booking notice',getOccupancyAgePolicy:async()=>({infantMaxAge:2,childMaxAge:12})},
   });
   const tree = await page.default({searchParams:Promise.resolve(query)});
+  assert.equal(find(tree,node=>node.type==='BookingStage')?.props.notice,'Fixture booking notice');
   const config = find(tree,node=>typeof node.type==='function' && node.type.name==='BookingConfigurator'); assert.ok(config);
   const flow = await config.type(config.props); assert.equal(flow.type,'BookingFlow');
   assert.deepEqual([flow.props.initialCheckIn,flow.props.initialCheckOut,flow.props.initialGuests,flow.props.initialAdults,flow.props.initialChildren,flow.props.initialInfants,flow.props.autoSearch],['2026-11-16','2026-11-20',2,2,0,0,true]);
