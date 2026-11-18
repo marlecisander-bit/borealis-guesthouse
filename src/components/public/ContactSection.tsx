@@ -1,6 +1,63 @@
 import Link from 'next/link';
-import {ContactForm} from '@/components/public/ContactForm';
-import {MapPlaceholder} from '@/components/public/MapPlaceholder';
-import {getContactInfo,getSiteDocument} from '@/services/site-content';
-export async function ContactSection(){const[contact,page]=await Promise.all([getContactInfo(),getSiteDocument('contact')]);const journeyEyebrow=page.journeyEyebrow||'How to reach Borealis',journeyHeading=page.journeyHeading||'Plan the final part of your journey.',journeyDescription=page.journeyDescription||'Koman connections can vary by route and season. Contact us for current directions, or explore the transfer services being prepared for guests.',primaryLabel=page.primaryCtaLabel||'View transfers',primaryTarget=page.primaryCtaTarget||'/transfers',secondaryLabel=page.secondaryCtaLabel||'Check availability',secondaryTarget=page.secondaryCtaTarget||'/book';return <><section id="contact" className="shell scroll-mt-24 py-20"><div className="mb-10 max-w-2xl"><p className="eyebrow">{page.eyebrow||'Contact Borealis'}</p><h2 className="mt-4 font-serif text-5xl text-lake md:text-6xl">{page.title||'Let us help with the journey.'}</h2><p className="mt-5 leading-7 text-muted">{page.introduction||'Ask about a room, an experience, a transfer or the best way to reach us in Koman.'}</p></div><div className="grid gap-8 lg:grid-cols-[.75fr_1.25fr]"><aside className="rounded-[1.75rem] bg-lake p-7 text-white md:p-9"><h2 className="font-serif text-4xl">{page.directHeading||'Talk to us directly.'}</h2><p className="mt-4 text-sm leading-6 text-white/60">{page.directDescription||'Contact details are managed in Borealis settings.'}</p><div className="mt-8 grid gap-3"><ContactAction label="Call" value={contact.phoneLabel} href={contact.phone?`tel:${contact.phone}`:undefined}/>{contact.whatsapp&&<ContactAction label="WhatsApp" value={contact.whatsappLabel} href={contact.whatsapp}/>}<ContactAction label="Email" value={contact.email} href={contact.email?`mailto:${contact.email}`:undefined}/><ContactAction label="Instagram" value={contact.instagramLabel} href={contact.instagram||undefined}/>{contact.facebook&&<ContactAction label="Facebook" value={contact.facebookLabel} href={contact.facebook}/>}</div><div className="mt-8 border-t border-white/15 pt-7"><p className="text-xs font-bold uppercase tracking-widest text-sand">{page.addressLabel||'Address'}</p><p className="mt-3 text-sm leading-6 text-white/70">{contact.address}</p>{page.directionsText&&<p className="mt-3 text-sm leading-6 text-white/60">{page.directionsText}</p>}</div></aside><div><ContactForm/></div></div></section><section className="bg-ivory py-20 md:py-24"><div className="shell grid gap-10 lg:grid-cols-2 lg:items-center"><div><p className="eyebrow">{journeyEyebrow}</p><h2 className="mt-4 font-serif text-5xl text-lake md:text-6xl">{journeyHeading}</h2><p className="mt-6 max-w-lg leading-8 text-muted">{journeyDescription}</p><div className="mt-7 flex flex-col gap-3 sm:flex-row"><Link href={primaryTarget} className="min-h-14 rounded-full bg-lake px-7 py-4 text-center text-sm font-bold text-white">{primaryLabel}</Link><Link href={secondaryTarget} className="min-h-14 rounded-full bg-sand px-7 py-4 text-center text-sm font-bold text-lake">{secondaryLabel}</Link></div></div><MapPlaceholder contact={contact}/></div></section></>}
-function ContactAction({label,value,href}:{label:string;value:string;href?:string}){const content=<><span><span className="block text-xs font-bold uppercase tracking-widest text-sand">{label}</span><span className="mt-1 block text-sm text-white/75">{value}</span></span><span aria-hidden="true" className="text-xl">{href?'→':'—'}</span></>;return href?<Link href={href} className="flex min-h-16 items-center justify-between rounded-xl bg-white/8 px-5">{content}</Link>:<div className="flex min-h-16 items-center justify-between rounded-xl bg-white/5 px-5">{content}</div>}
+import { ContactForm } from '@/components/public/ContactForm';
+import { MapPlaceholder } from '@/components/public/MapPlaceholder';
+import { getContactInfo, getSiteDocument } from '@/services/site-content';
+
+export async function ContactSection() {
+  const [contact, page] = await Promise.all([getContactInfo(), getSiteDocument('contact')]);
+  const directDescription = /managed in Borealis settings/i.test(page.directDescription || '') ? '' : page.directDescription;
+
+  return <>
+    <section id="contact" className="shell public-section-anchor py-10 md:py-16">
+      <div className="mb-8 max-w-2xl">
+        <p className="eyebrow">{page.eyebrow || 'Contact Borealis'}</p>
+        <h2 className="mt-3 font-serif text-4xl text-lake md:text-6xl">Contact &amp; Directions</h2>
+        <p className="mt-4 leading-7 text-muted">{page.introduction || 'Ask about a room, an experience, a transfer or the best way to reach us in Koman.'}</p>
+      </div>
+      <div className="grid gap-8 lg:grid-cols-[.75fr_1.25fr]">
+        <aside className="rounded-3xl bg-lake p-6 text-white md:p-9">
+          <h3 className="font-serif text-3xl">{page.directHeading || 'Talk to us directly.'}</h3>
+          {directDescription && <p className="mt-4 text-sm leading-6 text-white/80">{directDescription}</p>}
+          <div className="mt-5 grid gap-3">
+            {contact.mapsUrl && <ContactAction label="Open in Google Maps" value={contact.address} href={contact.mapsUrl} newTab/>}
+            {contact.phone && <ContactAction label="Call" value={contact.phoneLabel} href={`tel:${contact.phone}`}/>}
+            {contact.whatsapp && <ContactAction label="WhatsApp" value={contact.whatsappLabel} href={contact.whatsapp} newTab/>}
+            {contact.email && <ContactAction label="Email" value={contact.email} href={`mailto:${contact.email}`}/>}
+            {contact.instagram && <ContactAction label="Instagram" value={contact.instagramLabel} href={contact.instagram} newTab/>}
+            {contact.facebook && <ContactAction label="Facebook" value={contact.facebookLabel} href={contact.facebook} newTab/>}
+          </div>
+          <div className="mt-6 border-t border-white/20 pt-5">
+            <p className="text-xs font-bold uppercase tracking-widest text-sand">{page.addressLabel || 'Address'}</p>
+            <p className="mt-2 text-sm leading-6 text-white/85">{contact.address}</p>
+            {page.directionsText && <p className="mt-3 text-sm leading-6 text-white/80">{page.directionsText}</p>}
+          </div>
+        </aside>
+        <ContactForm/>
+      </div>
+    </section>
+    <section className="bg-ivory py-12 md:py-16">
+      <div className="shell grid gap-8 lg:grid-cols-2 lg:items-center">
+        <div>
+          <p className="eyebrow">{page.journeyEyebrow || 'How to reach Borealis'}</p>
+          <h2 className="mt-3 font-serif text-4xl text-lake md:text-5xl">{page.journeyHeading || 'Plan the final part of your journey.'}</h2>
+          <p className="mt-4 max-w-lg leading-7 text-muted">{page.journeyDescription || 'Koman connections can vary by route and season. Contact us for current directions and transfer options.'}</p>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <Link href={page.primaryCtaTarget || '/transfers'} className="min-h-12 rounded-full bg-lake px-6 py-3 text-center text-sm font-bold text-white">{page.primaryCtaLabel || 'View transfers'}</Link>
+            <Link href={page.secondaryCtaTarget || '/book'} className="min-h-12 rounded-full bg-sand px-6 py-3 text-center text-sm font-bold text-lake">{page.secondaryCtaLabel || 'Check availability'}</Link>
+          </div>
+        </div>
+        <MapPlaceholder contact={contact}/>
+      </div>
+    </section>
+  </>;
+}
+
+function ContactAction({ label, value, href, newTab }: { label: string; value: string; href: string; newTab?: boolean }) {
+  return <a href={href} target={newTab ? '_blank' : undefined} rel={newTab ? 'noopener noreferrer' : undefined} className="flex min-h-14 items-center justify-between gap-3 rounded-xl bg-white/10 px-4 py-2">
+    <span>
+      <span className="block text-xs font-bold uppercase tracking-widest text-sand">{label}</span>
+      <span className="mt-1 block text-sm text-white/85">{value}</span>
+    </span>
+    <span aria-hidden="true" className="text-xl">→</span>
+  </a>;
+}

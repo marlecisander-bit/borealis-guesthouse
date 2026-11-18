@@ -43,7 +43,7 @@ export async function HomepageSections({homepageCms,liveProperty}:{homepageCms:P
               <SectionHeader eyebrow={roomSection?.eyebrow||'Stay at Borealis'} title={roomSection?.title||'Our Rooms'} copy={roomSection?.subtitle||roomSection?.body||'Natural textures, quiet comfort and the lake always close by.'} />
               <Link href={roomSection?.ctaLink||'/rooms'} className="hidden border-b-2 border-sand pb-1 text-sm font-bold text-lake md:block">{roomSection?.ctaLabel||'See all rooms'}</Link>
             </div>
-            <div className="-mx-4 mt-12 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-5 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0">
+            <div className="-mx-3 mt-12 flex snap-x snap-mandatory gap-5 overflow-x-auto px-3 pb-5 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0">
               {liveRooms.map((room) => <RoomCard key={room.id} room={room} variant="featured"/>)}
             </div>
           </div>

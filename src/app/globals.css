@@ -117,5 +117,10 @@
 .whatsapp-contact__logo{display:block;flex:none;width:28px;height:28px;object-fit:contain}.whatsapp-contact__label{display:none;font-size:16px;line-height:24px;font-weight:700}
 .whatsapp-contact:hover{box-shadow:0 6px 20px #0b30243b}.whatsapp-contact:focus-visible{outline:3px solid #164b59;outline-offset:4px;box-shadow:0 0 0 2px white,0 4px 16px #0b302433}
 .whatsapp-contact.is-obstructed,.whatsapp-contact[data-ready="false"]{visibility:hidden;pointer-events:none}
-@media(min-width:768px){.whatsapp-contact{--whatsapp-edge:24px;width:auto;padding-inline:20px}.whatsapp-contact__label{display:inline}}
+@media(min-width:768px){.whatsapp-contact{--whatsapp-edge:24px}}
+.eyebrow-on-photo{color:#fff}
+.public-section-anchor{scroll-margin-top:calc(var(--public-header-height,4.5rem) + env(safe-area-inset-top) + 1rem)}
 @media(prefers-reduced-motion:reduce){.whatsapp-contact{transition:none}}
+
+/* Keep classic scrollbars from resizing the booking shell as its content streams in. */
+html:has([data-booking-stage]) { scrollbar-gutter: stable; }

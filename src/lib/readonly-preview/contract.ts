@@ -11,7 +11,8 @@ export const projections: Record<string, readonly string[]> = {
   ],
   "experiences": [
     "id,name,slug",
-    "id,slug,name,short_description,full_description,duration_label,max_capacity,minimum_quantity,maximum_quantity,price,currency,pricing_type,meeting_point,included_items,important_notes,booking_notice,availability_mode,is_featured,bookable,book_independently"
+    "id,slug,name,short_description,full_description,duration_label,max_capacity,minimum_quantity,maximum_quantity,price,currency,pricing_type,meeting_point,included_items,important_notes,booking_notice,availability_mode,is_featured,bookable,book_independently",
+    "rental_config,id,slug,name,short_description,full_description,duration_label,duration_minutes,max_capacity,minimum_quantity,maximum_quantity,price,currency,pricing_type,meeting_point,included_items,important_notes,booking_notice,availability_mode,is_featured,bookable,book_independently"
   ],
   "gallery_items": [
     "id,title,category,sort_order,media_assets!inner(id,file_path,alt_text,filename,status,is_visible)"

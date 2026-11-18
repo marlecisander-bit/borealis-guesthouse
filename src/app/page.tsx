@@ -43,14 +43,14 @@ export default async function Home({searchParams}:{searchParams:Promise<{preview
       <main className="flex flex-col">{preview&&<PreviewBanner label="Homepage draft preview"/>}
         {visible('hero')&&<section data-homepage-section="hero" style={{order:order('hero',0)}} className="hero-section relative z-30 min-h-[88svh] bg-lake text-white lg:min-h-[94svh]">
           <HeroImage desktopAsset={homepageCms?.heroAssets[String(heroSettings?.desktopHeroAssetId || '')]} mobileAsset={homepageCms?.heroAssets[String(heroSettings?.mobileHeroAssetId || '')]} desktopFocal={heroSettings?.desktopFocal} mobileFocal={heroSettings?.mobileFocal} desktopImage={!preview&&publishedHero?.imageUrl?publishedHero.imageUrl:hero?.backgroundMediaId?homepageCms?.mediaUrls[hero.backgroundMediaId]||liveProperty.heroImage:liveProperty.heroImage} mobileImage={homepageCms?.mediaUrls[String(heroSettings?.mobileMediaId || '')]} mobileAlt={String(heroSettings?.mobileImageAlt||heroSettings?.imageAlt||'')} alt={String(heroSettings?.imageAlt || hero?.title || 'Koman Lake surrounded by mountain slopes')} overlayIntensity={heroSettings?.overlayIntensity} />
-          <div className="hero-content shell relative flex min-h-[88svh] flex-col justify-end pb-7 pt-28 lg:min-h-[94svh] lg:pb-0">
+          <div className="hero-content shell relative flex min-h-[88svh] flex-col justify-end pb-7 pt-28 lg:min-h-[94svh] lg:pb-8">
             <div className="hero-copy max-w-3xl pb-7 md:pb-10">
-              <p className="text-[.68rem] font-bold uppercase tracking-[0.26em] text-sand">{hero?.eyebrow||'Borealis Guest House · Koman, Albania'}</p>
+              <p className="text-[.68rem] font-bold uppercase tracking-[0.26em] text-white">{hero?.eyebrow||'Borealis Guest House · Koman, Albania'}</p>
               <h1 className="mt-4 max-w-[12ch] font-serif text-[clamp(3rem,7vw,6.8rem)] font-medium leading-[.88] tracking-[-.045em]">{hero?.title||'Wake up by the water.'}</h1>
               <p className="mt-5 max-w-xl text-[.95rem] leading-7 text-white/80 md:text-lg">{hero?.subtitle||'A lakeside stay in the heart of Koman.'}</p>
-              {hero?.ctaLabel&&<Link href={hero.ctaLink||'/book'} className="mt-6 inline-block rounded-full bg-sand px-6 py-3 text-sm font-bold text-lake">{hero.ctaLabel}</Link>}
+              {hero?.settings.showBookingSearch===false&&hero?.ctaLabel&&<Link href={hero.ctaLink||'/book'} className="mt-6 inline-block rounded-full bg-sand px-6 py-3 text-sm font-bold text-lake">{hero.ctaLabel}</Link>}
             </div>
-            {hero?.settings.showBookingSearch!==false&&<div className="hero-booking md:translate-y-1/2"><BookingSearch hero ctaLabel={(typeof bookingCtaLabel==='string'&&bookingCtaLabel)||'Check availability'} infantMaxAge={agePolicy.infantMaxAge} childMaxAge={agePolicy.childMaxAge}/></div>}
+            {hero?.settings.showBookingSearch!==false&&<div className="hero-booking"><BookingSearch hero ctaLabel={(typeof bookingCtaLabel==='string'&&bookingCtaLabel)||'Check availability'} infantMaxAge={agePolicy.infantMaxAge} childMaxAge={agePolicy.childMaxAge}/></div>}
           </div>
         </section>}
 

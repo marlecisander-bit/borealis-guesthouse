@@ -12,7 +12,7 @@ import { createLocalizedMetadata } from '@/lib/seo';
 import { contentRepository } from '@/services/content';
 import { authorizePreview } from '@/lib/preview';
 import { PreviewBanner } from '@/components/public/PreviewBanner';
-import {formatMoney} from '@/lib/pricing/format';
+import {formatExperiencePrice} from '@/lib/pricing/format';
 import { getLandingPageContent } from '@/services/site-content';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -26,35 +26,50 @@ export default async function ExperiencePage({ params,searchParams }: { params: 
   const [item, rooms, page] = await Promise.all([contentRepository.getExperience(slug,preview?.id), contentRepository.getRooms(), getLandingPageContent('experiences')]);
   if (!item) notFound();
   const canBookIndependently=item.bookable&&item.bookIndependently===true&&(!item.rental||item.rental.standalone);
-  const productData: Record<string, unknown> = { '@context': 'https://schema.org', '@type': 'Product', name: item.title, description: item.description, image: item.gallery, category: item.category };
+  const photos = item.gallery.filter(image => image !== '/borealis-placeholder.svg');
+  const productData: Record<string, unknown> = { '@context': 'https://schema.org', '@type': 'Product', name: item.title, description: item.description, image: photos, category: item.category };
   if (item.priceFrom !== null) productData.offers = { '@type': 'Offer', priceCurrency: item.currency, price: item.priceFrom, availability: 'https://schema.org/PreOrder' };
   return <PublicShell mobileBooking={false}>{preview&&<PreviewBanner label="Experience draft preview"/>}
     <BreadcrumbJsonLd items={[{ name: 'Home', url: '/' }, { name: 'Experiences', url: '/experiences' }, { name: item.title, url: `/experiences/${slug}` }]} />
     <JsonLd data={productData} />
     <section className="shell pb-20 pt-8 md:pt-10">
       <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Experiences', href: '/experiences' }, { label: item.title }]} />
-      <ExperienceGallery images={item.gallery} title={item.title} />
-      <div className="grid gap-12 py-14 lg:grid-cols-[1fr_24rem] lg:gap-20">
-        <div>
+      <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_23rem] lg:items-start lg:gap-10">
+        <div className="lg:col-start-2 lg:row-start-1 lg:row-span-2">
           <p className="eyebrow">{item.category}</p>
-          <h1 className="mt-4 font-serif text-5xl leading-[.98] text-lake sm:text-6xl md:text-8xl">{item.title}</h1>
-          <p className="mt-7 max-w-2xl text-xl leading-8 text-muted">{item.description}</p>
-          <dl className="mt-10 grid grid-cols-2 gap-5 border-y border-lake/10 py-7 sm:grid-cols-3">
-            <Fact label="Duration" value={item.duration}/><Fact label="Capacity" value={item.capacity}/><Fact label="Starting price" value={item.priceFrom===null?item.priceType:formatMoney(item.priceFrom,item.currency)} />
+          <h1 className="mt-4 font-serif text-4xl leading-none text-lake sm:text-5xl">{item.title}</h1>
+
+          <dl className="my-5 grid grid-cols-2 gap-4 border-y border-lake/10 py-5">
+            <Fact label="Duration" value={item.duration}/>{item.capacity !== "On request" && <Fact label="Capacity" value={item.capacity}/>}
           </dl>
-          {item.rental&&<div className="mt-8"><RentalInformation rental={item.rental} currency={item.currency}/></div>}<section className="py-12"><p className="eyebrow">{page.detailEyebrow}</p><h2 className="mt-3 font-serif text-4xl text-lake">{page.detailHeading}</h2><p className="mt-5 max-w-2xl text-lg leading-8 text-muted">{item.longDescription}</p></section>
-          <section className="grid gap-10 border-t border-lake/10 py-12 md:grid-cols-2"><InfoList title="What's included" items={item.included}/><InfoList title="Booking requirements" items={item.bookingRequirements}/></section>
-          <section className="rounded-[1.75rem] bg-ivory p-7 md:p-9"><p className="eyebrow">Practical information</p><dl className="mt-6 space-y-5"><InfoRow label="Availability" value={item.availability}/><InfoRow label="Meeting point" value={item.meetingPoint}/><InfoRow label="Price type" value={item.priceType}/></dl>{item.notes.length>0&&<div className="mt-7 border-t border-lake/10 pt-6"><InfoList title="Notes" items={item.notes}/></div>}</section>
+          <div data-booking-actions className="rounded-3xl bg-brand p-5 text-white">
+            <p className="font-serif text-3xl">{formatExperiencePrice(item.priceFrom, item.currency, item.priceType)}</p>
+            {canBookIndependently&&<BookingLink href={`/book/experience/${item.slug}`} className="mt-6 flex min-h-14 w-full rounded-xl bg-sand px-5 py-4 text-center text-sm font-bold text-lake">Choose a time</BookingLink>}
+            {item.bookable&&(!item.rental||item.rental.roomAddon)&&<BookingLink href={`/book?addon=${item.slug}`} className="mt-3 flex min-h-14 w-full rounded-xl border border-white/25 px-5 py-4 text-center text-sm font-bold text-white">Add to a room stay</BookingLink>}
+          </div>
+          {item.included.length > 0 && <div className="mt-6"><InfoList title="What's included" items={item.included}/></div>}
         </div>
-        <aside className="h-fit rounded-[1.75rem] bg-brand p-7 text-white lg:sticky lg:top-6">
-          <p className="text-xs font-bold uppercase tracking-widest text-sand">Plan this experience</p><p className="mt-5 text-sm text-white/60">{item.priceFrom===null?item.priceType:'Starting from'}</p>{item.priceFrom!==null&&<p className="mt-1 font-serif text-4xl">{formatMoney(item.priceFrom,item.currency)}</p>}<p className="mt-5 text-sm leading-6 text-white/65">{item.bookingRequirements[0]||'Contact Borealis for current availability.'}</p>
-          {canBookIndependently&&<BookingLink href={`/book/experience/${item.slug}`} className="mt-6 flex min-h-14 w-full rounded-xl bg-sand px-5 py-4 text-center text-sm font-bold text-lake">Choose time</BookingLink>}
-          {item.bookable&&(!item.rental||item.rental.roomAddon)&&<BookingLink href={`/book?addon=${item.slug}`} className="mt-3 flex min-h-14 w-full rounded-xl border border-white/25 px-5 py-4 text-center text-sm font-bold text-white">Add to a room stay</BookingLink>}
-        </aside>
+        {photos.length > 0 && <div className="lg:col-start-1 lg:row-start-1">
+          <ExperienceGallery images={photos} title={item.title}/>
+        </div>}
+        <div className={photos.length > 0 ? 'lg:col-start-1' : 'lg:col-start-1 lg:row-start-1'}>
+          {item.description && <p className="max-w-2xl text-lg leading-8 text-muted">{item.description}</p>}
+          {item.rental && <div className="mt-6"><RentalInformation rental={item.rental} currency={item.currency}/></div>}
+          {item.longDescription && item.longDescription !== item.description && <section className="py-8">
+            <h2 className="font-serif text-4xl text-lake">{page.detailHeading}</h2>
+            <p className="mt-4 max-w-2xl text-lg leading-8 text-muted">{item.longDescription}</p>
+          </section>}
+          {item.bookingRequirements.length > 0 && <div className="py-6"><InfoList title="Booking requirements" items={item.bookingRequirements}/></div>}
+          <section className="mt-6 rounded-3xl bg-ivory p-6">
+            <h2 className="font-serif text-2xl text-lake">Practical information</h2>
+            <dl className="mt-4 space-y-4"><InfoRow label="Meeting point" value={item.meetingPoint}/></dl>
+            {item.notes.length > 0 && <div className="mt-6"><InfoList title="Notes" items={item.notes}/></div>}
+          </section>
+        </div>
       </div>
     </section>
     <section className="bg-ivory py-20 md:py-28"><div className="shell"><div className="grid gap-8 md:grid-cols-[1fr_auto] md:items-end"><div><p className="eyebrow">{page.relatedEyebrow}</p><h2 className="mt-4 font-serif text-5xl text-lake md:text-6xl">{page.relatedHeading}</h2><p className="mt-4 max-w-xl leading-7 text-muted">{page.relatedDescription}</p></div><Link href="/rooms" className="border-b-2 border-sand pb-1 text-sm font-bold text-lake">{page.relatedLinkLabel}</Link></div><div className="mt-10 grid gap-10 md:grid-cols-2">{rooms.slice(0,2).map((room)=><RoomCard key={room.id} room={room}/>)}</div></div></section>
-    <ExperienceActions slug={item.slug} price={item.priceFrom} currency={item.currency} bookable={item.bookable} bookIndependently={canBookIndependently}/>
+    <ExperienceActions slug={item.slug} price={item.priceFrom} currency={item.currency} priceType={item.priceType} bookable={item.bookable && (canBookIndependently || !item.rental || item.rental.roomAddon)} bookIndependently={canBookIndependently}/>
   </PublicShell>;
 }
 

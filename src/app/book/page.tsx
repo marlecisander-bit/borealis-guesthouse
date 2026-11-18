@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { BookingFlow } from '@/components/booking/BookingFlow';
+import { BookingFlowSkeleton, BookingStage } from '@/components/booking/BookingStage';
 import { PublicShell } from '@/components/public/PageShell';
 import { validateBookingSearch } from '@/lib/booking/search-criteria';
 import { createMetadata } from '@/lib/seo';
@@ -18,10 +19,7 @@ export default async function BookPage({ searchParams }: { searchParams: Promise
   const value = (key: string) => typeof params[key] === 'string' ? params[key] : undefined;
   const search = validateBookingSearch({ checkIn:value('checkIn'), checkOut:value('checkOut'), guests:value('guests'),adults:value('adults'),children:value('children'),infants:value('infants') });
   return <PublicShell mobileBooking={false}>
-    <section className="bg-ivory py-12 md:py-20">
-      <div className="shell"><p className="eyebrow">{page.eyebrow||'Book direct'}</p><h1 className="mt-4 max-w-3xl font-serif text-5xl leading-none text-lake md:text-7xl">{page.heading||'Your Koman stay, made simple.'}</h1><p className="mt-5 max-w-xl leading-7 text-muted">{page.description||'Choose your room, add anything useful and review everything clearly before confirming.'}</p></div>
-    </section>
-    <section className="bg-[#fbfaf7] py-8 md:py-14"><div className="shell"><Suspense fallback={<BookingFlowSkeleton/>}><BookingConfigurator
+    <BookingStage intro={page}><Suspense fallback={<BookingFlowSkeleton/>}><BookingConfigurator
       initialRoom={value('room')}
       initialTransfer={value('transfer')}
       initialExperience={value('experience')||value('addon')}
@@ -29,7 +27,7 @@ export default async function BookPage({ searchParams }: { searchParams: Promise
       search={search}
       infantMaxAge={agePolicy.infantMaxAge}
       childMaxAge={agePolicy.childMaxAge}
-    /></Suspense></div></section>
+    /></Suspense></BookingStage>
   </PublicShell>;
 }
 
@@ -72,5 +70,3 @@ async function BookingConfigurator({initialRoom,initialTransfer,initialExperienc
       addons={[...experienceAddons,...transferAddons]}
     />;
 }
-
-function BookingFlowSkeleton(){return <div aria-label="Preparing booking options" aria-busy="true" className="grid animate-pulse gap-10 lg:grid-cols-[1fr_23rem]"><div className="rounded-[1.5rem] bg-white p-5 shadow-sm md:p-8"><div className="h-8 w-52 rounded-full bg-brand-soft"/><div className="mt-7 grid gap-3 sm:grid-cols-2">{Array.from({length:4},(_,index)=><div key={index} className="h-16 rounded-xl bg-ivory"/>)}</div></div><div className="hidden h-72 rounded-[1.75rem] bg-brand-soft lg:block"/></div>}

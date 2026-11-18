@@ -1,0 +1,14 @@
+{
+  "id": "/admin/",
+  "name": "Borealis Guest House Admin",
+  "short_name": "Borealis Admin",
+  "start_url": "/admin/notifications",
+  "scope": "/admin/",
+  "display": "standalone",
+  "background_color": "#f6f4ef",
+  "theme_color": "#24523e",
+  "icons": [
+    {"src": "/admin/push-icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "/admin/push-icon-512.png", "sizes": "512x512", "type": "image/png"}
+  ]
+}

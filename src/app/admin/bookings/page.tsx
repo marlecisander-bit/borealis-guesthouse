@@ -23,6 +23,7 @@ export default async function BookingsPage({searchParams}:{searchParams:Promise<
   const activeFilters=[filters.status?.replaceAll('_',' '),rooms.find(room=>room.id===filters.room)?.name||filters.room,filters.from&&'From '+filters.from,filters.to&&'To '+filters.to,filters.date,filters.payment==='failed'&&'Failed payment'].filter(Boolean);
   const viewHref=(period:string)=>bookingListHref({...filters,period,date:undefined,page:undefined});
   return <div className="space-y-4 sm:space-y-5">{header}
+    <Link href="/admin/bookings/requests" className="inline-flex min-h-11 items-center text-sm font-bold text-brand underline">Guest booking requests</Link>
     <div className="flex flex-wrap gap-2">
       <Form action="/admin/bookings" className="flex min-w-0 flex-1 gap-2">
         {Object.entries(filters).filter(([key,value])=>key!=='q'&&key!=='page'&&typeof value==='string').map(([key,value])=><input key={key} type="hidden" name={key} value={value}/>)}

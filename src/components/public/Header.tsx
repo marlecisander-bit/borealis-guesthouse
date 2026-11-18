@@ -10,7 +10,7 @@ import type { LanguageRecord } from '@/types/languages';
 import { isHomeNavigationItem } from '@/lib/navigation/home';
 import { BookingLink, useBookingRoutePrefetch } from './BookingLink';
 
-const fallbackLinks = [['Home', '/'], ['Rooms', '/rooms'], ['Journey', '/experiences'], ['Explore Koman', '/explore-koman'], ['Discover', '/gallery']];
+const fallbackLinks = [['Home', '/'], ['Rooms', '/rooms'], ['Experiences & Transfers', '/experiences'], ['Explore Koman', '/explore-koman'], ['Gallery', '/gallery']];
 const mobileFocusable = 'a[href],button:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
 export function Header({ overlay = false, navigation, languages = [], selectedLanguage = '', bookingCtaLabel = 'Book now', mobileBookingCtaLabel = 'Check availability' }: { overlay?: boolean; navigation?: { label: string; href: string }[]; languages?: LanguageRecord[]; selectedLanguage?: string; bookingCtaLabel?: string; mobileBookingCtaLabel?: string }) {

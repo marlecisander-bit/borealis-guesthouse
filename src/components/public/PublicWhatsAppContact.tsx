@@ -6,6 +6,6 @@ import {WhatsAppContact} from './WhatsAppContact';
 /** Root-layout sibling of page content: persists across public route navigation. */
 export function PublicWhatsAppContact({value}:{value?:string}) {
   const pathname=usePathname();
-  if(pathname?.match(/^\/admin(?:\/|$)/))return null;
+  if(pathname?.match(/^\/(?:admin|book|booking)(?:\/|$)/))return null;
   return <WhatsAppContact value={value}/>;
 }

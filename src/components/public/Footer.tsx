@@ -21,14 +21,16 @@ type HomepageFooterProps = {
 const fallbackLinks = [
   { label: 'Home', href: '/' },
   { label: 'Rooms', href: '/rooms' },
-  { label: 'Journey', href: '/experiences' },
+  { label: 'Experiences & Transfers', href: '/experiences' },
   { label: 'Explore Koman', href: '/explore-koman' },
-  { label: 'Discover', href: '/gallery' },
+  { label: 'Gallery', href: '/gallery' },
 ];
 
 async function getFooterContent() {
   const [contact, cms, managed] = await Promise.all([getContactInfo(), getSiteDocument('footer'), getNavigation('footer')]);
-  return { contact, cms, links: managed.length ? managed : fallbackLinks };
+  const links = (managed.length ? managed : fallbackLinks)
+    .filter(({href}) => href !== '/contact' && href !== '/gallery#contact');
+  return { contact, cms, links: [...links, { label: 'Contact & Directions', href: '/gallery#contact' }] };
 }
 
 export async function Footer() {
@@ -50,7 +52,7 @@ export async function Footer() {
           <h2 className="text-xs font-bold uppercase tracking-widest text-sand">{cms.findUsHeading||'Find us'}</h2>
           <div className="mt-5 grid gap-3 text-sm text-white/70">
             <p>{contact.address}</p>
-            <a href={`mailto:${contact.email}`}>{contact.email}</a>
+            {contact.email && <a href={`mailto:${contact.email}`}>{contact.email}</a>}
             {contact.phone && <a href={`tel:${contact.phone}`}>Call us</a>}
             {contact.whatsapp && <a href={contact.whatsapp}>WhatsApp</a>}
             {contact.instagram && <a href={contact.instagram} target="_blank" rel="noopener noreferrer">Instagram</a>}

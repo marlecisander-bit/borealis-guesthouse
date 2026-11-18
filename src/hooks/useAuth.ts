@@ -1,5 +1,6 @@
 'use client';
 
+import { revokeAdminPushOnSignOut } from '@/lib/notifications/push-device';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
@@ -65,6 +66,7 @@ export function useAuth() {
   );
 
   const signOut = useCallback(async () => {
+    await revokeAdminPushOnSignOut();
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   }, [supabase]);

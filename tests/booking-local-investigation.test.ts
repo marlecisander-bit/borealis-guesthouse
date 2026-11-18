@@ -34,7 +34,7 @@ test('exact reported URL has valid future dates and consistent category counts; 
 });
 test('actual BookPage transfers validated URL props through configurator into BookingFlow offline', async () => {
   const page = load('src/app/book/page.tsx', {
-    'react/jsx-runtime': { jsx,jsxs:jsx }, react:{Suspense:'Suspense'}, '@/components/booking/BookingFlow':{BookingFlow:'BookingFlow'}, '@/components/public/PageShell':{PublicShell:'PublicShell'},
+    'react/jsx-runtime': { jsx,jsxs:jsx }, react:{Suspense:'Suspense'}, '@/components/booking/BookingFlow':{BookingFlow:'BookingFlow'}, '@/components/booking/BookingStage':{BookingStage:'BookingStage',BookingFlowSkeleton:'BookingFlowSkeleton'}, '@/components/public/PageShell':{PublicShell:'PublicShell'},
     '@/lib/booking/search-criteria':{...criteria,validateBookingSearch:(input:any)=>criteria.validateBookingSearch(input,'2026-10-21')}, '@/lib/seo':{createMetadata:()=>({})},
     '@/services/content':{contentRepository:{getExperiences:async()=>[],getTransfers:async()=>[]}}, '@/services/site-content':{getSiteDocument:async()=>({}),getOccupancyAgePolicy:async()=>({infantMaxAge:2,childMaxAge:12})},
   });

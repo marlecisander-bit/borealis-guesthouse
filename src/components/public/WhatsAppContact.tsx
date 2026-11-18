@@ -9,7 +9,7 @@ const clientReady=()=>true;
 const serverReady=()=>false;
 const regions='.safe-bottom-bar,.safe-bottom-offset,[data-floating-contact-obstacle],[data-cookie-notice]';
 
-/** One destination and one focus target; CSS switches circle/pill at 768px. */
+/** One destination and one focus target; CSS displays the compact icon. */
 export function WhatsAppContact({value,menuOpen=false,label='Chat with us',accessibleLabel='Chat with Borealis on WhatsApp (opens in a new tab)'}:{value?:string;menuOpen?:boolean;label?:string;accessibleLabel?:string}) {
   const href=whatsAppHref(value),button=useRef<HTMLAnchorElement>(null),mounted=useSyncExternalStore(subscribeToClient,clientReady,serverReady),[obstructed,setObstructed]=useState(false);
   useEffect(()=>{
@@ -32,7 +32,15 @@ export function WhatsAppContact({value,menuOpen=false,label='Chat with us',acces
         if(Number.isFinite(bottom))clearance=Math.max(clearance,bottom+region.offsetHeight+12);
       }
       element.style.setProperty('--whatsapp-clearance',`${clearance}px`);
-      setObstructed(Boolean(modal||editing||keyboard));
+      const rect=element.getBoundingClientRect();
+      const overlapsControl=[...document.querySelectorAll(
+        '.booking-search, [data-booking-actions], a[href^="/book"], main form'
+      )].some(control=>{
+        const bounds=control.getBoundingClientRect();
+        return bounds.width>0&&bounds.height>0&&rect.right+8>bounds.left&&rect.left-8<bounds.right
+          &&rect.bottom+8>bounds.top&&rect.top-8<bounds.bottom;
+      });
+      setObstructed(Boolean(modal||editing||keyboard||overlapsControl));
     };
     const schedule=()=>{if(!frame)frame=requestAnimationFrame(update)};
     const sizes=new ResizeObserver(schedule);
@@ -42,8 +50,8 @@ export function WhatsAppContact({value,menuOpen=false,label='Chat with us',acces
     });
     observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['open','aria-modal','aria-hidden','inert','class','style','data-floating-contact-active','data-cookie-notice']});
     observeRegions();schedule();
-    window.addEventListener('resize',schedule);document.addEventListener('focusin',schedule);document.addEventListener('focusout',schedule);window.visualViewport?.addEventListener('resize',schedule);
-    return()=>{cancelAnimationFrame(frame);observer.disconnect();sizes.disconnect();window.removeEventListener('resize',schedule);document.removeEventListener('focusin',schedule);document.removeEventListener('focusout',schedule);window.visualViewport?.removeEventListener('resize',schedule)};
+    window.addEventListener('resize',schedule);window.addEventListener('scroll',schedule,{passive:true,capture:true});document.addEventListener('focusin',schedule);document.addEventListener('focusout',schedule);window.visualViewport?.addEventListener('resize',schedule);
+    return()=>{cancelAnimationFrame(frame);observer.disconnect();sizes.disconnect();window.removeEventListener('resize',schedule);window.removeEventListener('scroll',schedule,true);document.removeEventListener('focusin',schedule);document.removeEventListener('focusout',schedule);window.visualViewport?.removeEventListener('resize',schedule)};
   },[href,mounted]);
   if(!href)return null;
   const hidden=menuOpen||obstructed;

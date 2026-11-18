@@ -10,6 +10,16 @@ const nextConfig: NextConfig = {
     BOREALIS_RELEASE_SHA: process.env.COMMIT_REF || "",
     BOREALIS_DEPLOY_ID: process.env.DEPLOY_ID || "",
   },
+  async headers() {
+    return [{
+      source: "/booking/confirmation/:path*",
+      headers: [
+        { key: "Referrer-Policy", value: "no-referrer" },
+        { key: "Cache-Control", value: "private, no-store" },
+        { key: "X-Robots-Tag", value: "noindex, nofollow" },
+      ],
+    }];
+  },
   distDir: process.env.NEXT_DIST_DIR || ".next",
   turbopack: {
     root: process.cwd(),

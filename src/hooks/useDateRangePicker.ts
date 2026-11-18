@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState, type MouseEvent } from 'react';
 import { dateOnlyToLocal, localToDateOnly, selectDateRangeValue, todayIso, type DateRangeField, type DateRangeValue } from '@/lib/date-range';
 
 export function useDateRangePicker({ value, onChange, minimumNights = 1 }: { value: DateRangeValue; onChange: (value: DateRangeValue) => void; minimumNights?: number }) {
@@ -9,14 +9,10 @@ export function useDateRangePicker({ value, onChange, minimumNights = 1 }: { val
   const [open, setOpen] = useState(false);
   const [selectionMinimum, setSelectionMinimum] = useState(Math.max(1, minimumNights));
 
-  useEffect(() => {
-    if (!open) return;
-    const close = (event: KeyboardEvent) => { if (event.key === 'Escape') setOpen(false); };
-    document.addEventListener('keydown', close);
-    return () => document.removeEventListener('keydown', close);
-  }, [open]);
+  const opener = useRef<HTMLButtonElement>(null);
 
-  const openAt = useCallback((field: DateRangeField) => {
+  const openAt = useCallback((field: DateRangeField, event?: MouseEvent<HTMLButtonElement>) => {
+    opener.current = event?.currentTarget ?? null;
     const anchor = field === 'checkin' ? value.checkIn : value.checkOut || value.checkIn;
     const date = anchor ? dateOnlyToLocal(anchor) : dateOnlyToLocal(todayIso());
     setMonth(new Date(date.getFullYear(), date.getMonth(), 1));
@@ -35,8 +31,9 @@ export function useDateRangePicker({ value, onChange, minimumNights = 1 }: { val
 
   return {
     open, activeField, month, currentMonth, selectionMinimum,
-    openCheckInPicker: () => openAt('checkin'),
-    openCheckOutPicker: () => openAt('checkout'),
+    opener,
+    openCheckInPicker: (event?: MouseEvent<HTMLButtonElement>) => openAt('checkin', event),
+    openCheckOutPicker: (event?: MouseEvent<HTMLButtonElement>) => openAt('checkout', event),
     selectDate: select,
     close: () => setOpen(false),
     previousMonth: () => setMonth(current => new Date(current.getFullYear(), current.getMonth() - 1, 1)),

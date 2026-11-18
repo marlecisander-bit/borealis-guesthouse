@@ -12,12 +12,13 @@ type GuestSelectorProps={value:OccupancyCounts;onChange:(value:OccupancyCounts)=
 export function GuestSelector({value,onChange,infantMaxAge=2,childMaxAge=12,fieldClassName='',submitNames=false}:GuestSelectorProps){
   const[open,setOpen]=useState(false),root=useRef<HTMLDivElement>(null),panel=useRef<HTMLDivElement>(null),total=totalGuests(value);
   useEffect(()=>{const close=(event:MouseEvent)=>{if(root.current&&!root.current.contains(event.target as Node)&&!panel.current?.contains(event.target as Node))setOpen(false)};document.addEventListener('mousedown',close);return()=>document.removeEventListener('mousedown',close)},[]);
-  useDialogFocus(panel,open,()=>setOpen(false));
+  const opener = useRef<HTMLButtonElement>(null);
+  useDialogFocus(panel, open, () => setOpen(false), opener);
   const change=(key:keyof OccupancyCounts,delta:number)=>{const next={...value,[key]:Math.max(0,value[key]+delta)};if(totalGuests(next)<=MAX_BOOKING_GUESTS)onChange(next)};
   const adultError=value.adults<1?'At least one adult is required for bookings with children or infants.':'';
   return <div ref={root} className="relative">
     {submitNames&&<><input type="hidden" name="guests" value={total}/><input type="hidden" name="adults" value={value.adults}/><input type="hidden" name="children" value={value.children}/><input type="hidden" name="infants" value={value.infants}/></>}
-    <button type="button" onClick={()=>setOpen(current=>!current)} aria-haspopup="dialog" aria-expanded={open} className={fieldClassName}>
+    <button ref={opener} type="button" onClick={()=>setOpen(current=>!current)} aria-haspopup="dialog" aria-expanded={open} className={fieldClassName}>
       <span>Guests</span><strong className="block normal-case tracking-normal">{occupancyLabel(value)}</strong>
     </button>
     {open&&createPortal(<div ref={panel} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Choose guests" className="guest-selector-panel">

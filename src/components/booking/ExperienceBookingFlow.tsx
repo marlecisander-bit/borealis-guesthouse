@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { formatMoney } from '@/lib/pricing/format';
+import { formatExperiencePrice, formatMoney } from '@/lib/pricing/format';
 
 type Slot = { slotId: string | null; date: string; startTime: string; endTime: string; remaining: number };
 type Guest = { firstName: string; lastName: string; email: string; phone: string; country: string; notes: string };
@@ -26,7 +26,7 @@ export function ExperienceBookingFlow({ experience, initialDate = '', initialTim
   initialQuantity?: number;
 }) {
   const router = useRouter();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(2);
   const [availability, setAvailability] = useState(experience.slots);
   const [date, setDate] = useState(initialDate);
   const [time, setTime] = useState(initialTime);
@@ -114,14 +114,14 @@ export function ExperienceBookingFlow({ experience, initialDate = '', initialTim
   return <section className="mx-auto max-w-3xl rounded-[2rem] bg-white p-5 shadow-sm sm:p-7 md:p-10">
     <p className="eyebrow">Book experience</p>
     <h1 className="mt-3 font-serif text-4xl text-lake sm:text-5xl">{experience.title}</h1>
+    <p className="mt-3 text-sm font-semibold text-muted">{formatExperiencePrice(experience.price, experience.currency, experience.priceType)}</p>
     <ol className="my-8 grid grid-cols-5 gap-1.5" aria-label="Booking progress">
-      {['Experience', 'Date & time', 'Quantity', 'Guest', 'Review'].map((label, index) => <li key={label} className={`rounded-full px-1 py-2 text-center text-[10px] font-bold sm:text-xs ${index + 1 <= step ? 'bg-lake text-white' : 'bg-ivory text-muted'}`}>{label}</li>)}
+      {['Experience', 'Date & time', 'Quantity', 'Guest', 'Review'].map((label, index) => <li key={label} aria-current={index + 1 === step ? "step" : undefined} className={`rounded-full px-1 py-2 text-center text-[10px] font-bold sm:text-xs ${index + 1 <= step ? 'bg-lake text-white' : 'bg-ivory text-muted'}`}>{label}</li>)}
     </ol>
 
     {step === 1 && <Block title="Your experience"><div className="rounded-2xl bg-ivory p-5">
       <p className="text-xs font-bold uppercase tracking-widest text-muted">Selected</p>
       <p className="mt-2 font-serif text-3xl text-lake">{experience.title}</p>
-      <p className="mt-2 text-sm text-muted">{experience.price === null ? 'Price on request' : `${formatMoney(experience.price, experience.currency)} / ${experience.priceType}`}</p>
     </div></Block>}
 
     {step === 2 && <Block title="Choose date and time">

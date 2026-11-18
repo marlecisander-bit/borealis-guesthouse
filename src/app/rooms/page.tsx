@@ -1,5 +1,3 @@
-import {landingHeroImageProps} from '@/lib/landing-page-content';
-import {Suspense} from 'react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -8,7 +6,6 @@ import { BookingSearch } from '@/components/public/BookingSearch';
 import { BookingLink } from '@/components/public/BookingLink';
 import { CTASection, PublicShell } from '@/components/public/PageShell';
 import {ResponsiveHeroImage} from '@/components/public/ResponsiveHeroImage';
-const images={room:'/borealis-placeholder.svg'};
 import { createPageMetadata } from '@/lib/seo';
 import { contentRepository } from '@/services/content';
 import {getLandingPageContent} from '@/services/site-content';
@@ -17,31 +14,31 @@ import {formatRoomRate} from '@/lib/pricing/format';
 export async function generateMetadata():Promise<Metadata>{return createPageMetadata('rooms')}
 
 export default async function RoomsPage() {
-  const roomsPromise=contentRepository.getRooms();
-  const page=await getLandingPageContent('rooms');
+  const [page, rooms] = await Promise.all([getLandingPageContent('rooms'), contentRepository.getRooms()]);
+  const heroRoom = rooms.find(room => room.slug === 'family-room-lake-view' && room.gallery.length)
+    || rooms.find(room => room.gallery.length);
   return <PublicShell>
-    <section className="bg-ivory pb-16 pt-10 md:pb-24 md:pt-16">
-      <div className="shell grid gap-10 lg:grid-cols-[.8fr_1.2fr] lg:items-end">
-        <div><p className="eyebrow">{page.eyebrow}</p><h1 className="mt-4 font-serif text-5xl leading-[.98] text-lake sm:text-6xl md:text-8xl">{page.heading}</h1><p className="mt-6 max-w-lg text-lg leading-8 text-muted">{page.description}</p></div>
-        <div className="relative min-h-[28rem] overflow-hidden rounded-[2rem]"><ResponsiveHeroImage desktopImage={page.heroImage||images.room} fallbackImage={images.room} alt={page.heroImageAlt} {...landingHeroImageProps(page)} sizes="(max-width:1024px) 100vw,60vw" /></div>
+    <section className="bg-ivory pb-12 pt-8 md:pb-14 md:pt-10">
+      <div className="shell grid gap-10 lg:grid-cols-[.8fr_1.2fr] lg:items-center">
+        <div><p className="eyebrow">{page.eyebrow}</p><h1 className="mt-4 font-serif text-5xl leading-[.98] text-lake sm:text-6xl md:text-6xl">{page.heading}</h1><p className="mt-6 max-w-lg text-lg leading-8 text-muted">Rooms by Koman Lake, with options for couples, families and small groups.</p></div>
+        {heroRoom && <div className="relative aspect-video max-h-72 overflow-hidden rounded-3xl"><ResponsiveHeroImage desktopImage={heroRoom.gallery[0]} alt={heroRoom.name} sizes="(max-width:1024px) 100vw,60vw" /></div>}
       </div>
     </section>
-    <section className="relative z-10 -mt-6 pb-14 md:-mt-8"><div className="shell"><BookingSearch /></div></section>
+    <section className="relative z-10 -mt-6 pb-9 md:-mt-7"><div className="shell"><BookingSearch /></div></section>
     <section className="shell pb-20 md:pb-28">
-      <div className="mb-12 max-w-2xl"><p className="eyebrow">{page.introEyebrow}</p><h2 className="mt-4 font-serif text-5xl text-lake md:text-6xl">{page.introHeading}</h2>{page.introDescription&&<p className="mt-5 leading-7 text-muted">{page.introDescription}</p>}</div>
-      <Suspense fallback={<div role="status" aria-label="Loading rooms" className="min-h-[32rem] rounded-2xl bg-slate-50"/>}><RoomsList roomsPromise={roomsPromise}/></Suspense>
+      <div className="mb-8 max-w-2xl"><p className="eyebrow">{page.introEyebrow}</p><h2 className="mt-4 font-serif text-5xl text-lake md:text-6xl">{page.introHeading}</h2>{page.introDescription&&<p className="mt-5 leading-7 text-muted">{page.introDescription}</p>}</div>
+      <RoomsList rooms={rooms}/>
     </section>
     <CTASection />
   </PublicShell>;
 }
 
-async function RoomsList({roomsPromise}:{roomsPromise:ReturnType<typeof contentRepository.getRooms>}){
-  const rooms=await roomsPromise;
+function RoomsList({rooms}:{rooms:Awaited<ReturnType<typeof contentRepository.getRooms>>}){
   return (
       <div className="space-y-14 md:space-y-24">
         {rooms.map((room, index) => <article key={room.id} className="grid gap-7 md:grid-cols-2 md:items-center md:gap-12">
-          <Link href={`/rooms/${room.slug}`} className={`group relative aspect-[4/5] overflow-hidden rounded-[1.75rem] md:aspect-[5/4] ${index % 2 ? 'md:order-2' : ''}`}><Image src={room.image} alt={room.name} fill sizes="(max-width:768px) 100vw,50vw" className="object-cover transition duration-700 group-hover:scale-105"/><span className="absolute left-4 top-4 rounded-xl bg-white/90 px-3 py-2 text-xs font-bold text-lake backdrop-blur">{room.viewType}</span></Link>
-          <div className={index % 2 ? 'md:order-1' : ''}><p className="eyebrow">{room.eyebrow}</p><div className="mt-3 flex items-start justify-between gap-4"><h2 className="font-serif text-4xl text-lake md:text-5xl">{room.name}</h2><p className="shrink-0 text-right text-xs text-muted">{room.priceFrom===null?'Pricing':'From'}<br/><strong className="text-xl text-lake">{formatRoomRate(room.priceFrom,room.currency)}</strong></p></div><p className="mt-5 leading-7 text-muted">{room.description}</p><div className="mt-6 grid grid-cols-2 gap-4 border-y border-lake/10 py-5 text-sm sm:grid-cols-3"><div><strong>{room.capacity}</strong><p className="text-xs text-muted">Guests</p></div><div><strong>{room.beds}</strong><p className="text-xs text-muted">Beds</p></div><div><strong>{room.size}</strong><p className="text-xs text-muted">Room size</p></div></div><div className="mt-6"><Amenities items={room.amenities.slice(0,4)} compact /></div><div className="mt-7 grid gap-3 min-[360px]:grid-cols-2"><Link href={`/rooms/${room.slug}`} className="min-h-14 rounded-xl bg-ivory px-5 py-4 text-center text-sm font-bold text-lake">View room</Link><BookingLink href={`/book?room=${room.slug}`} pendingLabel="Opening…" className="public-primary-cta min-h-14 rounded-xl px-5 py-4 text-center text-sm font-bold">Check availability</BookingLink></div></div>
+          <Link href={`/rooms/${room.slug}`} className={`group relative aspect-[4/3] overflow-hidden rounded-[1.75rem] md:aspect-[5/4] ${index % 2 ? 'md:order-2' : ''}`}><Image src={room.image} alt={room.name} fill sizes="(max-width:768px) 100vw,50vw" className="object-cover transition duration-700 group-hover:scale-105"/>{room.viewType && <span className="absolute left-4 top-4 rounded-xl bg-white/95 px-3 py-2 text-xs font-bold text-lake">{room.viewType}</span>}</Link>
+          <div className={index % 2 ? 'md:order-1' : ''}><p className="eyebrow">{room.eyebrow}</p><div className="mt-3 flex items-start justify-between gap-4"><h2 className="font-serif text-4xl text-lake md:text-5xl">{room.name}</h2><p className="shrink-0 text-right text-xs text-muted">{room.priceFrom===null?'Pricing':'From'}<br/><strong className="text-xl text-lake">{formatRoomRate(room.priceFrom,room.currency)}</strong>{room.priceFrom!==null&&<><br/>per night</>}</p></div><p className="mt-5 leading-7 text-muted">{room.description}</p><div className="mt-6 grid grid-cols-2 gap-4 border-y border-lake/10 py-5 text-sm sm:grid-cols-3"><div><strong>{room.capacity}</strong><p className="text-xs text-muted">Guests</p></div><div><strong>{room.beds}</strong><p className="text-xs text-muted">Beds</p></div><div><strong>{room.size}</strong><p className="text-xs text-muted">Room size</p></div></div><div className="mt-6"><Amenities items={room.amenities.slice(0,4)} compact /></div><div className="mt-7 grid gap-3 min-[360px]:grid-cols-2"><Link href={`/rooms/${room.slug}`} className="min-h-14 rounded-xl bg-ivory px-5 py-4 text-center text-sm font-bold text-lake">View room</Link><BookingLink href={`/book?room=${room.slug}`} pendingLabel="Opening…" className="public-primary-cta min-h-14 rounded-xl px-5 py-4 text-center text-sm font-bold">Check availability</BookingLink></div></div>
         </article>)}
       </div>
   );

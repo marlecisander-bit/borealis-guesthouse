@@ -26,6 +26,7 @@ export default async function DashboardPage() {
         <strong className="rounded-full bg-white px-3 py-1 text-sm">{item.count}</strong>
       </Link>)}</div>:!data.attentionUnavailable&&<p className="mt-2 text-sm text-slate-600">No open booking or notification issues.</p>}
     </section>
+    <Link href="/admin/bookings/requests" className="inline-flex min-h-11 items-center text-sm font-bold text-brand underline">Review guest booking requests</Link>
     <section aria-label="Quick actions" className="grid grid-cols-2 gap-2 sm:gap-4">
       {quickActions.map(([label,href],index)=><Link key={href} href={href} className={`flex min-h-12 items-center justify-center rounded-xl px-3 text-center text-sm font-bold ${index?'border border-stone-300 bg-white text-brand':'bg-brand text-white'}`}>{label}</Link>)}
     </section>

@@ -16,22 +16,25 @@ export class NotificationService {
       return;
     }
     const db = createServiceSupabaseClient();
-    const { data: notification, error: notificationError } = await db.from('notifications')
-      .select('id,type,booking_id').eq('booking_id', bookingId).eq('type', type).maybeSingle();
-    if (notificationError || !notification) return;
-    const [{ data: booking, error: bookingError }, { data: settings }, { data: deliveries }] = await Promise.all([
-      db.from('bookings').select('id,property_id,reference,booking_status,source,payment_status,payment_method,check_in,check_out,adults,children,infants,total_guests,total_amount,currency,booking_guests(first_name,last_name,email,phone,is_primary),booking_items(item_type,title_snapshot,quantity,total_price,service_date,service_time,metadata)').eq('id', bookingId).single(),
-      db.from('site_settings').select('setting_key,value_text').eq('property_id', (await db.from('bookings').select('property_id').eq('id', bookingId).single()).data?.property_id || '').in('setting_key', ['reply_to_email']),
-      db.from('notification_deliveries').select('id,channel,recipient,status').eq('notification_id', notification.id).eq('status', 'pending'),
+    const { data: booking, error: bookingError } = await db.from('bookings')
+      .select('id,property_id,reference,booking_status,source,payment_status,payment_method,check_in,check_out,adults,children,infants,total_guests,total_amount,currency,booking_guests(first_name,last_name,email,phone,is_primary),booking_items(item_type,title_snapshot,quantity,total_price,service_date,service_time,metadata)')
+      .eq('id', bookingId).single();
+    if (bookingError || !booking) return;
+    const [{ data: events }, { data: settings }] = await Promise.all([
+      db.from('notifications').select('id,notification_deliveries!inner(id,channel,recipient)')
+        .eq('booking_id', bookingId).eq('type', type)
+        .eq('notification_deliveries.status','pending').eq('notification_deliveries.attempt_count',0),
+      db.from('site_settings').select('setting_key,value_text').eq('property_id', booking.property_id).eq('setting_key','reply_to_email'),
     ]);
-    if (bookingError || !booking || !deliveries?.length) return;
+    const deliveries=(events||[]).flatMap(event=>event.notification_deliveries);
+    if (!deliveries.length) return;
     const guests = booking.booking_guests as unknown as GuestRow[];
     const guest = guests.find(item => item.is_primary) || guests[0];
     const items = booking.booking_items as unknown as ItemRow[];
     const appUrl = (process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '');
     const replyTo = settings?.find(item => item.setting_key === 'reply_to_email')?.value_text || '';
     const email = bookingNotificationEmail({
-      type: notification.type as NotificationType,
+      type,
       reference: booking.reference || booking.id.slice(0, 8).toUpperCase(),
       status: booking.booking_status,
       paymentStatus:booking.payment_status,paymentMethod:booking.payment_method,
@@ -55,13 +58,17 @@ export class NotificationService {
     for (const delivery of deliveries) {
       const channel = this.channels.find(item => item.name === delivery.channel);
       if (!channel) continue;
+      const {data:claimed}=await db.from('notification_deliveries')
+        .update({attempt_count:1,attempted_at:new Date().toISOString()})
+        .eq('id',delivery.id).eq('status','pending').eq('attempt_count',0).select('id').maybeSingle();
+      if(!claimed)continue;
       try {
         const result = await channel.send(delivery.recipient, email);
         await db.from('notification_deliveries').update({ status: 'sent', attempt_count: 1, attempted_at: new Date().toISOString(), sent_at: new Date().toISOString(), provider_message_id: result.providerId || null, error_summary: null, updated_at: new Date().toISOString() }).eq('id', delivery.id);
       } catch (error) {
         const summary = (error instanceof Error ? error.message : 'Email delivery failed.').slice(0, 500);
         await db.from('notification_deliveries').update({ status: 'failed', attempt_count: 1, attempted_at: new Date().toISOString(), error_summary: summary, updated_at: new Date().toISOString() }).eq('id', delivery.id);
-        console.error(`Notification ${notification.id} delivery failed: ${summary}`);
+        console.error('Booking email delivery failed.');
       }
     }
   }

@@ -32,7 +32,7 @@ function CalendarMonth({ month, value, picker }: { month: Date; value: DateRange
 export function DateRangeCalendar({ value, picker }: { value: DateRangeValue; picker: DateRangePickerController }) {
   const panelRef = useRef<HTMLDivElement>(null);
   useOutsideClick(panelRef, picker.close, picker.open);
-  useDialogFocus(panelRef,picker.open,picker.close);
+  useDialogFocus(panelRef, picker.open, picker.close, picker.opener);
   if (!picker.open) return null;
   const instruction = picker.activeField === 'checkout' ? 'Choose a new departure date' : 'Choose arrival, then departure';
   return createPortal(<div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Choose your stay dates" className="booking-calendar">
