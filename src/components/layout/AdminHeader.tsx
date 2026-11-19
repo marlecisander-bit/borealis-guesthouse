@@ -38,7 +38,7 @@ export default function AdminHeader() {
   }
 
   return (
-    <header className="admin-mobile-header sticky top-0 z-30 border-b border-[#c7dddb] bg-ivory/95 px-3 py-2 backdrop-blur sm:px-6 sm:py-3">
+    <header className="admin-mobile-header admin-header-line sticky top-0 z-30 bg-ivory/95 px-3 py-2 backdrop-blur sm:px-6 sm:py-3">
       <div className="flex min-h-11 items-center justify-between gap-2 sm:gap-4">
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <div className="min-w-0">

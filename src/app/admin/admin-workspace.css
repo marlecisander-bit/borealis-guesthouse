@@ -340,3 +340,11 @@ body:has([role="dialog"][aria-modal="true"],dialog[open]) .admin-bottom-nav { vi
 [data-admin-shell]:has([data-restricted-calendar]) > :is(.sticky, .admin-bottom-nav),
 [data-admin-shell]:has([data-restricted-calendar]) .admin-content > nav,
 [data-admin-shell]:has([data-restricted-calendar]) :is(.admin-mobile-header, [data-admin-header]) { display: none; }
+
+.admin-header-line { border-bottom: 1px solid #c7dddb; }
+@media (min-width: 64rem) {
+  .admin-header-line {
+    min-height: 4.5rem;
+    align-content: center;
+  }
+}
