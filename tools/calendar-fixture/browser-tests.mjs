@@ -1,26 +1,191 @@
-// Actual calendar/forms with synthetic repositories and actions; no network or production records.
-import{chromium}from'@playwright/test';import{buildFixture}from'../booking-fixture/build.mjs';import assert from'node:assert/strict';import fs from'node:fs';import{pathToFileURL}from'node:url';
-const{html,out}=await buildFixture(process.env,{admin:true,audit:true,calendar:true}),results=[],browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
-try{for(const width of [360,390,768,1024,1440,1920]){const context=await browser.newContext({viewport:{width,height:width<768?844:900},reducedMotion:'reduce',serviceWorkers:'block'}),outbound=[],errors=[];await context.route('**/*',r=>{outbound.push(r.request().url());return r.abort()});const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));await page.evaluate(()=>window.__BOREALIS_FIXTURE_HEADLESS__=true);await page.setContent(html);await page.addStyleTag({content:'body>main{max-width:none!important;padding:12px!important}'});await page.getByRole('button',{name:'View options'}).waitFor();
- const choose=async scenario=>{await page.selectOption('#scenario',scenario);await page.waitForTimeout(100)};const close=async()=>{await page.keyboard.press('Escape');await page.getByRole('dialog').waitFor({state:'hidden'});await assert.doesNotReject(()=>page.getByRole('button',{name:'View options'}).waitFor())};const overflow=()=>page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1);
- assert.equal(await overflow(),false);await page.screenshot({path:out+`/initial-${width}.png`,fullPage:true});assert.equal(await page.getByRole('button',{name:'7 days',exact:true}).getAttribute('aria-pressed'),'false');
- if(width<768){assert.ok(await page.locator('.calendar-agenda').isVisible());await page.getByRole('button',{name:'Today',exact:true}).click();assert.ok((await page.evaluate(()=>window.__calendarNavigation)).includes('from=2026-10-21'));await page.getByRole('button',{name:'View options'}).click();await page.getByLabel('Calendar layout',{exact:true}).selectOption('grid')}
- if(!await page.locator('.calendar-options').isVisible())await page.getByRole('button',{name:'View options'}).click();await page.getByLabel('Group rooms').selectOption('type');assert.equal(await page.locator('.calendar-group').count(),2);await page.getByLabel('Group rooms').selectOption('room');await page.getByRole('button',{name:'View options'}).click();
- const alex=page.getByRole('button',{name:/Alex Example, 3 guests total, confirmed/});await alex.click();let dialog=page.getByRole('dialog',{name:'Booking details',exact:true});await dialog.waitFor();assert.ok(await dialog.getByText('Checkout 2026-10-22',{exact:false}).isVisible());await page.keyboard.press('Tab');assert.ok(await dialog.evaluate(el=>el.contains(document.activeElement)));await page.keyboard.press('Escape');assert.ok(await alex.evaluate(el=>el===document.activeElement));
- const bars=await page.locator('.calendar-row').first().locator('.calendar-stay').evaluateAll(xs=>xs.map(x=>({column:x.style.gridColumn,row:x.style.gridRow})));assert.equal(bars[0].column,'1 / span 3');assert.equal(bars[1].column,'4 / span 3');assert.equal(bars[0].row,bars[1].row);
- // Sticky room names remain stationary while dates scroll.
- const region=page.getByRole('region',{name:/Room calendar/}),room=page.getByRole('rowheader').first(),left=(await room.boundingBox()).x;await region.evaluate(el=>el.scrollLeft=240);assert.ok(Math.abs((await room.boundingBox()).x-left)<2);await region.evaluate(el=>el.scrollLeft=0);
- await page.getByRole('button',{name:/Arrivals today/}).click();dialog=page.getByRole('dialog',{name:'Arrivals today'});assert.equal(await dialog.getByRole('link',{name:/Synthetic Guest arrival/}).count(),1);await close();
- // Switch to all fourteen nights for selection, closure and expiry cases.
- await page.getByRole('button',{name:'14 days',exact:true}).click();const night=page.locator('#night-left-2026-10-27');await night.click();dialog=page.getByRole('dialog',{name:'Selected dates'});await dialog.waitFor();await dialog.getByLabel('Checkout / end').fill('2026-10-30');assert.equal(await dialog.getByRole('link',{name:'Add booking',exact:true}).getAttribute('href'),'/admin/bookings/new?roomTypeId=triple&checkIn=2026-10-27&checkOut=2026-10-30');await dialog.getByRole('button',{name:'Close room',exact:true}).click();dialog=page.getByRole('dialog',{name:'Close room',exact:true});assert.equal(await dialog.locator('input[name=endDate]').inputValue(),'2026-10-29');assert.ok(await dialog.getByText(/3 affected nights/).isVisible());
- await page.evaluate(()=>window.__calendarConflict=true);await dialog.getByRole('button',{name:'Close room',exact:true}).click();await dialog.getByText(/This inventory has a booking/).waitFor();assert.equal(await dialog.getByRole('button',{name:'Close room',exact:true}).isEnabled(),true);await page.evaluate(()=>window.__calendarConflict=false);await dialog.locator('form').evaluate(form=>{form.requestSubmit();form.requestSubmit()});await dialog.getByText('Room closed in local fixture.').waitFor();assert.equal(await dialog.getByRole('button',{name:'Room closed',exact:true}).isDisabled(),true);assert.equal(await page.evaluate(()=>window.__calendarCalls.filter(x=>x.action==='close').length),2);await close();
- const created=page.getByRole('button',{name:/Triple Room L, closed 2026-10-27 through 2026-10-29/});await created.click();dialog=page.getByRole('dialog',{name:'Closure details'});await dialog.getByRole('button',{name:'Reopen dates',exact:true}).click();assert.equal(await page.evaluate(()=>window.__calendarCalls.filter(x=>x.action==='reopen').length),0);await dialog.getByRole('checkbox').check();await dialog.locator('form').evaluate(form=>{form.requestSubmit();form.requestSubmit()});await dialog.getByText('Dates reopened in local fixture.').waitFor();assert.equal(await page.evaluate(()=>window.__calendarCalls.filter(x=>x.action==='reopen').length),1);await close();assert.equal(await created.count(),0);
- // Click and Shift-click range alternative; dragging tested at desktop widths.
- await night.click();await close();await page.locator('#night-left-2026-10-29').click({modifiers:['Shift']});dialog=page.getByRole('dialog',{name:'Selected dates'});assert.equal(await dialog.getByLabel('Check-in / start').inputValue(),'2026-10-27');assert.equal(await dialog.getByLabel('Checkout / end').inputValue(),'2026-10-30');await close();
- if(width>=1024){const a=await page.locator('#night-left-2026-10-27').boundingBox(),z=await page.locator('#night-left-2026-10-29').boundingBox();await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();await page.mouse.move(z.x+z.width/2,z.y+z.height/2,{steps:5});await page.mouse.up();dialog=page.getByRole('dialog',{name:'Selected dates'});assert.equal(await dialog.getByLabel('Checkout / end').inputValue(),'2026-10-30');await close()}
- await night.focus();await page.keyboard.press('Shift+ArrowRight');dialog=page.getByRole('dialog',{name:'Selected dates'});await dialog.waitFor();assert.equal(await dialog.getByLabel('Checkout / end').inputValue(),'2026-10-29');await close();await night.focus();await page.keyboard.press('Enter');dialog=page.getByRole('dialog',{name:'Selected dates'});await dialog.waitFor();await page.keyboard.press('Shift+Tab');assert.ok(await dialog.evaluate(el=>el.contains(document.activeElement)));const bounds=await dialog.boundingBox();assert.ok(bounds.x>=0&&bounds.x+bounds.width<=width+1);await page.screenshot({path:out+`/drawer-${width}.png`});if(width<768){await page.setViewportSize({width,height:420});await page.waitForTimeout(100);const short=await dialog.boundingBox();assert.ok(short.y>=0&&short.y+short.height<=420+1);await dialog.getByRole('button',{name:'Close room',exact:true}).scrollIntoViewIfNeeded();assert.ok(await dialog.getByRole('button',{name:'Close room',exact:true}).isVisible());await page.screenshot({path:out+`/drawer-short-${width}.png`});await page.setViewportSize({width,height:844})}await close();
- // Holds expire in memory without a database write.
- await region.evaluate(el=>el.scrollLeft=0);await page.getByRole('button',{name:/Synthetic Guest hold, 3 guests total, held/}).click();dialog=page.getByRole('dialog',{name:'Booking details'});await page.evaluate(()=>{Date.now=()=>new Date('2026-10-21T12:02:00Z').getTime()});await page.waitForTimeout(1100);assert.equal(await page.getByRole('button',{name:/Synthetic Guest hold, 3 guests total, held/}).count(),0);assert.ok(await page.locator('#night-right-2026-10-21').isEnabled());assert.ok(await dialog.getByText(/Hold expired/).isVisible());await close();
- await choose('year');await page.getByRole('button',{name:'Next period'}).click();assert.ok((await page.evaluate(()=>window.__calendarNavigation)).includes(width<768?'from=2026-12-31':'from=2027-01-13'));await page.getByRole('button',{name:/Dec 30/}).click();dialog=page.getByRole('dialog',{name:'Choose calendar date'});await dialog.getByLabel('Start date').fill('2027-02-01');await dialog.getByRole('button',{name:'Show dates'}).click();assert.ok((await page.evaluate(()=>window.__calendarNavigation)).includes('from=2027-02-01'));
- await choose('prefill');assert.equal(await page.locator('select[name=roomTypeId]').inputValue(),'triple');assert.equal(await page.locator('input[name=checkIn]').inputValue(),'2026-10-27');assert.equal(await page.locator('input[name=checkOut]').inputValue(),'2026-10-30');assert.equal(await page.evaluate(()=>window.__calendarCalls.length),0);
- await choose('empty');assert.ok(await page.getByText('No rooms yet.',{exact:false}).isVisible());await choose('calendar');assert.equal(await overflow(),false);await page.screenshot({path:out+`/calendar-${width}.png`,fullPage:true});assert.deepEqual(errors,[]);assert.deepEqual(outbound,[]);results.push({width,overflow:false,adjacentStays:true,checkoutExclusive:true,stickyNames:true,drawerFocus:true,closureConflictAndReopen:true,rangeSelection:true,expiry:true,dateNavigation:true,prefill:true,networkRequests:0});await context.close();console.log(JSON.stringify(results.at(-1)))}const deepPage=await browser.newPage({viewport:{width:390,height:844}}),file=pathToFileURL(out+'/index.html').href;const deepErrors=[];deepPage.on('pageerror',e=>deepErrors.push(e.message));await deepPage.route('**/*',route=>route.request().url().split('#')[0]===file?route.continue():route.abort());await deepPage.goto(file+'#block-dates');let deepDrawer=deepPage.getByRole('dialog',{name:'Close room',exact:true});await deepDrawer.waitFor();await deepPage.keyboard.press('Escape');await deepDrawer.waitFor({state:'hidden'});assert.equal(new URL(deepPage.url()).hash,'');await deepPage.selectOption('#scenario','deep');await deepPage.waitForTimeout(100);await deepPage.evaluate(()=>location.hash='#block-dates');await deepDrawer.waitFor();assert.equal(await deepDrawer.locator('input[name=startDate]').inputValue(),'2026-10-27');assert.equal(await deepDrawer.locator('input[name=endDate]').inputValue(),'2026-10-29');assert.ok(await deepDrawer.getByText(/3 affected nights/).isVisible());await deepPage.keyboard.press('Escape');assert.deepEqual(deepErrors,[]);await deepPage.close();results.push({legacyHash:true,inclusiveLegacyDates:true});fs.writeFileSync(out+'/browser-results.json',JSON.stringify(results,null,2))}finally{await browser.close()}
+// Actual calendar views with synthetic inventory/actions and outbound requests denied.
+import { chromium, webkit } from 'playwright';
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { buildFixture } from '../booking-fixture/build.mjs';
+
+const { html, out } = await buildFixture(process.env, { admin: true, calendar: true });
+const results = [];
+for (const [engine, launch, widths] of [
+  [chromium, { channel: 'chrome' }, [360, 1440]],
+  [webkit, {}, [360, 390, 1440]],
+]) {
+  const browser = await engine.launch(launch);
+  try {
+    for (const width of widths) {
+      const mobile = width < 768;
+      console.log(engine.name(), width);
+      const context = await browser.newContext({
+        viewport: { width, height: mobile ? 800 : 900 }, isMobile: mobile, hasTouch: mobile,
+        reducedMotion: 'reduce', serviceWorkers: 'block',
+      });
+      const page = await context.newPage();
+      page.setDefaultTimeout(15000);
+      const outbound = [], errors = [];
+      await context.route('**/*', route => { outbound.push(route.request().url()); return route.abort(); });
+      page.on('pageerror', error => { errors.push(error.message); console.error(error.message); });
+      await page.evaluate(() => { window.__BOREALIS_FIXTURE_HEADLESS__ = true; });
+      await page.setContent(html);
+      await page.addStyleTag({ content: 'body>main{max-width:none!important;padding:0!important}.fixture-banner{display:none!important}' });
+      await page.getByRole('button', { name: 'Today', exact: true }).waitFor();
+      const dialog = page.getByRole('dialog');
+      const tap = async control => {
+        await control.evaluate(element => element.scrollIntoView({ behavior: 'instant', block: 'nearest' }));
+        await control.click();
+      };
+      const night = (day, unit = 'left') => page.locator('#night-' + unit + '-2026-10-' + day);
+      const chooseDay = async day => {
+        const name = new Date('2026-10-' + day + 'T12:00:00Z').toLocaleDateString('en', {
+          weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC',
+        });
+        await tap(page.getByRole('navigation', { name: 'Seven-day calendar' }).getByRole('button', { name, exact: true }));
+      };
+      const fixtureImage = name => path.join(out, engine.name() + '-' + width + '-' + name + '.png');
+      const close = async () => { await page.keyboard.press('Escape'); await dialog.waitFor({ state: 'hidden' }); };
+      if (mobile) {
+        await page.getByRole('navigation', { name: 'Seven-day calendar' }).waitFor();
+        assert.equal(await page.locator('.calendar-week-strip button').count(), 7);
+      } else {
+        await page.getByRole('region', { name: /Room calendar/ }).waitFor();
+        await page.getByLabel('Inventory view').selectOption('type');
+        await page.getByRole('cell', { name: '2026-10-19: 1 of 2 units available' }).waitFor();
+        await page.getByRole('button', { name: /Triple room/ }).click();
+        assert.equal(await night('19', 'right').isEnabled(), true);
+        assert.equal(await night('19').isEnabled(), false);
+        await page.getByLabel('Inventory view').selectOption('room');
+        await page.locator('.calendar-type-row').first().waitFor({ state: 'hidden' });
+      }
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
+      if (width === 1440 || width === 360) await page.screenshot({ path: fixtureImage('calendar') });
+
+      if (mobile) {
+        await chooseDay('25');
+        await page.getByRole('button', { name: 'Next period' }).click();
+        await chooseDay('27');
+        await page.locator('.calendar-agenda article').filter({ hasText: 'Triple Room L' }).getByRole('button', { name: 'Block dates' }).click();
+        await dialog.getByLabel(/last closed night/).fill('2026-10-29');
+      } else {
+        await night('27').focus();
+        await page.keyboard.press('Enter');
+        await page.getByText('Selected', { exact: true }).waitFor();
+        await night('27').press('ArrowRight');
+        await night('28').press('ArrowRight');
+        assert.equal(await night('29').evaluate(element => element === document.activeElement), true);
+        await night('29').press('Enter');
+      }
+      await dialog.getByText(/3 nights, 2026-10-27 to 2026-10-30/).waitFor().catch(async error => {
+        console.error(await page.evaluate(() => ({ active: document.activeElement?.id, dialogs: document.querySelector('[role=dialog]')?.textContent, values: [...document.querySelectorAll('[role=dialog] input')].map(input => input.value) })));
+        throw error;
+      });
+      await dialog.getByLabel('Reason details (optional)').fill('Floor repair');
+      if (width === 1440 || width === 360) await page.screenshot({ path: fixtureImage('block-editor') });
+      await page.evaluate(() => { window.__calendarConflict = true; });
+      await dialog.getByRole('button', { name: 'Close room', exact: true }).click();
+      await dialog.getByRole('alert').filter({ hasText: 'booking or active hold' }).waitFor();
+      assert.equal(await dialog.getByLabel(/last closed night/).inputValue(), '2026-10-29');
+      assert.equal(await dialog.getByLabel('Reason details (optional)').inputValue(), 'Floor repair');
+      await page.evaluate(() => { window.__calendarConflict = false; });
+      const before = await page.evaluate(() => window.scrollY);
+      await dialog.getByRole('button', { name: 'Close room', exact: true }).click();
+      await dialog.waitFor({ state: 'hidden' });
+      assert.equal(await page.evaluate(() => window.scrollY), before);
+      if (!mobile) {
+        for (const day of ['27', '28', '29']) assert.equal(await night(day).isEnabled(), false);
+        for (const day of ['26', '30']) assert.equal(await night(day).isEnabled(), true);
+        await page.getByRole('button', { name: /closed 2026-10-27 through 2026-10-29/ }).click();
+      } else {
+        for (const day of ['26', '27', '28', '29', '30']) {
+          await chooseDay(day);
+          const room = page.locator('.calendar-agenda article').filter({ hasText: 'Triple Room L' });
+          if (['27','28','29'].includes(day)) await room.getByRole('button', { name: /Blocked · maintenance/ }).waitFor();
+          else await room.getByRole('button', { name: 'Block dates' }).waitFor();
+        }
+        await chooseDay('27');
+        await page.getByRole('button', { name: /Blocked · maintenance/ }).click();
+      }
+      await dialog.getByText(/Floor repair/).waitFor();
+      await dialog.getByRole('checkbox').check();
+      await dialog.getByRole('button', { name: 'Reopen dates' }).click();
+      await dialog.waitFor({ state: 'hidden' });
+      if (!mobile) assert.equal(await night('27').isEnabled(), true);
+      else await page.locator('.calendar-agenda article').filter({ hasText: 'Triple Room L' }).getByRole('button', { name: 'Block dates' }).waitFor();
+
+      await tap(page.getByRole('button', { name: 'Today', exact: true }));
+      if (mobile) {
+        await page.getByRole('button', { name: /Booked · Staying · Alex Example/ }).click();
+      } else {
+        await page.getByRole('button', { name: /Alex Example, confirmed/ }).click();
+      }
+      const bookingLink = dialog.getByRole('link', { name: 'Open full booking' });
+      await bookingLink.waitFor();
+      assert.match(await bookingLink.getAttribute('href'), /^\/admin\/bookings\/a\?calendarReturn=/);
+      await close();
+      if (mobile) await page.getByRole('button', { name: /Temporary hold · Synthetic Guest hold/ }).click();
+      else await page.getByRole('button', { name: /Synthetic Guest hold, held/ }).click();
+      await dialog.getByText(/Hold expires/).waitFor();
+      await close();
+      if (mobile) {
+        await chooseDay('24');
+        await page.getByRole('button', { name: /Blocked · external calendar/ }).press('Enter');
+      } else {
+        await page.getByRole('button', { name: /Triple Room R, closed.*external calendar/ }).press('Enter');
+      }
+      await dialog.getByText(/Sample partner calendar/).waitFor();
+      assert.equal(await dialog.getByRole('button', { name: 'Reopen dates' }).count(), 0);
+      await close();
+      await page.getByLabel('Room', { exact: true }).selectOption('right');
+      await page.locator(mobile ? '.calendar-agenda article' : '.calendar-room[role=rowheader]').filter({ hasText: 'Triple Room L' }).waitFor({ state: 'hidden' });
+      await page.locator('.calendar-range').press('Enter');
+      await dialog.getByLabel('Start date').fill('2026-12-30');
+      if (!mobile) await dialog.getByLabel('Last displayed date').fill('2027-01-04');
+      await dialog.getByRole('button', { name: 'Show dates' }).press('Enter');
+      await dialog.waitFor({ state: 'hidden' });
+      const navigation = new URL(await page.evaluate(() => window.__calendarNavigation), 'https://fixture.invalid');
+      assert.equal(navigation.searchParams.get('from'), '2026-12-30');
+      assert.equal(navigation.searchParams.get('room'), 'right');
+      if (!mobile) assert.equal(navigation.searchParams.get('to'), '2027-01-04');
+      await page.selectOption('#scenario', 'restricted', { force: true });
+      await tap(page.getByRole('button', { name: 'Today', exact: true }));
+      if (mobile) await page.getByRole('button', { name: /Booked · Staying · confirmed/ }).first().click();
+      else await page.getByRole('button', { name: /Reserved, confirmed/ }).first().click();
+      await dialog.getByText('Inventory reservation', { exact: true }).waitFor();
+      assert.equal(await dialog.getByRole('link', { name: 'Open full booking' }).count(), 0);
+      assert.equal(await page.getByText('Alex Example', { exact: false }).count(), 0);
+      assert.deepEqual(errors, []);
+      assert.deepEqual(outbound, []);
+      results.push({ browser: engine.name(), width, threeNightBlock: true, staleConflict: true, reopen: true, protectedEntries: true, restricted: true });
+      await context.close();
+    }
+  } finally { await browser.close(); }
+}
+// A fresh load of the same local URL verifies the calendar return state outside the fixture router.
+const browser = await chromium.launch({ channel: 'chrome' });
+try {
+  const page = await browser.newPage({ viewport: { width: 1024, height: 810 } });
+  await page.route(/^https?:/, route => route.abort());
+  const returnUrl = pathToFileURL(path.join(out, 'index.html'));
+  returnUrl.search = '?from=2026-10-19&view=type&room=left';
+  await page.goto(returnUrl.href);
+  await page.getByRole('button', { name: /Triple room/ }).press('Enter');
+  await page.getByRole('button', { name: /Alex Example, confirmed/ }).press('Enter');
+  const link = page.getByRole('link', { name: 'Open full booking' });
+  await link.waitFor();
+  await page.evaluate(() => {
+    document.querySelector('.calendar-scroll').scrollLeft = 180;
+    document.addEventListener('click', event => {
+      if (event.target.closest('a[href^="/admin/bookings/"]')) event.preventDefault();
+    });
+  });
+  const offset = await page.locator('.calendar-scroll').evaluate(element => element.scrollLeft);
+  assert.ok(offset > 0);
+  await link.press('Enter');
+  assert.match(await link.getAttribute('href'), /from%3D2026-10-19%26view%3Dtype%26room%3Dleft/);
+  assert.ok(await page.evaluate(() => sessionStorage.getItem('borealis-calendar-position')));
+  await page.reload();
+  await page.getByRole('rowheader', { name: /Triple Room L/ }).waitFor();
+  await page.waitForFunction(expected => document.querySelector('.calendar-scroll')?.scrollLeft === expected, offset);
+  assert.equal(await page.getByLabel('Room', { exact: true }).inputValue(), 'left');
+  assert.equal(await page.getByLabel('Inventory view').inputValue(), 'type');
+} finally { await browser.close(); }
+console.log(JSON.stringify({ results, isolatedReturnScroll: true, screenshots: out }, null, 2));

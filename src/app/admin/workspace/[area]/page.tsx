@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { requireTeamMember } from '@/lib/admin/team-session';
 import { teamWorkspaces, type TeamPermission } from '@/lib/admin/team-permissions';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
@@ -23,6 +23,12 @@ export default async function Page({params,searchParams}:{
   const workspace=teamWorkspaces.find(item=>item.key===area);
   if(!workspace)notFound();
   const member=await requireTeamMember(workspace.permission);
+  if (area === 'calendar') {
+    const query = await searchParams;
+    const params = new URLSearchParams(Object.entries(query).filter(([key, value]) =>
+      ['from','to','room','view','blockStart','blockEnd'].includes(key) && typeof value === 'string') as [string, string][]);
+    redirect('/admin/availability' + (params.size ? '?' + params : ''));
+  }
   const db=await createServerSupabaseClient();
   const read=(permission:string)=>db.rpc('team_workspace',{target_property:member.propertyId,area:permission});
   const [main,media,amenities]=await Promise.all([
@@ -38,7 +44,7 @@ export default async function Page({params,searchParams}:{
       <nav aria-label="Workspaces" className="hidden flex-wrap gap-2 lg:flex">{links.map(item=><WorkspaceLink key={item.key} item={item} current={area}/>)}</nav>
       {main.error ? <p role="alert" className={card}>These records are unavailable for your current access.</p> :
         area==='bookings'?<Bookings rows={main.data} permissions={member.permissions}/>:
-        area==='calendar'?<Calendar data={main.data}/>:
+
         area==='website'?<Website rows={main.data} media={media.data || []} publish={member.permissions.includes('website.publish')} preview={preview}/>:
         <EditorRows area={area} rows={main.data} media={media.data || []} amenities={amenities.data || []}/>}
     </div>
@@ -70,29 +76,6 @@ function Bookings({rows,permissions}:{rows:Reservation[];permissions:TeamPermiss
 }
 
 type Option={id:string;name:string};
-type CalendarData={rooms:{id:string;title:string}[];blocks:{id:string;room_id:string;start_date:string;end_date:string;source:string}[];occupancy:{room_id:string;check_in:string;check_out:string;booking_status:string}[]};
-function Calendar({data}:{data:CalendarData}) {
-  const name=(id:string)=>data.rooms.find(room=>room.id===id)?.title || 'Room type';
-  return <div className="grid gap-3">
-    <section className={card}><h2 className="font-bold">Block dates</h2>
-      <WorkspaceForm operation="block" label="Block dates">
-        <label>Room<select name="target" className={input} required><option value="">Choose room</option>{data.rooms.map(room=><option key={room.id} value={room.id}>{room.title}</option>)}</select></label>
-        <div className="grid gap-3 sm:grid-cols-2"><label>From<input type="date" name="start" className={input} required/></label><label>Through<input type="date" name="end" className={input} required/></label></div>
-      </WorkspaceForm>
-    </section>
-    <section className={card}><h2 className="font-bold">Upcoming occupancy</h2>
-      {data.occupancy.length===0 && <p>No occupied dates to show.</p>}
-      {data.occupancy.map((stay,index)=><p key={index}>{name(stay.room_id)} · {stay.check_in} → {stay.check_out} · {stay.booking_status.replaceAll('_',' ')}</p>)}
-    </section>
-    <section className={card}><h2 className="font-bold">Availability blocks</h2>
-      {data.blocks.map(block=><div key={block.id} className="space-y-2 border-t py-2">
-        <p>{name(block.room_id)} · {block.start_date} → {block.end_date}</p>
-        {block.source==='manual' && <WorkspaceForm operation="reopen" target={block.id} label="Reopen dates" confirm="Remove this availability block?"/>}
-      </div>)}
-    </section>
-  </div>;
-}
-
 type Document={document_key:string;live_copy:string|null;draft_copy:string|null;has_draft:boolean};
 function Website({rows,media,publish,preview}:{rows:Document[];media:Option[];publish:boolean;preview?:string}) {
   if(preview) {

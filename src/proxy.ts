@@ -76,7 +76,8 @@ export async function proxy(request: NextRequest) {
       url.searchParams.set('error', 'not-authorized');
       return adminRedirect(url);
     }
-    if (profile?.team_permissions && path !== '/admin/mfa' && !path.startsWith('/admin/workspace')) {
+    if (profile?.team_permissions && path !== '/admin/mfa' && !path.startsWith('/admin/workspace')
+      && !(path === '/admin/availability' && profile.team_permissions.includes('availability.manage'))) {
       const workspace = path.startsWith('/admin/bookings') ? '/bookings'
         : path.startsWith('/admin/availability') ? '/calendar'
         : path.startsWith('/admin/content') ? '/website'

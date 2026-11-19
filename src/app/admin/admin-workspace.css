@@ -155,7 +155,8 @@ body:has([role="dialog"][aria-modal="true"],dialog[open]) .admin-bottom-nav { vi
   gap: .75rem;
 }
 .admin-filter-bar > button { white-space: nowrap; }
-[data-admin-shell] :is(.admin-filter-bar, .admin-filter-bar-wide, .admin-inline-action) select {
+[data-admin-shell] :is(.admin-filter-bar, .admin-filter-bar-wide, .admin-inline-action, .calendar-room-filter, .calendar-group-filter) select,
+.calendar-drawer select {
   display: block;
   appearance: none;
   height: 2.75rem;
@@ -256,3 +257,86 @@ body:has([role="dialog"][aria-modal="true"],dialog[open]) .admin-bottom-nav { vi
 
 [data-admin-shell] .admin-record-wide td { overflow-wrap: anywhere; }
 [data-admin-shell] .admin-record-wide th { white-space: normal; }
+
+/* Availability calendar uses the admin content width and a separate mobile agenda. */
+[data-admin-shell]:has([data-availability-page]) .admin-content { max-width: none; }
+.availability-calendar { color: #173d2c; }
+.availability-calendar .calendar-surface { border-color: #dedbd0; }
+.availability-calendar .calendar-toolbar {
+  display: flex;
+  align-items: end;
+  gap: .75rem;
+  background: #f6f4ef;
+}
+.calendar-nav { display: grid; grid-template-columns: auto 2.75rem minmax(0, 1fr) 2.75rem; gap: .375rem; }
+.calendar-nav .calendar-range { order: initial; min-width: 0; width: auto; }
+.calendar-room-filter, .calendar-group-filter { display: grid; min-width: 0; gap: .25rem; font-size: .75rem; font-weight: 700; }
+.calendar-room-filter > select, .calendar-group-filter > select { min-width: 0; height: 2.75rem; }
+.calendar-feedback { padding-inline: .875rem; font-size: .825rem; color: #42534a; }
+.calendar-feedback:not(:has(> p:empty)) { padding-block: .6rem; }
+.calendar-feedback .calendar-button { margin-top: .4rem; }
+.availability-calendar .calendar-date-row { background: #f1efe7; }
+.availability-calendar .calendar-room { background: #f7f5ef; }
+.availability-calendar .calendar-night.today, .availability-calendar .calendar-date-columns > .today { background: #edf4eb; }
+.availability-calendar .calendar-stay.confirmed { background: #d7e9dd; color: #173d2c; border-color: #88b39a; }
+.availability-calendar .calendar-stay.pending { background: #f8edcf; color: #634a18; }
+.availability-calendar .calendar-stay.closure { background: #eee6dc; color: #594631; }
+.calendar-selected > button {
+  outline: 2px solid #30654b;
+  outline-offset: -3px;
+  background: #e5f1e9;
+  color: #143c29;
+  font-size: .65rem;
+  font-weight: 800;
+}
+.calendar-type-row { min-height: 4rem; }
+.calendar-type-count { display: grid; align-content: center; justify-items: center; gap: .125rem; }
+.calendar-type-count span { font-size: .625rem; }
+.calendar-week-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .25rem; padding: .75rem; }
+.calendar-week-strip button {
+  display: grid;
+  min-width: 0;
+  min-height: 3rem;
+  place-content: center;
+  gap: .125rem;
+  border-radius: .65rem;
+  background: #f6f4ef;
+  color: #254738;
+  font-size: .75rem;
+}
+.calendar-week-strip button[aria-current="date"] { box-shadow: inset 0 0 0 1px #315f43; }
+.calendar-week-strip button[aria-pressed="true"] { background: #24523e; color: white; }
+.calendar-drawer .calendar-sheet-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+  gap: .5rem;
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding-block: .5rem max(.5rem, env(safe-area-inset-bottom));
+}
+.calendar-drawer .calendar-primary, .calendar-date-picker .calendar-primary { color: white; background: #24523e; border-color: #24523e; }
+.calendar-drawer textarea, .calendar-drawer select, .calendar-drawer input:not([type="checkbox"]) { min-width: 0; max-width: 100%; }
+@media (max-width: 767px) {
+  .availability-calendar .calendar-toolbar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
+  .calendar-nav, .availability-calendar .calendar-toolbar > button { grid-column: 1 / -1; }
+  .calendar-nav button { padding-inline: .425rem; }
+  .calendar-week-strip { padding-inline: .375rem; gap: .1875rem; }
+  .availability-calendar .calendar-agenda { padding: .75rem; }
+  .availability-calendar .calendar-agenda article { overflow-wrap: anywhere; }
+  .availability-calendar .calendar-agenda article > button { max-width: 100%; white-space: normal; }
+  .calendar-drawer {
+    align-self: flex-start;
+    margin-top: calc(var(--dialog-viewport-top, 0px) + var(--dialog-viewport-height, 100dvh) * .08);
+    height: calc(var(--dialog-viewport-height, 100dvh) * .92);
+    border-radius: 1.15rem 1.15rem 0 0;
+    padding: 1rem max(1rem, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(1rem, env(safe-area-inset-left));
+  }
+  .calendar-drawer :is(input, select, textarea), .calendar-date-picker input { font-size: 1rem; }
+}
+.calendar-type-agenda { border-top: 1px solid #dedbd0; }
+.calendar-type-agenda summary { display: flex; min-height: 3.25rem; align-items: center; justify-content: space-between; gap: .5rem; cursor: pointer; }
+.calendar-type-agenda summary span { text-align: end; font-size: .75rem; }
+[data-admin-shell]:has([data-restricted-calendar]) > :is(.sticky, .admin-bottom-nav),
+[data-admin-shell]:has([data-restricted-calendar]) .admin-content > nav,
+[data-admin-shell]:has([data-restricted-calendar]) :is(.admin-mobile-header, [data-admin-header]) { display: none; }

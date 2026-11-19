@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import{bookingHref,cellState,liveStay,nights,occupies,shiftDay,spanWithin,tiraneDay,validDay}from'../src/lib/admin/availability-calendar.ts';
+import{availableUnitCount,bookingHref,cellState,liveStay,nights,occupies,shiftDay,spanWithin,tiraneDay,validDay}from'../src/lib/admin/availability-calendar.ts';
 import type{AvailabilityBooking,AvailabilityBlock,AvailabilityRoom}from'../src/types/availability-admin.ts';
 const r:AvailabilityRoom={id:'left',name:'Triple Room L',roomTypeId:'triple',roomTypeName:'Triple',active:true};
 const b:AvailabilityBooking={id:'b',reference:'B',roomIds:['left'],roomTypeIds:['triple'],checkIn:'2026-12-30',checkOut:'2027-01-02',status:'confirmed'};
@@ -9,3 +9,10 @@ test('physical allocations never occupy sibling units; category-only reservation
 test('only active statuses and unexpired holds occupy inventory',()=>{const now=Date.parse('2026-12-31T09:00:00Z');assert.equal(liveStay({...b,status:'held',holdExpiresAt:'2026-12-31T09:00:01Z'},now),true);assert.equal(liveStay({...b,status:'held',holdExpiresAt:'2026-12-31T09:00:00Z'},now),false);for(const status of ['cancelled','completed','expired'])assert.equal(liveStay({...b,status},now),false);for(const status of ['pending','awaiting_payment','confirmed','checked_in'])assert.equal(liveStay({...b,status},now),true)});
 test('Tirane dates, leap days and year navigation do not depend on the operator timezone',()=>{assert.equal(tiraneDay(new Date('2026-12-31T23:30:00Z')),'2027-01-01');assert.equal(shiftDay('2026-12-30',14),'2027-01-13');assert.equal(shiftDay('2028-02-28',1),'2028-02-29');assert.equal(validDay('2026-02-31'),false);assert.equal(validDay('2027-01-01'),true)});
 test('prefill is a link to the existing category allocator, not a booking mutation',()=>{const url=new URL(bookingHref(r,'2026-12-30','2027-01-02'),'https://example.invalid');assert.equal(url.pathname,'/admin/bookings/new');assert.equal(url.searchParams.get('roomTypeId'),'triple');assert.equal(url.searchParams.get('checkOut'),'2027-01-02');assert.equal(url.searchParams.has('roomId'),false)});
+
+test('room type counts retain sibling inventory and subtract only unassigned reservations', () => {
+  const sister = { ...r, id: 'right' };
+  assert.deepEqual(availableUnitCount([r,sister],'2026-12-31',[],[b]), { available: 1, total: 2 });
+  assert.deepEqual(availableUnitCount([r,sister],'2027-01-02',[],[b]), { available: 2, total: 2 });
+  assert.deepEqual(availableUnitCount([r,sister],'2026-12-31',[],[b,{...b,roomIds:[],unassignedTypeIds:['triple']}]), { available: 0, total: 2 });
+});

@@ -35,7 +35,7 @@ test('high-use datasets have touch-first alternatives instead of squeezed tables
 
   const calendar = source('src/components/admin/AvailabilityCalendar.tsx');
   assert.match(calendar, /calendar-agenda/);
-  assert.match(calendar, /Selected dates/);
+  assert.match(calendar, /calendar-selected/);
   assert.match(calendar, /Previous period/);
   assert.match(calendar, /Next period/);
 
