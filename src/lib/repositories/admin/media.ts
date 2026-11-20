@@ -39,7 +39,7 @@ export const adminMediaRepository = {
   },
   async options(session: AdminSession) {
     const db=await createServerSupabaseClient();
-    const {data,error}=await db.from('media_assets').select('id,title,alt_text,filename,file_path,storage_bucket,status').eq('property_id',session.propertyId).neq('status','archived').order('created_at',{ascending:false});
+    const {data,error}=await db.from('media_assets').select('id,title,alt_text,filename,file_path,storage_bucket,status,is_visible').eq('property_id',session.propertyId).neq('status','archived').order('created_at',{ascending:false});
     if(error)throw error;
     return (data||[]).map(asset=>({...asset,publicUrl:resolvePublicMediaUrl(asset.file_path,asset.storage_bucket)}));
   },

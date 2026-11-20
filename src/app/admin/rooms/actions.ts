@@ -9,6 +9,20 @@ export async function restoreRoomType(id:string){const session=await requireAdmi
 export async function duplicateRoomType(id:string){const session=await requireAdmin(['owner','manager','editor']);await adminRoomsRepository.duplicateRoomType(session,id);refresh()}
 export async function archivePhysicalRoom(id:string){const session=await requireAdmin(['owner','manager']);await adminRoomsRepository.setPhysicalRoomStatus(session,id,'archived');refresh()}
 export async function restorePhysicalRoom(id:string){const session=await requireAdmin(['owner','manager']);await adminRoomsRepository.setPhysicalRoomStatus(session,id,'draft');refresh()}
+export async function refreshRoomGallery(roomTypeId: string): Promise<void> {
+  const session = await requireAdmin(['owner', 'manager', 'editor']);
+  const db = await createServerSupabaseClient();
+  const { data, error } = await db.from('room_types').select('slug')
+    .eq('property_id', session.propertyId).eq('id', roomTypeId).single();
+  if (error || !data) throw new Error('The room could not be found.');
+  refreshRoomGalleryPages(data.slug);
+}
+
+function refreshRoomGalleryPages(slug: string | null) {
+  if (slug) revalidatePath(`/rooms/${slug}`);
+  refresh();
+}
+
 export type RoomMediaState={ok:boolean;message:string};
 export async function attachExistingRoomMedia(roomTypeId:string,_:RoomMediaState,data:FormData):Promise<RoomMediaState>{
   const session=await requireAdmin(['owner','manager','editor']),mediaAssetId=String(data.get('mediaAssetId')||'').trim();
@@ -16,20 +30,23 @@ export async function attachExistingRoomMedia(roomTypeId:string,_:RoomMediaState
   const db=await createServerSupabaseClient();
   const[roomResult,assetResult,countResult,existingResult]=await Promise.all([
     db.from('room_types').select('id,slug').eq('id',roomTypeId).eq('property_id',session.propertyId).single(),
-    db.from('media_assets').select('id').eq('id',mediaAssetId).eq('property_id',session.propertyId).neq('status','archived').single(),
+    db.from('media_assets').select('id').eq('id',mediaAssetId).eq('property_id',session.propertyId).eq('status','published').eq('is_visible',true).single(),
     db.from('room_images').select('id',{count:'exact',head:true}).eq('property_id',session.propertyId).eq('room_type_id',roomTypeId).neq('status','archived'),
-    db.from('room_images').select('id').eq('property_id',session.propertyId).eq('room_type_id',roomTypeId).eq('media_asset_id',mediaAssetId).maybeSingle(),
+    db.from('room_images').select('id,status,is_visible').eq('property_id',session.propertyId).eq('room_type_id',roomTypeId).eq('media_asset_id',mediaAssetId).maybeSingle(),
   ]);
   if(roomResult.error||!roomResult.data)return{ok:false,message:'This room is no longer available.'};
-  if(assetResult.error||!assetResult.data)return{ok:false,message:'This image is unavailable or belongs to another property.'};
+  if(assetResult.error||!assetResult.data)return{ok:false,message:'Choose a published, visible photo from this property.'};
   if(countResult.error||existingResult.error)return{ok:false,message:ownerSafeError(countResult.error||existingResult.error,'The room gallery could not be checked. Please try again.')};
+  if (existingResult.data?.status === 'published' && existingResult.data.is_visible) {
+    refreshRoomGalleryPages(roomResult.data.slug);
+    return { ok: true, message: 'This photo is already in the room gallery.' };
+  }
   const values={status:'published' as const,is_visible:true,is_featured:(countResult.count||0)===0,sort_order:(countResult.count||0)*10,updated_by:session.userId};
   const result=existingResult.data
     ?await db.from('room_images').update(values).eq('id',existingResult.data.id).eq('property_id',session.propertyId)
     :await db.from('room_images').insert({property_id:session.propertyId,room_type_id:roomTypeId,media_asset_id:mediaAssetId,...values,created_by:session.userId});
   if(result.error)return{ok:false,message:ownerSafeError(result.error,'The image could not be added. Please try again.')};
   revalidatePath(`/admin/rooms/${roomTypeId}`);
-  revalidatePath(`/rooms/${roomResult.data.slug}`);
-  refresh();
+  refreshRoomGalleryPages(roomResult.data.slug);
   return{ok:true,message:existingResult.data?'Image restored to the room gallery.':'Image added to the room gallery.'};
 }

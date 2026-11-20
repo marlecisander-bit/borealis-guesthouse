@@ -55,6 +55,52 @@ test('live Supabase transport explicitly bypasses cache by default',async()=>{
 test('homepage selection preserves order and fills gaps left by unpublished items',async()=>{
  const rows=['e1','e2','e3','e4'].map(id=>({id,slug:id,name:id,price:null,pricing_type:'per_person',availability_mode:'on_request',is_featured:false}));
  const db={from:(table:string)=>{let ids:string[]|undefined,limit=1000;const query:any={};for(const method of ['select','eq','order'])query[method]=()=>query;query.in=(_key:string,values:string[])=>{ids=values;return query};query.limit=(value:number)=>{limit=value;return query};query.then=(resolve:any)=>Promise.resolve({data:table==='experiences'?rows.filter(row=>!ids||ids.includes(row.id)).slice(0,limit):[],error:null}).then(resolve);return query}};
- const {getDatabaseExperiences}=load('src/services/database-experiences.ts',{'@/lib/rentals/model':{publicRentalConfig},'react':{cache:(fn:unknown)=>fn},'@/lib/supabase/public-cms':{createPublicCmsClient:()=>db},'@/lib/supabase/server':{createServerSupabaseClient:async()=>db}});
+ const {getDatabaseExperiences}=load('src/services/database-experiences.ts',{'@/lib/media-url':{resolvePublicMediaUrl:(path:string)=>'/'+path},'@/lib/rentals/model':{publicRentalConfig},'react':{cache:(fn:unknown)=>fn},'@/lib/supabase/public-cms':{createPublicCmsClient:()=>db},'@/lib/supabase/server':{createServerSupabaseClient:async()=>db}});
  const selected=await getDatabaseExperiences(undefined,3,['unpublished','e4','e3','e2']);assert.deepEqual(selected.map((row:any)=>row.id),['e4','e3','e2']);
+});
+
+test('public experiences use a visible assigned cover even without a gallery link', async () => {
+ const filters: unknown[][] = [];
+ const rows = {
+   experiences: [{ id: 'experience', cover_media_id: 'cover', name: 'Paddle', pricing_type: 'per_person', availability_mode: 'on_request' }],
+   experience_images: [],
+   media_assets: [{ id: 'cover', file_path: 'paddle photo.webp', storage_bucket: 'public-media' }],
+   seo_metadata: [],
+ };
+ const db = { from(table: keyof typeof rows) {
+   const query: Record<string, unknown> = {};
+   for (const method of ['select', 'eq', 'in', 'order']) {
+     query[method] = (...args: unknown[]) => { filters.push([table, method, ...args]); return query; };
+   }
+   query.then = (resolve: (result: unknown) => unknown) => Promise.resolve({ data: rows[table] }).then(resolve);
+   return query;
+ } };
+ const { getDatabaseExperiences } = load('src/services/database-experiences.ts', {
+   '@/lib/media-url': { resolvePublicMediaUrl: (path: string, bucket: string) => '/' + bucket + '/' + encodeURIComponent(path) },
+   '@/lib/rentals/model': { publicRentalConfig },
+   'react': { cache: (fn: unknown) => fn },
+   '@/lib/supabase/public-cms': { createPublicCmsClient: () => db },
+   '@/lib/supabase/server': { createServerSupabaseClient: async () => db },
+ });
+ const [experience] = await getDatabaseExperiences();
+ assert.equal(experience.image, '/public-media/paddle%20photo.webp');
+ assert.deepEqual(experience.gallery, [experience.image]);
+ assert.ok(filters.some(entry => entry.join(':') === 'experience_images:eq:is_visible:true'));
+ assert.ok(filters.some(entry => entry.join(':') === 'media_assets:eq:status:published'));
+ assert.ok(filters.some(entry => entry.join(':') === 'media_assets:eq:is_visible:true'));
+});
+
+test('room photo edits invalidate the shared gallery and all room card surfaces', async () => {
+ const paths: string[] = [];
+ const query = { select: () => query, eq: () => query, single: async () => ({ data: { slug: 'triple-room-lake-view' } }) };
+ const { refreshRoomGallery } = load('src/app/admin/rooms/actions.ts', {
+   '@/lib/revalidate-public-content': { roomsRevalidatePath: (path: string) => paths.push(path) },
+   '@/lib/admin/auth': { requireAdmin: async () => ({ propertyId: 'property' }) },
+   '@/lib/admin/owner-safe-error': {},
+   '@/lib/admin/room-validation': {},
+   '@/lib/repositories/admin/rooms': {},
+   '@/lib/supabase/server': { createServerSupabaseClient: async () => ({ from: () => query }) },
+ });
+ await refreshRoomGallery('room-id');
+ assert.deepEqual(paths, ['/rooms/triple-room-lake-view', '/admin/rooms', '/rooms', '/']);
 });

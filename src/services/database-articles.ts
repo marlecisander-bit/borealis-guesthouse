@@ -1,4 +1,5 @@
 import {cache} from 'react';
+import { resolvePublicMediaUrl } from '@/lib/media-url';
 import {createPublicCmsClient} from '@/lib/supabase/public-cms';
 import{createServerSupabaseClient}from'@/lib/supabase/server';
 import type{TourismArticle}from'@/types/public';
@@ -11,7 +12,7 @@ const unique=(values:(string|null|undefined)[])=>Array.from(new Set(values.filte
 
 export const getDatabaseArticles = cache(async function getDatabaseArticles(includeId?:string,limit?:number,selectedIds?:string[]):Promise<TourismArticle[]>{
   try{
-    const db=includeId?await createServerSupabaseClient():createPublicCmsClient(),base=process.env.NEXT_PUBLIC_SUPABASE_URL||'';
+    const db=includeId?await createServerSupabaseClient():createPublicCmsClient();
     let query=db.from('tourism_articles').select('id,slug,title,subtitle,excerpt,description,category_id,hero_media_id,hero_settings,gallery_media_ids,content_blocks,author_name,published_at,is_featured,related_article_ids,related_experience_ids,related_transfer_ids').order('is_featured',{ascending:false}).order('sort_order').order('published_at',{ascending:false});
     query=includeId?query.or(`and(status.eq.published,is_visible.eq.true),id.eq.${includeId}`):query.eq('status','published').eq('is_visible',true);
     if(selectedIds?.length)query=query.in('id',selectedIds);if(limit)query=query.limit(selectedIds?.length||limit);
@@ -25,14 +26,14 @@ export const getDatabaseArticles = cache(async function getDatabaseArticles(incl
     const mediaIds=unique(rows.flatMap(row=>{const meta=(seoRows||[]).find(item=>item.entity_id===row.id);return[row.hero_media_id,row.hero_settings?.heroMobileImageId,meta?.og_image_id,...(row.gallery_media_ids||[]),...(row.content_blocks||[]).flatMap(block=>[block.mediaId,...(block.mediaIds||[])])]}));
     const categoryIds=unique(rows.map(row=>row.category_id));
     const[media,categories,relatedArticles,experiences,transfers,rooms]=await Promise.all([
-      mediaIds.length?db.from('media_assets').select('id,alt_text,filename,file_path').in('id',mediaIds).eq('status','published').eq('is_visible',true):Promise.resolve({data:[]}),
+      mediaIds.length?db.from('media_assets').select('id,alt_text,filename,file_path,storage_bucket').in('id',mediaIds).eq('status','published').eq('is_visible',true):Promise.resolve({data:[]}),
       categoryIds.length?db.from('tourism_categories').select('id,title,slug').in('id',categoryIds).eq('status','published').eq('is_visible',true):Promise.resolve({data:[]}),
       articleIds.length?db.from('tourism_articles').select('id,title,slug').in('id',articleIds).eq('status','published').eq('is_visible',true):Promise.resolve({data:[]}),
       experienceIds.length?db.from('experiences').select('id,name,slug').in('id',experienceIds).eq('status','published').eq('is_visible',true):Promise.resolve({data:[]}),
       transferIds.length?db.from('transfer_routes').select('id,origin,destination,slug').in('id',transferIds).eq('status','published').eq('is_visible',true).eq('active',true):Promise.resolve({data:[]}),
       roomIds.length?db.from('room_types').select('id,name,slug').in('id',roomIds).eq('status','published').eq('is_visible',true):Promise.resolve({data:[]}),
     ]);
-    const mediaMap=new Map((media.data||[]).map(item=>[item.id,{url:`${base}/storage/v1/object/public/public-media/${item.file_path}`,alt:item.alt_text||item.filename||'Borealis Guest House'}]));
+    const mediaMap=new Map((media.data||[]).filter(item=>item.file_path).map(item=>[item.id,{url:resolvePublicMediaUrl(item.file_path,item.storage_bucket||undefined),alt:item.alt_text||item.filename||'Borealis Guest House'}]));
     const related:Record<string,{label:string;href:string}>={};
     for(const item of relatedArticles.data||[])related[item.id]={label:item.title,href:`/explore-koman/${item.slug}`};
     for(const item of experiences.data||[])related[item.id]={label:item.name,href:`/experiences/${item.slug}`};

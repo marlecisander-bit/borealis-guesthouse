@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { refreshRoomGallery } from '@/app/admin/rooms/actions';
 import { useMemo, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { AdminMediaAsset } from '@/types/media';
@@ -19,6 +20,15 @@ export function RoomImagesManager({ propertyId, roomTypeId, initialImages }: Roo
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [dragged, setDragged] = useState<number | null>(null);
+
+  async function confirmPublicRefresh(feedback: string) {
+    try {
+      await refreshRoomGallery(roomTypeId);
+      setMessage(feedback);
+    } catch {
+      setMessage(feedback + ' The public page could not be refreshed yet.');
+    }
+  }
 
   async function attach(assets: AdminMediaAsset[]) {
     setBusy(true);
@@ -58,7 +68,7 @@ export function RoomImagesManager({ propertyId, roomTypeId, initialImages }: Roo
           };
         }),
       ]);
-      setMessage('Room photos added.');
+      await confirmPublicRefresh('Room photos added.');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Could not add the photos.');
     } finally {
@@ -96,7 +106,7 @@ export function RoomImagesManager({ propertyId, roomTypeId, initialImages }: Roo
         throw error;
       }
       setImages((items) => items.map((item) => ({ ...item, isFeatured: item.id === id })));
-      setMessage('Cover image updated.');
+      await confirmPublicRefresh('Cover image updated.');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Could not update the cover image.');
     } finally {
@@ -105,6 +115,7 @@ export function RoomImagesManager({ propertyId, roomTypeId, initialImages }: Roo
   }
 
   async function updateAlt(image: AdminRoomImage, value: string) {
+    if (value === image.altText) return;
     const { error } = await db
       .from('media_assets')
       .update({ alt_text: value })
@@ -117,7 +128,11 @@ export function RoomImagesManager({ propertyId, roomTypeId, initialImages }: Roo
   }
 
   async function archive(image: AdminRoomImage) {
-    if (!confirm('Remove this image from the room gallery?')) return;
+    const isLastPublicPhoto = image.publiclyVisible !== false &&
+      !images.some(item => item.id !== image.id && item.publiclyVisible !== false);
+    if (!confirm(isLastPublicPhoto
+      ? 'Remove the last public photo? This room will show a placeholder until another photo is added.'
+      : 'Remove this image from the room gallery?')) return;
     setBusy(true);
     const { error } = await db
       .from('room_images')
@@ -126,7 +141,10 @@ export function RoomImagesManager({ propertyId, roomTypeId, initialImages }: Roo
       .eq('property_id', propertyId)
       .eq('room_type_id', roomTypeId);
     setMessage(error ? error.message : 'Image removed from this room.');
-    if (!error) setImages((items) => items.filter((item) => item.id !== image.id));
+    if (!error) {
+      setImages((items) => items.filter((item) => item.id !== image.id));
+      await confirmPublicRefresh('Image removed from this room.');
+    }
     setBusy(false);
   }
 
@@ -146,7 +164,7 @@ export function RoomImagesManager({ propertyId, roomTypeId, initialImages }: Roo
       .eq('room_type_id', roomTypeId)));
     const failed = results.find((result) => result.error);
     if (failed?.error) setImages(previous);
-    setMessage(failed?.error?.message || 'Image order saved.');
+    await confirmPublicRefresh(failed?.error ? 'The full image order could not be saved.' : 'Image order saved.');
     setBusy(false);
   }
 
@@ -163,7 +181,7 @@ export function RoomImagesManager({ propertyId, roomTypeId, initialImages }: Roo
           <article key={image.id} draggable onDragStart={() => setDragged(index)} onDragOver={(event) => event.preventDefault()} onDrop={() => { if (dragged !== null) void reorder(dragged, index); setDragged(null); }} className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
             <div className="relative aspect-[4/3]">
               <Image src={image.publicUrl} alt={image.altText} fill sizes="(max-width:640px) 100vw,33vw" className="object-cover" />
-              {image.isFeatured && <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-bold">Cover</span>}
+              {image.publiclyVisible === false ? <span className="absolute left-3 top-3 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold">Hidden in Media Library</span> : image.isFeatured && <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-bold">Cover</span>}
             </div>
             <div className="space-y-3 p-4">
               <label className="block text-xs font-bold text-slate-600">
@@ -171,7 +189,7 @@ export function RoomImagesManager({ propertyId, roomTypeId, initialImages }: Roo
                 <input defaultValue={image.altText} onBlur={(event) => void updateAlt(image, event.target.value)} className="mt-1 min-h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal" />
               </label>
               <div className="flex flex-wrap gap-2">
-                <button onClick={() => void setCover(image.id)} disabled={busy || image.isFeatured} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold disabled:opacity-50">Set cover</button>
+                <button onClick={() => void setCover(image.id)} disabled={busy || image.isFeatured || image.publiclyVisible === false} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold disabled:opacity-50">Set cover</button>
                 <button onClick={() => void reorder(index, Math.max(0, index - 1))} disabled={index === 0 || busy} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold disabled:opacity-50">Move up</button>
                 <button onClick={() => void reorder(index, index + 1)} disabled={index === images.length - 1 || busy} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold disabled:opacity-50">Move down</button>
                 <button onClick={() => void archive(image)} disabled={busy} className="rounded-lg px-3 py-2 text-xs font-bold text-red-700 disabled:opacity-50">Remove</button>

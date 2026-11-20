@@ -1,4 +1,5 @@
 import { cache } from 'react';
+import { resolvePublicMediaUrl } from '@/lib/media-url';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createPublicCmsClient } from '@/lib/supabase/public-cms';
 import { getRoomPriceFromMap } from '@/services/pricing';
@@ -6,7 +7,7 @@ const images={room:'/borealis-placeholder.svg'};
 import type { Room } from '@/types/public';
 
 type TypeRow={id:string;slug:string;name:string;short_description:string|null;long_description:string|null;capacity:number;max_adults:number|null;max_children:number|null;max_infants:number|null;max_total_occupancy:number|null;min_adults:number|null;infants_count_toward_capacity:boolean|null;bed_configuration:string|null;size_sqm:number|null;view_type:string|null;is_featured:boolean};
-type ImageRow={room_type_id:string;sort_order:number;is_featured:boolean;media_assets:{file_path:string}|null};
+type ImageRow={room_type_id:string;sort_order:number;is_featured:boolean;media_assets:{file_path:string;storage_bucket:string|null}|null};
 type SeoRow={entity_id:string;title:string|null;meta_description:string|null;og_title:string|null;og_description:string|null;canonical_override:string|null;noindex:boolean|null};
 
 export const getDatabaseRooms=cache(async(includeId?:string):Promise<Room[]>=>{
@@ -16,7 +17,7 @@ export const getDatabaseRooms=cache(async(includeId?:string):Promise<Room[]>=>{
     const db=includeId?await createServerSupabaseClient():createPublicCmsClient();
     const[{data:types,error},{data:imageRows},{data:links},{data:amenities},{data:seo}]=await Promise.all([
       includeId?db.from('room_types').select('id,slug,name,short_description,long_description,capacity,max_adults,max_children,max_infants,max_total_occupancy,min_adults,infants_count_toward_capacity,bed_configuration,size_sqm,view_type,is_featured').or(`and(status.eq.published,is_visible.eq.true),id.eq.${includeId}`).order('is_featured',{ascending:false}).order('sort_order'):db.from('room_types').select('id,slug,name,short_description,long_description,capacity,max_adults,max_children,max_infants,max_total_occupancy,min_adults,infants_count_toward_capacity,bed_configuration,size_sqm,view_type,is_featured').eq('status','published').eq('is_visible',true).order('is_featured',{ascending:false}).order('sort_order'),
-      db.from('room_images').select('room_type_id,sort_order,is_featured,media_assets(file_path)').eq('status','published').eq('is_visible',true).order('sort_order'),
+      db.from('room_images').select('room_type_id,sort_order,is_featured,media_assets!inner(file_path,storage_bucket)').eq('status','published').eq('is_visible',true).eq('media_assets.status','published').eq('media_assets.is_visible',true).order('sort_order'),
       db.from('room_type_amenities').select('room_type_id,amenity_id'),
       db.from('amenities').select('id,name,icon').eq('status','published').eq('is_visible',true),
       db.from('seo_metadata').select('entity_id,title,meta_description,og_title,og_description,canonical_override,noindex').eq('entity_type','room_type').eq('status','published'),
@@ -24,7 +25,7 @@ export const getDatabaseRooms=cache(async(includeId?:string):Promise<Room[]>=>{
     if(error||!types)return[];
     const prices=await getRoomPriceFromMap((types as TypeRow[]).map(row=>row.id));
     return(types as TypeRow[]).map(row=>{
-      const roomImages=((imageRows||[]) as unknown as ImageRow[]).filter(item=>item.room_type_id===row.id&&item.media_assets).sort((a,b)=>Number(b.is_featured)-Number(a.is_featured)||a.sort_order-b.sort_order).map(item=>`${url}/storage/v1/object/public/public-media/${item.media_assets!.file_path}`);
+      const roomImages=((imageRows||[]) as unknown as ImageRow[]).filter(item=>item.room_type_id===row.id&&item.media_assets?.file_path).sort((a,b)=>Number(b.is_featured)-Number(a.is_featured)||a.sort_order-b.sort_order).map(item=>resolvePublicMediaUrl(item.media_assets!.file_path,item.media_assets!.storage_bucket||undefined));
       const withoutConflictingCapacity = (copy: string | null) => row.slug === 'family-room-lake-view'
         ? (copy || '').replace(/\s+and can accommodate up to (?:five|5) guests\b/gi, '')
           .replace(/[^.!?\n]*\bup to (?:five|5) guests[^.!?\n]*[.!?]?\s*/gi, '').trim()

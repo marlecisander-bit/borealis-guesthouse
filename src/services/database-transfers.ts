@@ -1,4 +1,5 @@
 import {cache} from 'react';
+import { resolvePublicMediaUrl } from '@/lib/media-url';
 import {createPublicCmsClient} from '@/lib/supabase/public-cms';
 import type {TransferRoute} from '@/types/public';
 
@@ -7,7 +8,7 @@ type Row={id:string;origin:string;destination:string;slug:string;short_descripti
 
 export const getDatabaseTransfers = cache(async function getDatabaseTransfers(limit?:number,selectedIds?:string[]):Promise<TransferRoute[]>{
   try{
-    const db=createPublicCmsClient(),base=process.env.NEXT_PUBLIC_SUPABASE_URL||'';
+    const db=createPublicCmsClient();
     let query=db.from('transfer_routes').select('id,origin,destination,slug,short_description,description,full_description,cover_media_id,duration_label,duration_minutes,capacity,service_type,price,currency,price_type,booking_notice,active,is_featured,bookable,availability_mode,available_days,window_start,window_end').eq('status','published').eq('is_visible',true).eq('active',true).order('is_featured',{ascending:false}).order('sort_order');
     if(limit)query=query.limit(limit);
     let{data,error}=await query;
@@ -19,8 +20,8 @@ export const getDatabaseTransfers = cache(async function getDatabaseTransfers(li
       db.from('seo_metadata').select('entity_id,title,meta_description').eq('entity_type','transfer_route').eq('status','published').in('entity_id',routeIds),
     ]);
     const imageRows=images.data||[],mediaIds=Array.from(new Set([...rows.flatMap(row=>row.cover_media_id?[row.cover_media_id]:[]),...imageRows.map(row=>row.media_asset_id)]));
-    const{data:media}=mediaIds.length?await db.from('media_assets').select('id,file_path').in('id',mediaIds).eq('status','published').eq('is_visible',true):{data:[] as {id:string;file_path:string}[]};
-    const paths=new Map((media||[]).map(item=>[item.id,item.file_path])),url=(id:string|null)=>id&&paths.get(id)?`${base}/storage/v1/object/public/public-media/${paths.get(id)}`:'';
+    const{data:media}=mediaIds.length?await db.from('media_assets').select('id,file_path,storage_bucket').in('id',mediaIds).eq('status','published').eq('is_visible',true):{data:[] as {id:string;file_path:string;storage_bucket:string|null}[]};
+    const paths=new Map((media||[]).filter(item=>item.file_path).map(item=>[item.id,resolvePublicMediaUrl(item.file_path,item.storage_bucket||undefined)])),url=(id:string|null)=>id?paths.get(id):undefined;
     return rows.map(row=>{
       const gallery=Array.from(new Set([url(row.cover_media_id),...imageRows.filter(item=>item.transfer_route_id===row.id).map(item=>url(item.media_asset_id))].filter(Boolean)))as string[];
       const meta=(seo.data||[]).find(item=>item.entity_id===row.id);

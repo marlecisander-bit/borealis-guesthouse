@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { contentRevalidatePath, experiencesRevalidatePath, roomsRevalidatePath, transfersRevalidatePath } from '@/lib/revalidate-public-content';
 import { requireTeamMember } from '@/lib/admin/team-session';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
@@ -18,6 +19,11 @@ export async function saveTeamWorkspace(_state:{ok:boolean;message:string}, form
   });
   if(error)return {ok:false,message:error.code==='42501'?'Your current access does not allow this change.':error.code==='23P01'?'These dates overlap a booking or an existing block.':'The change could not be saved. Check the selected item and entered values.'};
   revalidatePath('/admin/workspace','layout');
-  if (['publish','rate','room_content','room_capacity','offer'].includes(operation)) revalidatePath('/','layout');
+  if (operation === 'publish') contentRevalidatePath('/','layout');
+  if (['rate','room_content','room_capacity'].includes(operation)) roomsRevalidatePath('/','layout');
+  if (operation === 'offer') {
+    const refreshOffer = fields.kind === 'transfer' ? transfersRevalidatePath : experiencesRevalidatePath;
+    refreshOffer('/','layout');
+  }
   return {ok:true,message:operation==='publish'?'Changes published.':operation==='draft'?'Draft saved.':'Change saved.'};
 }
