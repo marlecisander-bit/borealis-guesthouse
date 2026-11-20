@@ -3,14 +3,19 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {resolvePropertyContact} from '../src/lib/property-contact.ts';
-import {adminNavigation,isAdminNavItemActive} from '../src/lib/admin/navigation.ts';
+import {adminNavigation,adminNavigationFor,adminWorkspacesFor,isAdminNavItemActive} from '../src/lib/admin/navigation.ts';
 
 const source = (path: string) => readFileSync(join(process.cwd(), path), 'utf8');
 
 test('Admin navigation groups owner tasks predictably', () => {
   assert.deepEqual(adminNavigation.map(item=>item.label),['Today','Bookings','Calendar','More']);
   for(const path of ['/admin/bookings','/admin/inquiries','/admin/rooms/room-id','/admin/experiences/rental-id','/admin/transfers','/admin/media','/admin/languages','/admin/channels'])assert.equal(adminNavigation.filter(item=>isAdminNavItemActive(path,item)).length,1,`${path} has exactly one destination`);
-  assert.match(source('src/components/admin/AdminWorkspaceNav.tsx'), /Guest enquiries/);
+  assert.deepEqual(adminNavigationFor('editor').map(item=>item.label),['Today','More']);
+  assert.ok(adminWorkspacesFor('manager').some(item=>item.label==='Settings'));
+  assert.ok(!adminWorkspacesFor('staff').some(item=>item.label==='Settings'));
+  const tabs = source('src/components/admin/AdminWorkspaceNav.tsx');
+  assert.match(tabs, /Guest messages/);
+  assert.match(tabs, /Change requests/);
   assert.match(source('src/app/admin/settings/page.tsx'), /Booking policies/);
 });
 

@@ -17,10 +17,13 @@ export interface UpcomingBooking {
   currency: string;
 }
 export interface AttentionItem { label: string; detail: string; count: number; href: string }
+type PendingGuestRequest = { booking_id: string; reference: string; operation: string };
 export interface DashboardOverview {
   today: { arrivals: TodayMetric; departures: TodayMetric; guestsStaying: TodayMetric };
   upcomingBookings: UpcomingBooking[];
   attention: AttentionItem[];
+  guestRequests: PendingGuestRequest[];
+  guestRequestCount: number | null;
   date: string;
   attentionUnavailable: boolean;
   arrivalsUnavailable: boolean;
@@ -36,7 +39,14 @@ const count = async (query: PromiseLike<{ count: number | null; error: unknown }
 export async function getDashboardOverview(session: AdminSession): Promise<DashboardOverview> {
   const db = await createServerSupabaseClient();
   const date = tiraneDay();
-  const [arrivals, departures, stayingResult, pending, awaitingPayment, failedPayments, unreadNotifications, upcomingResult] = await Promise.all([
+  const canReview = session.role !== 'editor';
+  const [reviewQueue, arrivals, departures, stayingResult, pending, awaitingPayment, failedPayments, unreadNotifications, upcomingResult] = await Promise.all([
+    canReview
+      ? db.rpc('booking_review_queue', { target_property: session.propertyId }, { count: 'exact' }).limit(3).then(
+        ({ data, count, error }) => ({ rows: error ? [] : (data ?? []) as PendingGuestRequest[], count: error ? null : count }),
+        () => ({ rows: [], count: null }),
+      )
+      : { rows: [], count: 0 },
     count(db.from('bookings').select('id', { count: 'exact', head: true }).eq('property_id', session.propertyId).eq('check_in', date).in('booking_status', arrivalStatuses)),
     count(db.from('bookings').select('id', { count: 'exact', head: true }).eq('property_id', session.propertyId).eq('check_out', date).in('booking_status', stayingStatuses)),
     db.from('bookings').select('total_guests,adults,children').eq('property_id', session.propertyId).lte('check_in', date).gt('check_out', date).in('booking_status', stayingStatuses),
@@ -49,7 +59,7 @@ export async function getDashboardOverview(session: AdminSession): Promise<Dashb
 
   const guestsStaying = (stayingResult.data || []).reduce((sum, booking) => sum + Number(booking.total_guests ?? Number(booking.adults || 0) + Number(booking.children || 0)), 0);
   const attention: AttentionItem[] = [];
-  if (pending) attention.push({ label: 'Booking requests', detail: 'Review and confirm new requests.', count: pending, href: '/admin/bookings?status=pending' });
+  if (pending) attention.push({ label: 'New reservations', detail: 'Review and confirm new requests.', count: pending, href: '/admin/bookings?status=pending' });
   if (awaitingPayment) attention.push({ label: 'Awaiting payment', detail: 'Follow up before arrival.', count: awaitingPayment, href: '/admin/bookings?status=awaiting_payment' });
   if (failedPayments) attention.push({ label: 'Payment issues', detail: 'A payment needs review.', count: failedPayments, href: '/admin/bookings?payment=failed' });
   if (unreadNotifications) attention.push({ label: 'Unread notifications', detail: 'Check recent booking activity.', count: unreadNotifications, href: '/admin/notifications' });
@@ -82,7 +92,9 @@ export async function getDashboardOverview(session: AdminSession): Promise<Dashb
     },
     upcomingBookings,
     attention,
-    attentionUnavailable: [pending,awaitingPayment,failedPayments,unreadNotifications].some(value=>value===null),
+    guestRequests: reviewQueue.rows,
+    guestRequestCount: reviewQueue.count,
+    attentionUnavailable: [pending,awaitingPayment,failedPayments,unreadNotifications,reviewQueue.count].some(value=>value===null),
     arrivalsUnavailable: Boolean(upcomingResult.error),
   };
 }

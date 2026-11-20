@@ -7,8 +7,8 @@ import { PropertyPublication } from '@/components/admin/PropertyPublication';
 
 const destinations=[
   ['Property details','#property-details'],['Booking policies','#booking-policies'],['Payments & fees','#payments-fees'],
-  ['Notification and email settings','#notification-preferences'],['Languages','/admin/languages'],
-  ['Notification activity','/admin/notifications'],['Integrations and calendars','/admin/channels'],['Team & Access','/admin/settings/team'],
+  ['Notification preferences','#notification-preferences'],
+  ['Notification inbox and devices','/admin/notifications'],['Team & Access','/admin/settings/team'],
 ] as const;
 
 export default async function SettingsPage() {

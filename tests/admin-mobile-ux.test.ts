@@ -9,7 +9,7 @@ test('mobile Admin navigation uses the shared destinations and clears dialogs an
   const navigation = source('src/components/layout/AdminMobileNav.tsx');
   const workspace = source('src/app/admin/admin-workspace.css');
   assert.match(navigation, /data-admin-bottom-nav/);
-  assert.match(navigation, /adminNavigation.map/);
+  assert.match(navigation, /adminNavigationFor\(role\)\.map/);
   assert.match(navigation, /aria-current/);
   assert.match(workspace, /safe-area-inset-bottom/);
   assert.match(workspace, /dialog\[open\]/);
@@ -65,6 +65,6 @@ test('mobile room, editor and media actions remain comfortably tappable', () => 
 
 test('mobile booking detail prioritizes the common lifecycle action', () => {
   const detail = source('src/app/admin/bookings/[id]/page.tsx');
-  assert.ok(detail.indexOf('>Guest</h2>') < detail.indexOf('>Change status</h2>'));
-  assert.ok(detail.indexOf('>Change status</h2>') < detail.indexOf('>Payment</h2>'));
+  assert.ok(detail.indexOf('>Guest</h2>') < detail.indexOf('>Change status</h3>'));
+  assert.ok(detail.indexOf('>Change status</h3>') < detail.indexOf('>Payment</h2>'));
 });

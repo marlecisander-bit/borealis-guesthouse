@@ -55,7 +55,10 @@ export async function manageBookingAction(manager:BookingManager,_:BookingManage
     revalidatePath('/admin/bookings/requests');
     revalidatePath('/admin/dashboard');
     if(data.result==='modified'||data.result==='cancelled') {
+      revalidatePath('/admin/bookings');
       revalidatePath('/admin/availability');
+      revalidatePath('/rooms');
+      revalidatePath('/');
       revalidatePath('/book');
       // Dispatch only after commit. Guest calls never pass a private token to the mail channel.
       after(async()=>{

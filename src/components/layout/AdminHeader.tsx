@@ -4,10 +4,11 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useOutsideClick } from '@/hooks/useOutsideClick';
+import type { AdminRole } from '@/lib/admin/auth';
 import { adminScreenTitle } from '@/lib/admin/navigation';
 import { AdminNotificationTrigger } from '@/components/admin/AdminNotificationTrigger';
 
-export default function AdminHeader() {
+export default function AdminHeader({ role }: { role: AdminRole | null }) {
   const [email, setEmail] = useState('');
   const pathname = usePathname();
   const router = useRouter();
@@ -74,7 +75,7 @@ export default function AdminHeader() {
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-        <AdminNotificationTrigger />
+        {role && role !== 'editor' && <AdminNotificationTrigger />}
         <div ref={menuRef} className="relative hidden lg:block">
           <button
             type="button"
@@ -100,7 +101,7 @@ export default function AdminHeader() {
                 <p className="mt-1 text-xs text-slate-500">Secure Borealis workspace</p>
               </div>
               <div className="space-y-1 p-2">
-                <Link role="menuitem" href="/admin/settings" onClick={() => setShowMenu(false)} className="flex min-h-11 items-center rounded-lg px-3 text-sm font-medium text-slate-700 hover:bg-[#e8f4f5] hover:text-brand">Settings</Link>
+                {(role === 'owner' || role === 'manager') && <Link role="menuitem" href="/admin/settings" onClick={() => setShowMenu(false)} className="flex min-h-11 items-center rounded-lg px-3 text-sm font-medium text-slate-700 hover:bg-[#e8f4f5] hover:text-brand">Settings</Link>}
                 <Link role="menuitem" href="/" target="_blank" onClick={() => setShowMenu(false)} className="flex min-h-11 items-center rounded-lg px-3 text-sm font-medium text-slate-700 hover:bg-[#e8f4f5] hover:text-brand">View public website ↗</Link>
               </div>
               <div className="border-t border-slate-100 p-2">

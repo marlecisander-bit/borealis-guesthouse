@@ -41,10 +41,10 @@ export default async function AvailabilityPage({ searchParams }: {
     }
     return <div data-availability-page data-restricted-calendar={restricted || undefined} className="space-y-5">
         <AdminPageHeader title="Availability calendar" description={'Room inventory and closures · ' + timeZone}
-            actions={restricted ? <div className="flex flex-wrap items-center gap-3"><Link className="underline" href="/admin/workspace">My workspace</Link><WorkspaceAccount/></div> : undefined}/>
+            actions={restricted ? <div className="flex flex-wrap items-center gap-3"><Link className="underline" href="/admin/workspace">My workspace</Link><WorkspaceAccount/></div> : session.role === 'owner' ? <Link href="/admin/channels/booking-com" className="inline-flex min-h-11 items-center rounded-lg border border-stone-300 bg-white px-4 text-sm font-semibold text-brand">Booking.com calendar sync</Link> : undefined}/>
         <AvailabilityCalendar rooms={calendar.rooms} blocks={calendar.blocks} bookings={bookings} from={from} today={today}
             periodDays={periodDays} timeZone={timeZone} restricted={restricted}
-            selectedRoom={calendar.rooms.find(room => room.id === query.room)?.id} initialView={query.view === 'type' ? 'type' : 'room'}
+            selectedRoom={calendar.rooms.some(room => room.id === query.room || 'type:' + room.roomTypeId === query.room) ? query.room : undefined} initialView={query.view === 'type' ? 'type' : 'room'}
             blockStart={validDay(query.blockStart) ? query.blockStart : undefined} blockEnd={validDay(query.blockEnd) ? query.blockEnd : undefined}/>
     </div>;
 }

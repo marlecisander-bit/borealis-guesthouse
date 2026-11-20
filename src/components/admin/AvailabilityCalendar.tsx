@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState, useTransition, useActionState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition, useActionState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useDialogFocus } from '@/hooks/useDialogFocus';
@@ -88,6 +88,10 @@ export function AvailabilityCalendar(props: Props) {
     (target: string, start: string, end: string) => setSelection({ target, start, end }),
     []
   );
+  const filtered = useMemo(
+    () => rooms.filter(room => !selectedRoom || room.id === selectedRoom || 'type:' + room.roomTypeId === selectedRoom),
+    [rooms, selectedRoom]
+  );
   const suppressClick = useRef(false);
   const drag = useRef<{
       roomId: string;
@@ -112,12 +116,11 @@ export function AvailabilityCalendar(props: Props) {
   }, []);
   useEffect(() => {
     const open = () => {
-      if (location.hash === '#block-dates' && rooms.some((room) => room.active)) {
+      if (location.hash === '#block-dates' && filtered.some((room) => room.active)) {
         setPanel({
           kind: 'close',
           roomId:
-            rooms.find((room) => room.active && room.id === selectedRoom)?.id ||
-            rooms.find((room) => room.active)?.id ||
+            filtered.find((room) => room.active)?.id ||
             '',
           start: blockStart || from,
           end: shiftDay(blockEnd || blockStart || from, 1),
@@ -127,7 +130,7 @@ export function AvailabilityCalendar(props: Props) {
     open();
     addEventListener('hashchange', open);
     return () => removeEventListener('hashchange', open);
-  }, [rooms, from, selectedRoom, blockStart, blockEnd]);
+  }, [filtered, from, blockStart, blockEnd]);
   useEffect(() => {
     if (panel) drawer.current?.focus({ preventScroll: true });
   }, [panel]);
@@ -149,7 +152,6 @@ export function AvailabilityCalendar(props: Props) {
     closePanel();
     startNavigation(() => router.push('/admin/availability?' + search.toString(), { scroll: false }));
   }
-  const filtered = rooms.filter((room) => !selectedRoom || room.id === selectedRoom);
 
   function saveScroll() {
     try {
@@ -493,6 +495,9 @@ export function AvailabilityCalendar(props: Props) {
               onChange={(event) => navigate(from, event.target.value)}
             >
               <option value="">All rooms</option>
+              <optgroup label="Room types">
+                {types.map(type => <option key={type} value={'type:' + type}>{rooms.find(room => room.roomTypeId === type)?.roomTypeName} (all units)</option>)}
+              </optgroup>
               {rooms.map((room) => (
                 <option value={room.id} key={room.id}>
                   {room.name}

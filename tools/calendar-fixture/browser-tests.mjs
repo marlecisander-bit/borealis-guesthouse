@@ -59,6 +59,16 @@ for (const [engine, launch, widths] of [
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
       if (width === 1440 || width === 360) await page.screenshot({ path: fixtureImage('calendar') });
 
+      const roomFilter = page.getByLabel('Room', { exact: true });
+      await roomFilter.selectOption('type:triple');
+      await page.waitForFunction(() => new URL(window.__calendarNavigation, 'https://fixture.invalid').searchParams.get('room') === 'type:triple');
+      const inventoryNames = mobile ? '.calendar-agenda article' : '.calendar-scroll';
+      await page.locator(inventoryNames).getByText('Family Room', { exact: true }).first().waitFor({ state: 'hidden' });
+      assert.match(await page.locator(inventoryNames).allTextContents().then(values => values.join(' ')), /Triple Room L/);
+      assert.doesNotMatch(await page.locator(inventoryNames).allTextContents().then(values => values.join(' ')), /Family Room/);
+      await roomFilter.selectOption('');
+      await page.locator(inventoryNames).getByText('Family Room', { exact: true }).first().waitFor();
+
       if (mobile) {
         await chooseDay('25');
         await page.getByRole('button', { name: 'Next period' }).click();

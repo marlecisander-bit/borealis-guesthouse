@@ -24,9 +24,10 @@ const shared = [
 ] as const;
 
 const tools = [
-  ['Media library', '/admin/media'],
-  ['SEO', '/admin/seo'],
-  ['Explore Koman articles', '/admin/explore-koman'],
+  ['Photos', '/admin/media', ['owner', 'manager', 'editor']],
+  ['Languages', '/admin/languages', ['owner', 'manager', 'editor']],
+  ['Search appearance', '/admin/seo', ['owner', 'manager', 'editor']],
+  ['Explore Koman articles', '/admin/explore-koman', ['owner']],
 ] as const;
 
 const rowLink = 'grid min-h-[3.5rem] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 px-4 py-3 hover:bg-stone-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand sm:px-5';
@@ -34,6 +35,7 @@ const rowLink = 'grid min-h-[3.5rem] grid-cols-[minmax(0,1fr)_auto] items-center
 export default async function ContentPage() {
   const session = await requireAdmin();
   const statuses = await adminSiteContentRepository.statuses(session).catch(() => null);
+  const visibleTools = tools.filter(([, , roles]) => roles.some(role => role === session.role));
   const pending = [...pages, ...shared].filter(([, key]) => statuses?.[key] === 'Unpublished changes' || statuses?.[key] === 'Draft only');
   return <div className="max-w-4xl space-y-6">
     <AdminPageHeader title="Website" actions={<a href="/" target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center rounded-lg border border-stone-300 bg-white px-4 text-sm font-semibold text-brand">View live website ↗</a>} />
@@ -43,10 +45,10 @@ export default async function ContentPage() {
     </section>}
     <PageRows title="Pages" entries={pages} statuses={statuses}/>
     <PageRows title="Site-wide content" entries={shared} statuses={statuses}/>
-    <section className="overflow-hidden rounded-xl border border-stone-200 bg-white">
+    {visibleTools.length > 0 && <section className="overflow-hidden rounded-xl border border-stone-200 bg-white">
       <h2 className="border-b border-stone-200 px-4 py-3 text-base font-bold text-lake">Website tools</h2>
-      <ul className="divide-y divide-stone-100">{tools.map(([label, href]) => <li key={href}><Link href={href} className={rowLink}><span className="font-semibold text-lake">{label}</span><span aria-hidden="true" className="text-brand">→</span></Link></li>)}</ul>
-    </section>
+      <ul className="divide-y divide-stone-100">{visibleTools.map(([label, href]) => <li key={href}><Link href={href} className={rowLink}><span className="font-semibold text-lake">{label}</span><span aria-hidden="true" className="text-brand">→</span></Link></li>)}</ul>
+    </section>}
   </div>;
 }
 

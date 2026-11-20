@@ -1,3 +1,11 @@
-import { AdminStatusFilter } from '@/components/admin/AdminStatusFilter';
-import Link from'next/link';import{requireAdmin}from'@/lib/admin/auth';import{adminExperiencesRepository}from'@/lib/repositories/admin/experiences';import{adminTransfersRepository}from'@/lib/repositories/admin/transfers';import{AdminPageHeader,AdminEmptyState}from'@/components/admin/ui';import{ExperienceRows}from'@/components/admin/ExperienceRows';import{TransferRows}from'@/components/admin/TransferRows';import{Pagination}from'@/components/admin/Pagination';
-export default async function ServicesPage({searchParams}:{searchParams:Promise<{status?:string;page?:string}>}){const session=await requireAdmin(),{status='active',page='1'}=await searchParams;const experiences=await adminExperiencesRepository.summaries(session,Number(page),status);const transfers=session.role==='owner'?(await adminTransfersRepository.list(session)).filter(item=>['draft','published','archived'].includes(status)?item.status===status:item.status!=='archived'):[];return <div className="space-y-5"><AdminPageHeader title="Activities & services" description="Manage services guests can discover and book." actions={<div className="flex flex-wrap gap-2"><Link href="/admin/experiences/new?type=rental" className="inline-flex min-h-11 items-center rounded-lg bg-[#164b59] px-4 text-sm font-semibold text-white">Add rental</Link><Link href="/admin/experiences/new" className="inline-flex min-h-11 items-center rounded-lg border bg-white px-4 text-sm font-semibold">Add experience</Link>{session.role==='owner'&&<Link href="/admin/transfers/new" className="inline-flex min-h-11 items-center rounded-lg border bg-white px-4 text-sm font-semibold">Add transfer</Link>}</div>}/><AdminStatusFilter status={status} kind="publication"/>{experiences.items.length>0&&<ExperienceRows items={experiences.items}/>}<Pagination page={experiences.page} pageSize={experiences.pageSize} total={experiences.total} pathname="/admin/services" filters={{status}}/>{transfers.length>0&&<TransferRows items={transfers}/>} {!experiences.total&&!transfers.length&&<AdminEmptyState title="No services found" description="Change the filter or create a service."/>}</div>}
+import { redirect } from 'next/navigation';
+
+export default async function ServicesPage({ searchParams }: {
+  searchParams: Promise<{ status?: string; page?: string }>;
+}) {
+  const { status, page } = await searchParams;
+  const query = new URLSearchParams({ type: 'experience' });
+  if (typeof status === 'string') query.set('status', status);
+  if (typeof page === 'string') query.set('page', page);
+  redirect('/admin/experiences?' + query);
+}

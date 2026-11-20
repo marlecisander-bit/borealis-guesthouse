@@ -24,8 +24,22 @@ export function ManageBookingForm({booking,action,staff=false}:{booking:BookingM
   };
   const statuses=booking.status==='cancelled';
   const quote=state.quote?.operationId===dismissed?undefined:state.quote;
+  const pendingRequests = staff ? booking.history.filter(event => event.status === 'pending') : [];
+  const history = staff ? booking.history.filter(event => event.status !== 'pending') : [];
+
+  function historyEntry(event: BookingManagement['history'][number]) {
+    return <article key={event.id} className="rounded-lg border border-stone-200 bg-white p-3 text-sm">
+      <p className="font-semibold capitalize">{event.operation.replaceAll('_',' ')}{event.status?' · '+event.status:''} · {event.actorId?'Staff':'Guest'}</p>
+      <time dateTime={event.createdAt}>{new Date(event.createdAt).toLocaleDateString('en-GB',{timeZone:'Europe/Tirane'})}</time>
+      {event.input.message&&<p className="mt-1 whitespace-pre-wrap">{event.input.message}</p>}
+      {event.outcome.previous&&<p>{event.outcome.previous.checkIn} → {event.outcome.previous.checkOut} changed to {event.input.checkIn} → {event.input.checkOut}. Total {formatMoney(event.outcome.previous.total,booking.currency)} → {formatMoney(event.outcome.total||0,booking.currency)}.</p>}
+      {event.status==='pending'&&<form action={submit} className="mt-2"><input type="hidden" name="operationId" value={event.id}/><button name="action" value="review" className={button} disabled={busy}>Mark reviewed</button></form>}
+    </article>;
+  }
+
   return <div className="space-y-4">
     <div aria-live="polite" className={state.message?'rounded-lg border border-stone-200 bg-white p-3 text-sm':''}>{state.message}</div>
+    {pendingRequests.length > 0 && <section className="space-y-2"><h3 className="font-bold">Guest requests awaiting review</h3>{pendingRequests.map(historyEntry)}</section>}
     {statuses&&<p className="font-semibold">This booking is cancelled.</p>}
     {booking.canChange&&<form action={submit} onSubmit={event=>bindOperation(event.currentTarget)} className="grid gap-3 rounded-xl border border-stone-200 bg-white p-4">
       <h3 className="font-bold">Change dates or guest counts</h3>
@@ -46,6 +60,7 @@ export function ManageBookingForm({booking,action,staff=false}:{booking:BookingM
     </form>}
     {booking.canCancel&&<form action={submit} onSubmit={event=>bindOperation(event.currentTarget)} className="space-y-3 rounded-xl border border-stone-200 bg-white p-4">
       <h3 className="font-bold">Cancel booking</h3>
+      {staff && <p className="text-sm text-slate-600">Cancellation releases the room. Handle any refund separately.</p>}
       <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="confirmed" required className="mt-1"/> I confirm I want to cancel this booking.</label>
       <input name="operationId" type="hidden"/><button name="action" value="cancel" className="min-h-11 rounded-lg border border-red-300 px-4 text-sm font-bold text-red-800" disabled={busy}>Confirm cancellation</button>
     </form>}
@@ -56,12 +71,6 @@ export function ManageBookingForm({booking,action,staff=false}:{booking:BookingM
       <label className="grid gap-1 text-sm">Request details<textarea name="message" required minLength={3} maxLength={1000} rows={3} className={input}/></label>
       <input name="operationId" type="hidden"/><button className={button} disabled={busy}>Send request</button>
     </form>)}
-    {staff&&booking.history.length>0&&<section className="space-y-2"><h3 className="font-bold">Requests and change history</h3>{booking.history.map(event=><article key={event.id} className="rounded-lg border border-stone-200 bg-white p-3 text-sm">
-      <p className="font-semibold capitalize">{event.operation.replaceAll('_',' ')}{event.status?' · '+event.status:''} · {event.actorId?'Staff':'Guest'}</p>
-      <time dateTime={event.createdAt}>{new Date(event.createdAt).toLocaleDateString('en-GB',{timeZone:'Europe/Tirane'})}</time>
-      {event.input.message&&<p className="mt-1 whitespace-pre-wrap">{event.input.message}</p>}
-      {event.outcome.previous&&<p>{event.outcome.previous.checkIn} → {event.outcome.previous.checkOut} changed to {event.input.checkIn} → {event.input.checkOut}. Total {formatMoney(event.outcome.previous.total,booking.currency)} → {formatMoney(event.outcome.total||0,booking.currency)}.</p>}
-      {event.status==='pending'&&<form action={submit} className="mt-2"><input type="hidden" name="operationId" value={event.id}/><button name="action" value="review" className={button} disabled={busy}>Mark reviewed</button></form>}
-    </article>)}</section>}
+    {history.length > 0 && <details className="space-y-2"><summary className="cursor-pointer font-bold">Booking history</summary>{history.map(historyEntry)}</details>}
   </div>;
 }

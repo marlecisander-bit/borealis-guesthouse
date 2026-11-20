@@ -27,7 +27,7 @@ export async function createAvailabilityBlock(_: AvailabilityState, data: FormDa
   return { ok: true, message: 'Dates blocked. Availability has been updated.' };
 }
 
-export async function reopenAvailability(id: string) {
+async function reopenAvailability(id: string) {
   const { session } = await requireCalendarAccess();
   const db = await createServerSupabaseClient();
   const { error } = await db.rpc('admin_calendar_change', { property: session.propertyId, operation: 'reopen', target: id });
