@@ -1,4 +1,21 @@
 .hero-responsive-image { object-position: var(--hero-desktop-position, 50% 50%); }
+/* Preserve detail across the landscape, with more shade behind navigation and copy. */
+.homepage-hero-overlay {
+  background: linear-gradient(
+    180deg,
+    rgba(10, 25, 18, .58) 0%,
+    rgba(10, 25, 18, .24) 13%,
+    rgba(10, 25, 18, .03) 37%,
+    rgba(10, 25, 18, .09) 53%,
+    rgba(10, 25, 18, .62) 86%,
+    rgba(10, 25, 18, .72) 100%
+  );
+}
+.hero-section .hero-copy {
+  text-shadow: 0 1px 14px rgba(8, 22, 17, .65), 0 1px 3px rgba(8, 22, 17, .4);
+}
+.hero-section .hero-copy > a { text-shadow: none; }
+
 /* Phone composition only. Tablet/desktop retain the established Hero layout. */
 @media (max-width: 767px) {
   .hero-section {
