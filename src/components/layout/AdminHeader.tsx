@@ -3,19 +3,40 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
 import { useOutsideClick } from '@/hooks/useOutsideClick';
 import { adminScreenTitle } from '@/lib/admin/navigation';
-import { NotificationBell } from '@/components/admin/NotificationBell';
+import { AdminNotificationTrigger } from '@/components/admin/AdminNotificationTrigger';
 
 export default function AdminHeader() {
-  const { user, signOut } = useAuth();
+  const [email, setEmail] = useState('');
   const pathname = usePathname();
   const router = useRouter();
   const menuRef = useRef<HTMLDivElement>(null);
   const [showMenu, setShowMenu] = useState(false);
   const section = adminScreenTitle(pathname);
-  const accountName = user?.email?.split('@')[0] || 'Administrator';
+  const accountName = email.split('@')[0] || 'Administrator';
+
+  useEffect(() => {
+    const desktop = window.matchMedia('(min-width: 1024px)');
+    let active = true;
+    const loadAccount = async () => {
+      if (!desktop.matches) return;
+      try {
+        const { createClient } = await import('@/lib/supabase/client');
+        const { data: { session } } = await createClient().auth.getSession();
+        if (active) setEmail(session?.user.email || '');
+      } catch {
+        // The account dropdown remains usable when the initial session lookup fails.
+      }
+    };
+    const timer = window.setTimeout(() => void loadAccount(), 900);
+    desktop.addEventListener('change', loadAccount);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+      desktop.removeEventListener('change', loadAccount);
+    };
+  }, []);
 
   useOutsideClick(menuRef, () => setShowMenu(false), showMenu);
   useEffect(() => {
@@ -29,7 +50,13 @@ export default function AdminHeader() {
 
   async function handleLogout() {
     try {
-      await signOut();
+      const [{ createClient }, { revokeAdminPushOnSignOut }] = await Promise.all([
+        import('@/lib/supabase/client'),
+        import('@/lib/notifications/push-device'),
+      ]);
+      await revokeAdminPushOnSignOut();
+      const { error } = await createClient().auth.signOut();
+      if (error) throw error;
       router.replace('/admin/login');
       router.refresh();
     } catch (error) {
@@ -47,7 +74,7 @@ export default function AdminHeader() {
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-        <NotificationBell />
+        <AdminNotificationTrigger />
         <div ref={menuRef} className="relative hidden lg:block">
           <button
             type="button"
@@ -58,7 +85,7 @@ export default function AdminHeader() {
             className="flex min-h-11 min-w-11 items-center justify-center gap-3 rounded-xl border border-[#d3e4e2] bg-[#eaf4f3] px-1.5 text-left transition hover:bg-[#deeeec] sm:justify-start sm:px-3"
           >
             <span className="grid size-8 place-items-center rounded-full bg-[#257d86] text-sm font-bold text-white">
-              {user?.email?.[0]?.toUpperCase() || 'A'}
+              {email[0]?.toUpperCase() || 'A'}
             </span>
             <span className="hidden min-w-0 sm:block">
               <span className="block max-w-40 truncate text-sm font-semibold text-slate-900">{accountName}</span>
@@ -69,7 +96,7 @@ export default function AdminHeader() {
           {showMenu && (
             <div role="menu" className="absolute right-0 z-40 mt-2 w-64 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
               <div className="border-b border-slate-100 p-4">
-                <p className="truncate text-sm font-semibold text-slate-900">{user?.email || 'Signed-in administrator'}</p>
+                <p className="truncate text-sm font-semibold text-slate-900">{email || 'Signed-in administrator'}</p>
                 <p className="mt-1 text-xs text-slate-500">Secure Borealis workspace</p>
               </div>
               <div className="space-y-1 p-2">

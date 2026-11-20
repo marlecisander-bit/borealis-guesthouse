@@ -21,25 +21,25 @@ export default async function DashboardPage() {
     <section aria-labelledby="attention-heading" className="rounded-2xl border border-stone-200 bg-white p-4 sm:p-5">
       <h2 id="attention-heading" className="text-lg font-bold text-lake">Needs attention</h2>
       {data.attentionUnavailable&&<p className="mt-2 text-sm text-amber-900" role="status">Some alerts could not be loaded. <a href="/admin/dashboard" className="underline">Reload Today</a></p>}
-      {data.attention.length>0?<div className="mt-3 grid gap-2">{data.attention.map(item=><Link key={item.href} href={item.href} className="admin-attention-item flex min-h-14 items-center justify-between gap-3 rounded-xl bg-amber-50 px-3 py-2 text-amber-950">
+      {data.attention.length>0?<div className="mt-3 grid gap-2">{data.attention.map(item=><Link prefetch={false} key={item.href} href={item.href} className="admin-attention-item flex min-h-14 items-center justify-between gap-3 rounded-xl bg-amber-50 px-3 py-2 text-amber-950">
         <span><strong className="block text-sm">{item.label}</strong><span className="block text-xs">{item.detail}</span></span>
         <strong className="rounded-full bg-white px-3 py-1 text-sm">{item.count}</strong>
       </Link>)}</div>:!data.attentionUnavailable&&<p className="mt-2 text-sm text-slate-600">No open booking or notification issues.</p>}
     </section>
-    <Link href="/admin/bookings/requests" className="inline-flex min-h-11 items-center text-sm font-bold text-brand underline">Review guest booking requests</Link>
+    <Link prefetch={false} href="/admin/bookings/requests" className="inline-flex min-h-11 items-center text-sm font-bold text-brand underline">Review guest booking requests</Link>
     <section aria-label="Quick actions" className="grid grid-cols-2 gap-2 sm:gap-4">
-      {quickActions.map(([label,href],index)=><Link key={href} href={href} className={`flex min-h-12 items-center justify-center rounded-xl px-3 text-center text-sm font-bold ${index?'border border-stone-300 bg-white text-brand':'bg-brand text-white'}`}>{label}</Link>)}
+      {quickActions.map(([label,href],index)=><Link prefetch={false} key={href} href={href} className={`flex min-h-12 items-center justify-center rounded-xl px-3 text-center text-sm font-bold ${index?'border border-stone-300 bg-white text-brand':'bg-brand text-white'}`}>{label}</Link>)}
     </section>
     <section aria-labelledby="upcoming-heading" className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
-      <div className="flex flex-wrap items-center justify-between gap-x-3 border-b border-stone-200 px-4 py-2"><h2 id="upcoming-heading" className="text-lg font-bold text-lake">Next arrivals</h2><Link href="/admin/bookings?period=upcoming" className="inline-flex min-h-11 shrink-0 items-center text-sm font-bold text-brand underline">View all</Link></div>
-      {data.arrivalsUnavailable?<p role="status" className="p-4 text-sm text-amber-900">Next arrivals could not be loaded.</p>:data.upcomingBookings.length?<div className="divide-y divide-stone-100">{data.upcomingBookings.map(booking=><Link href={bookingDetailHref(booking.id,{period:'upcoming'})} key={booking.id} className="flex min-h-16 flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3 hover:bg-ivory">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 border-b border-stone-200 px-4 py-2"><h2 id="upcoming-heading" className="text-lg font-bold text-lake">Next arrivals</h2><Link prefetch={false} href="/admin/bookings?period=upcoming" className="inline-flex min-h-11 shrink-0 items-center text-sm font-bold text-brand underline">View all</Link></div>
+      {data.arrivalsUnavailable?<p role="status" className="p-4 text-sm text-amber-900">Next arrivals could not be loaded.</p>:data.upcomingBookings.length?<div className="divide-y divide-stone-100">{data.upcomingBookings.map(booking=><Link prefetch={false} href={bookingDetailHref(booking.id,{period:'upcoming'})} key={booking.id} className="flex min-h-16 flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3 hover:bg-ivory">
         <div><strong className="block text-lake">{booking.guestName}</strong><span className="block text-sm text-slate-600">{formatDate(booking.checkIn)} · {booking.booking}</span></div><StatusBadge status={booking.status}/>
       </Link>)}</div>:<p className="p-4 text-sm text-slate-600">No upcoming arrivals.</p>}
     </section>
   </div>;
 }
 function TodayCard({title,metric}:{title:string;metric:TodayMetric}) {
-  return <Link data-admin-metric href={metric.href} className="flex min-h-24 min-w-0 flex-col justify-between gap-2 rounded-xl border border-stone-200 bg-white p-2.5 hover:bg-ivory sm:p-4">
+  return <Link prefetch={false} data-admin-metric href={metric.href} className="flex min-h-24 min-w-0 flex-col justify-between gap-2 rounded-xl border border-stone-200 bg-white p-2.5 hover:bg-ivory sm:p-4">
     <span className="text-xs font-semibold text-slate-700 sm:text-sm">{title}</span>
     {metric.value===null?<span className="text-xs font-semibold text-amber-900">Unavailable</span>:<strong className="text-2xl text-lake sm:text-3xl">{metric.value}</strong>}
   </Link>;

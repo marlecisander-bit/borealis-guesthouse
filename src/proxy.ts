@@ -12,6 +12,9 @@ export async function proxy(request: NextRequest) {
   // Preserve the historical production matcher behavior when preview is off.
   const path = request.nextUrl.pathname;
   if (path.startsWith('/api') || path.startsWith('/_next/static') || path.startsWith('/_next/image') || path.includes('.')) return NextResponse.next();
+  const isAdmin = path === '/admin' || path.startsWith('/admin/');
+  // Presentation hint only. Overwrite any incoming value and keep authorization below.
+  request.headers.set('x-borealis-surface', isAdmin ? 'admin' : 'public');
   let response = NextResponse.next({ request });
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -39,7 +42,6 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  const isAdmin = path === '/admin' || path.startsWith('/admin/');
   if (!isAdmin) return response;
 
   const { data: { user } } = await supabase.auth.getUser();

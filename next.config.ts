@@ -12,6 +12,9 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [{
+      source: "/fonts/cormorant-garamond-ae1ccee3fa8d.woff2",
+      headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+    }, {
       source: "/booking/confirmation/:path*",
       headers: [
         { key: "Referrer-Policy", value: "no-referrer" },

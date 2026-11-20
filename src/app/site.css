@@ -1,3 +1,24 @@
 @import "./globals.css";
 @import "./control-alignment.css";
 @import "./homepage-hero.css";
+
+@font-face {
+  font-family: Borealis Cormorant;
+  src: url("/fonts/cormorant-garamond-ae1ccee3fa8d.woff2") format("woff2");
+  font-display: swap;
+  font-style: normal;
+  font-weight: 300 700;
+}
+
+@font-face {
+  font-family: Borealis Cormorant Fallback;
+  src: local("Times New Roman");
+  ascent-override: 96.43%;
+  descent-override: 29.95%;
+  line-gap-override: 0%;
+  size-adjust: 95.82%;
+}
+
+:root {
+  --font-cormorant: "Borealis Cormorant", "Borealis Cormorant Fallback", Georgia, serif;
+}

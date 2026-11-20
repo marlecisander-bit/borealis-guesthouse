@@ -23,6 +23,11 @@ test('font files and notices match pinned official provenance',()=>{
 });
 test('local font integration preserves family variables, weights, normal styles and swap',()=>{
  const source=readFileSync(new URL('src/app/layout.tsx',root),'utf8');assert.ok(!source.includes('next/font/google'));assert.ok(source.includes("from 'next/font/local'"));
- for(const value of ['--font-manrope','--font-cormorant',"weight:'200 800'","weight:'300 700'",'Manrope-variable.woff2','CormorantGaramond-variable.woff2',"style:'normal'","display:'swap'","adjustFontFallback:'Times New Roman'"])assert.ok(source.includes(value),value);
+ for(const value of ['--font-manrope',"weight:'200 800'",'Manrope-variable.woff2',"style:'normal'","display:'swap'"])assert.ok(source.includes(value),value);
+ const css=readFileSync(new URL('src/app/site.css',root),'utf8');
+ for(const value of ['--font-cormorant','font-weight: 300 700','font-style: normal','font-display: swap','local("Times New Roman")'])assert.ok(css.includes(value),value);
+ const serifPath=css.match(/url\("(\/fonts\/cormorant-garamond-[\da-f]+\.woff2)"\)/)?.[1];
+ assert.ok(serifPath);
+ assert.ok(source.includes(`preload('${serifPath}'`));
  assert.ok(!source.includes("style:'italic'")); // Original loader used normal faces only; CSS italic synthesis is unchanged.
 });
