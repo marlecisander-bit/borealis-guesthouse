@@ -31,24 +31,26 @@ export function WhatsAppContact({value,menuOpen=false,label='Chat with us',acces
         const bottom=Number.parseFloat(style.bottom);
         if(Number.isFinite(bottom))clearance=Math.max(clearance,bottom+region.offsetHeight+12);
       }
-      element.style.setProperty('--whatsapp-clearance',`${clearance}px`);
+      // Use the untransformed position so an in-progress transition cannot feed back into placement.
       const rect=element.getBoundingClientRect();
-      const controls=[...document.querySelectorAll<HTMLElement>('.booking-search,[data-booking-actions],a[href^="/book"]')]
+      const baseTop=element.offsetTop;
+      let top=Math.min(baseTop,window.innerHeight-clearance-rect.height);
+      const selector=mobile
+        ? '.hero-section .booking-search'
+        : '.booking-search,[data-booking-actions],a[href^="/book"]';
+      const controls=[...document.querySelectorAll<HTMLElement>(selector)]
         .filter(control=>!control.closest('[aria-hidden="true"],[inert]') &&
           (control.checkVisibility?.({opacityProperty:true,visibilityProperty:true}) ?? getComputedStyle(control).visibility!=='hidden'))
         .map(control=>control.getBoundingClientRect())
         .filter(bounds=>bounds.width>0&&bounds.height>0&&rect.right+8>bounds.left&&rect.left-8<bounds.right)
         .sort((a,b)=>b.bottom-a.bottom);
-      // Move above controls instead of disappearing whenever the homepage search is visible.
-      let top=rect.top;
       for(const bounds of controls){
         if(top+rect.height+8>bounds.top&&top-8<bounds.bottom)top=bounds.top-12-rect.height;
       }
       const headerBottom=document.querySelector('.public-header')?.getBoundingClientRect().bottom ?? 0;
       const noRoom=top<Math.max(0,headerBottom)+8;
-      if(!noRoom&&top<rect.top){
-        element.style.setProperty('--whatsapp-clearance',`${window.innerHeight-top-rect.height}px`);
-      }
+      const lift=`${noRoom?0:Math.round(top-baseTop)}px`;
+      if(element.style.getPropertyValue('--whatsapp-lift')!==lift)element.style.setProperty('--whatsapp-lift',lift);
       setObstructed(Boolean(modal||editing||keyboard||noRoom));
     };
     const schedule=()=>{if(!frame)frame=requestAnimationFrame(update)};
