@@ -1,3 +1,4 @@
+import { resolvePublicMediaUrl } from '@/lib/media-url';
 import { fetchPublicCms } from '@/lib/supabase/public-cms';
 import 'server-only';
 import {cache} from 'react';
@@ -23,7 +24,60 @@ const getRooms = cache(async function getRooms(previewId?:string):Promise<Room[]
 const getExperiences = cache(async function getExperiences(previewId?:string,limit?:number,selectedIds?:string[]):Promise<Experience[]>{const rows=await getDatabaseExperiences(previewId,limit,selectedIds),translated=await translations('experience',rows.map(row=>row.id));return rows.map(row=>{const t=translated.get(row.id)||{};return{...row,title:t.title||t.name||row.title,description:t.description||row.description,longDescription:t.long_description||t.description||row.longDescription,seo:{...row.seo,title:t.seo_title||row.seo.title,description:t.meta_description||row.seo.description}}})});
 const getTransfers = cache(async function getTransfers(limit?:number,selectedIds?:string[]):Promise<TransferRoute[]>{const rows=await getDatabaseTransfers(limit,selectedIds),translated=await translations('transfer_route',rows.map(row=>row.id));return rows.map(row=>{const t=translated.get(row.id)||{};return{...row,origin:t.origin||row.origin,destination:t.destination||row.destination,description:t.description||row.description,fullDescription:t.full_description||row.fullDescription,seo:{...row.seo,title:t.seo_title||row.seo.title,description:t.meta_description||row.seo.description}}})});
 const getExploreArticles = cache(async function getExploreArticles(limit?:number,selectedIds?:string[]):Promise<TourismArticle[]>{return getDatabaseArticles(undefined,limit,selectedIds)});
-const getGallery = cache(async function getGallery(limit?:number,selectedIds?:string[]):Promise<GalleryItem[]>{const db=client();if(!db)return[];let query=db.from('gallery_items').select('id,title,category,sort_order,media_assets!inner(id,file_path,alt_text,filename,status,is_visible)').eq('status','published').eq('is_visible',true).eq('media_assets.status','published').eq('media_assets.is_visible',true).order('is_featured',{ascending:false}).order('sort_order');if(selectedIds?.length)query=query.in('media_asset_id',selectedIds);if(limit)query=query.limit(selectedIds?.length||limit);const{data}=await query;return(data||[]).flatMap(row=>{const asset=Array.isArray(row.media_assets)?row.media_assets[0]:row.media_assets;return asset?[{id:asset.id,src:mediaUrl(asset.file_path),alt:asset.alt_text||row.title||asset.filename||'Borealis Guest House',category:row.category||row.title||'Borealis'}]:[]})});
+const getGallery = cache(async function getGallery(): Promise<GalleryItem[]> {
+  const db = client();
+  if (!db) return [];
+
+  const readAssets = async () => {
+    const query = db.from('media_assets')
+      .select('id,file_path,storage_bucket,alt_text,title,filename,mime_type,file_type,width,height')
+      .eq('status', 'published').eq('is_visible', true)
+      .order('created_at', { ascending: false }).order('id');
+    const batchSize = 500;
+    const first = await query.range(0, batchSize - 1);
+    if (first.error || !first.data) return [];
+    const assets = [...first.data];
+    for (let offset = batchSize; assets.length === offset; offset += batchSize) {
+      const { data, error } = await query.range(offset, offset + batchSize - 1);
+      if (error || !data?.length) break;
+      assets.push(...data);
+    }
+    return assets;
+  };
+
+  const [assets, curated] = await Promise.all([
+    readAssets(),
+    db.from('gallery_items').select('media_asset_id,title,category').eq('status', 'published')
+      .eq('is_visible', true).order('is_featured', { ascending: false }).order('sort_order').order('id'),
+  ]);
+  const items = new Map<string, GalleryItem>();
+  const metadata = new Map<string, { title: string | null; category: string | null }>();
+  for (const entry of curated.data || []) {
+    if (!metadata.has(entry.media_asset_id)) metadata.set(entry.media_asset_id, entry);
+  }
+
+  for (const asset of assets) {
+    const mime = asset.mime_type || asset.file_type || '';
+    if (!asset.file_path || !(mime.startsWith('image/') || (!mime.includes('/') && /\.(?:jpe?g|png|webp|avif|gif)$/i.test(asset.file_path)))) continue;
+    const entry = metadata.get(asset.id);
+    items.set(asset.id, {
+      id: asset.id,
+      src: resolvePublicMediaUrl(asset.file_path, asset.storage_bucket || undefined),
+      alt: asset.alt_text || entry?.title || asset.title || 'Borealis Guest House',
+      category: entry?.category || 'Borealis',
+      width: asset.width || undefined,
+      height: asset.height || undefined,
+    });
+  }
+
+  const ordered: GalleryItem[] = [];
+  for (const id of metadata.keys()) {
+    const item = items.get(id);
+    if (item) ordered.push(item);
+    items.delete(id);
+  }
+  return [...ordered, ...items.values()];
+});
 const getSiteSettings = cache(async function getSiteSettings(){const db=client();if(!db)return{};const{data}=await db.from('site_settings').select('setting_key,value_text,value_number,value_boolean,media_asset_id').eq('status','published').eq('is_public',true);return Object.fromEntries((data||[]).map(row=>[row.setting_key,row.value_text??row.value_number??row.value_boolean??row.media_asset_id??null]))});
 const getAbout = cache(async function getAbout(preview=false):Promise<AboutContent>{const data=await getSiteDocument('about',preview);return{heroEyebrow:data.heroEyebrow||'Our story',heroTitle:data.heroTitle||'About Borealis',heroCopy:data.introduction||'',heroImage:data.heroImage||placeholder,heroImageAlt:data.heroImageAlt||'Borealis Guest House by the lake',sections:[{id:'story',eyebrow:data.storyEyebrow||'Our story',title:data.storyHeading||'',copy:data.storyText||'',image:data.storyImage||placeholder,imageAlt:data.storyImageAlt||data.storyHeading||'Borealis Guest House'},{id:'location',eyebrow:data.locationEyebrow||'Koman',title:data.locationHeading||'',copy:data.locationText||'',image:data.locationImage||placeholder,imageAlt:data.locationImageAlt||data.locationHeading||'Koman landscape'}].filter(section=>section.title||section.copy),philosophyEyebrow:data.philosophyEyebrow||'Hospitality philosophy',philosophyHeading:data.philosophyHeading||'Thoughtful, never formal.',philosophy:(data.philosophy||'').split(/\r?\n/).filter(Boolean),ctaLabel:data.ctaLabel||'Check availability',ctaTarget:data.ctaTarget||'/book'}});
 

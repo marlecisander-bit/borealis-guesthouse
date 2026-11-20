@@ -153,3 +153,55 @@ test('public room cards read live base rates without loading stay rules or seaso
    else process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = key;
  }
 });
+
+test('public Gallery includes visible Media Library photos beyond the first batch', async () => {
+ const assets = Array.from({length: 501}, (_, i) => ({
+   id: String(i), file_path: `library/photo ${i}.webp`, storage_bucket: 'public-media',
+   mime_type: 'image/webp', width: 1200, height: 800, status: 'published', is_visible: true,
+ }));
+ assets.push(
+   {...assets[0], id: 'draft', status: 'draft'},
+   {...assets[0], id: 'hidden', is_visible: false},
+   {...assets[0], id: 'document', file_path: 'document.pdf', mime_type: 'application/pdf'},
+ );
+ const curated = [{media_asset_id: '500', title: 'Lake view', category: 'Lake'}, {media_asset_id: '500'}, {media_asset_id: 'hidden'}];
+ const ranges: number[][] = [];
+ const db = { from(table: string) {
+   const filters: Record<string,unknown> = {};
+   const query = {
+     select: () => query,
+     eq: (key: string, value: unknown) => {filters[key] = value; return query;},
+     order: () => query,
+     range: async (start: number, end: number) => {
+       ranges.push([start,end]);
+       assert.deepEqual(filters,{status:'published',is_visible:true});
+       return { data: assets.filter(asset => asset.status === filters.status && asset.is_visible === filters.is_visible).slice(start,end+1) };
+     },
+     then: (resolve: (value: unknown) => unknown) => {
+       assert.equal(table,'gallery_items');
+       return Promise.resolve({ data: curated }).then(resolve);
+     },
+   };
+   return query;
+ } };
+ const previousUrl = process.env.NEXT_PUBLIC_SUPABASE_URL, previousKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+ process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.test';
+ process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'synthetic';
+ try {
+   const { publicContentRepository } = load('src/lib/repositories/public/content.ts', {
+     react:{cache:(fn:unknown)=>fn}, '@supabase/supabase-js':{createClient:()=>db},
+     '@/lib/supabase/public-cms':{}, '@/lib/media-url':{resolvePublicMediaUrl:(path:string,bucket:string)=>`/${bucket}/${encodeURI(path)}`},
+     '@/services/database-rooms':{}, '@/services/database-experiences':{}, '@/services/database-transfers':{},
+     '@/services/database-articles':{}, '@/services/homepage-cms':{}, '@/services/translations':{}, '@/services/site-content':{},
+   });
+   const items = await publicContentRepository.getGallery();
+   assert.equal(items.length,501);
+   assert.deepEqual(items[0],{id:'500',src:'/public-media/library/photo%20500.webp',alt:'Lake view',category:'Lake',width:1200,height:800});
+   assert.deepEqual(ranges,[[0,499],[500,999]]);
+ } finally {
+   if (previousUrl === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+   else process.env.NEXT_PUBLIC_SUPABASE_URL = previousUrl;
+   if (previousKey === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+   else process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = previousKey;
+ }
+});

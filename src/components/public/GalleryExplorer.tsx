@@ -34,7 +34,7 @@ export function GalleryExplorer({ items }: { items: GalleryItem[] }) {
     <div className={`gap-4 ${visible.length > 1 ? "columns-1 sm:columns-2 lg:columns-3 lg:gap-5" : "max-w-3xl"}`}>
       {visible.map((item, index) => <figure key={item.id} className="mb-4 break-inside-avoid lg:mb-5">
         <button onClick={() => setActive(index)} className="group relative block w-full overflow-hidden rounded-[1.5rem] text-left" aria-label={`Open image: ${item.alt}`}>
-          <Image src={item.src} alt={item.alt} loading={index === 0 ? "eager" : "lazy"} width={1200} height={index % 3 === 0 ? 1500 : 900} sizes="(max-width:640px) 100vw,(max-width:1024px) 50vw,33vw" className="h-auto w-full object-cover transition duration-700 group-hover:scale-[1.03]" />
+          <Image src={item.src} alt={item.alt} loading={index === 0 ? "eager" : "lazy"} width={item.width && item.height ? item.width : 1200} height={item.width && item.height ? item.height : 900} sizes="(max-width:640px) 100vw,(max-width:1024px) 50vw,33vw" className="h-auto w-full object-cover transition duration-700 group-hover:scale-[1.03]" />
           <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-lake/80 to-transparent px-5 pb-5 pt-14 text-sm text-white opacity-90">{item.alt}</span>
         </button>
         <figcaption className="sr-only">{item.alt} · {item.category}</figcaption>

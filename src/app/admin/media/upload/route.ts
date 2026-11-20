@@ -1,3 +1,4 @@
+import { galleryMediaRevalidatePath } from '@/lib/revalidate-public-content';
 import { NextResponse } from 'next/server';
 import { getCurrentAdmin } from '@/lib/admin/auth';
 import { mediaBucket, resolvePublicMediaUrl } from '@/lib/media-url';
@@ -38,6 +39,7 @@ export async function POST(request: Request) {
     try { cleanupFailed = !!(await db.storage.from(mediaBucket).remove([path])).error; } catch { cleanupFailed = true; }
     return NextResponse.json({ error: cleanupFailed ? 'The media record could not be saved and cleanup failed. Contact an administrator before retrying.' : 'The media record could not be saved. The incomplete upload was removed.' }, { status: 400 });
   }
+  galleryMediaRevalidatePath('/gallery');
   return NextResponse.json({ asset: { ...data, publicUrl: resolvePublicMediaUrl(path, mediaBucket), referencedByPublishedContent: false } }, { status: 201 });
 }
 

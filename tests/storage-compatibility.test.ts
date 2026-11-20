@@ -57,7 +57,7 @@ function heroHandler(s: any, db: any, processing?: any) {
   }).POST;
 }
 function ordinaryHandler(s: any, db: any) {
-  return load('src/app/admin/media/upload/route.ts', { 'next/server': next, '@/lib/admin/auth': { getCurrentAdmin: async () => s }, '@/lib/supabase/server': { createServerSupabaseClient: async () => db }, '@/lib/media-url': { mediaBucket: 'public-media', resolvePublicMediaUrl: (p: string) => p }, '@/lib/media-upload-config': mediaConfig, '@/lib/media-upload-security': security }).POST;
+  return load('src/app/admin/media/upload/route.ts', { '@/lib/revalidate-public-content': { galleryMediaRevalidatePath: () => {} }, 'next/server': next, '@/lib/admin/auth': { getCurrentAdmin: async () => s }, '@/lib/supabase/server': { createServerSupabaseClient: async () => db }, '@/lib/media-url': { mediaBucket: 'public-media', resolvePublicMediaUrl: (p: string) => p }, '@/lib/media-upload-config': mediaConfig, '@/lib/media-upload-security': security }).POST;
 }
 function multipart(f: NodeFile = file()) { const form = new FormData(); form.set('file', f as any); form.set('uploadId', ID); form.set('property_id', B); return new Request('https://app.test/admin/media/upload', { method: 'POST', body: form }); }
 

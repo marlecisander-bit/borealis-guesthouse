@@ -19,3 +19,5 @@ export const languagesRevalidatePath = forTables(["languages","translations"]);
 export const seoRevalidatePath = forTables(["site_settings","seo_metadata","page_seo","cms_documents"]);
 export const settingsRevalidatePath = forTables(["properties","languages","translations","site_settings","navigation_items","cms_documents"]);
 export const mediaRevalidatePath = forTables(null);
+
+export const galleryMediaRevalidatePath = forTables(['media_assets']);
