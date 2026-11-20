@@ -1,39 +1,25 @@
 'use client';
 
-import {Suspense} from 'react';
+import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import AdminSidebar from '@/components/layout/AdminSidebar';
-import { AdminMobileNav } from '@/components/layout/AdminMobileNav';
-import type { AdminRole } from '@/lib/admin/auth';
-import AdminHeader from '@/components/layout/AdminHeader';
 import { AdminAppResume } from '@/components/admin/AdminAppResume';
-import { SlugChangeGuard } from '@/components/admin/SlugChangeGuard';
-import { AdminFormValueGuard } from '@/components/admin/AdminFormValueGuard';
-import { AdminWorkspaceNav } from '@/components/admin/AdminWorkspaceNav';
-import { AdminMobileInputEnhancer } from '@/components/admin/AdminMobileInputEnhancer';
+import type { AdminRole } from '@/lib/admin/auth';
 
-export default function AdminShell({
-  children,
-  role,
-}: {
+const AdminFrame = dynamic(() => import('./AdminFrame'));
+
+export default function AdminShell({ children, role, account }: {
   children: React.ReactNode;
   role: AdminRole | null;
+  account: { email: string; propertyId: string } | null;
 }) {
   const pathname = usePathname();
-  const installMetadata=<><AdminAppResume/><link rel="manifest" href="/admin/manifest.webmanifest"/><link rel="apple-touch-icon" sizes="180x180" href="/admin/apple-touch-icon.png"/><meta name="apple-mobile-web-app-title" content="Borealis Admin"/></>;
   const standalonePage = pathname === '/admin/login' || pathname === '/admin/mfa' || pathname.startsWith('/admin/workspace');
 
-  return (
-    <>{installMetadata}{standalonePage ? children : <div data-admin-shell className="flex min-h-screen"><SlugChangeGuard/><AdminFormValueGuard/><AdminMobileInputEnhancer/>
-      <a href="#admin-main" className="fixed left-4 top-4 z-[100] -translate-y-24 rounded-lg bg-slate-950 px-4 py-3 text-sm font-bold text-white focus:translate-y-0">Skip to admin content</a>
-      <div className="sticky top-0 hidden h-screen shrink-0 lg:block"><AdminSidebar role={role} /></div>
-      <div className="flex min-w-0 flex-1 flex-col">
-        <AdminHeader role={role} />
-        <main id="admin-main" className="min-w-0 flex-1" tabIndex={-1}>
-          <div className="admin-content mx-auto w-full max-w-[90rem] p-4 pb-24 sm:p-6 sm:pb-24 lg:p-8 lg:pb-12"><Suspense><AdminWorkspaceNav role={role} /></Suspense>{children}</div>
-        </main>
-      </div>
-      <AdminMobileNav role={role}/>
-    </div>}</>
-  );
+  return <>
+    <AdminAppResume/>
+    <link rel="manifest" href="/admin/manifest.webmanifest"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="/admin/apple-touch-icon.png"/>
+    <meta name="apple-mobile-web-app-title" content="Borealis Admin"/>
+    {standalonePage ? children : <AdminFrame role={role} account={account}>{children}</AdminFrame>}
+  </>;
 }

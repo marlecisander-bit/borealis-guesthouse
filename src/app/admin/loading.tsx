@@ -2,7 +2,7 @@ export default function AdminLoading() {
   return (
     <div role="status" aria-label="Loading admin page" className="animate-pulse space-y-8">
       <div className="space-y-3">
-        <div className="h-8 w-64 rounded-lg bg-slate-200" />
+        <div className="h-8 w-full max-w-64 rounded-lg bg-slate-200" />
         <div className="h-4 w-full max-w-xl rounded bg-slate-200" />
       </div>
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">

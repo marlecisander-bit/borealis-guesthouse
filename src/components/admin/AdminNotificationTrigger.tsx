@@ -13,7 +13,7 @@ function loadBell() {
   });
 }
 
-export function AdminNotificationTrigger() {
+export function AdminNotificationTrigger({ propertyId }: { propertyId: string }) {
   const [Bell, setBell] = useState<typeof NotificationBell>();
   const [requestedOpen, setRequestedOpen] = useState(false);
 
@@ -26,7 +26,7 @@ export function AdminNotificationTrigger() {
     return () => { active = false; window.clearTimeout(timer); };
   }, []);
 
-  if (Bell) return <Bell initialOpen={requestedOpen}/>;
+  if (Bell) return <Bell propertyId={propertyId} initialOpen={requestedOpen}/>;
   return <NotificationTrigger busy={requestedOpen} onClick={() => {
     setRequestedOpen(true);
     void loadBell().then(component => setBell(() => component)).catch(() => setRequestedOpen(false));

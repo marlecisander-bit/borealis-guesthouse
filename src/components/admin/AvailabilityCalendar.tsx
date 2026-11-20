@@ -13,6 +13,7 @@ import {
   cellState,
   closuresFor,
   liveStay,
+  nextCalendarUpdate,
   nights,
   occupies,
   pendingStay,
@@ -108,10 +109,8 @@ export function AvailabilityCalendar(props: Props) {
     };
     resize();
     media.addEventListener('change', resize);
-    const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => {
       media.removeEventListener('change', resize);
-      clearInterval(timer);
     };
   }, []);
   useEffect(() => {
@@ -134,6 +133,22 @@ export function AvailabilityCalendar(props: Props) {
   useEffect(() => {
     if (panel) drawer.current?.focus({ preventScroll: true });
   }, [panel]);
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    const sync = () => {
+      clearTimeout(timer);
+      const current = Date.now();
+      setNow(current);
+      timer = setTimeout(sync, nextCalendarUpdate(props.bookings, current));
+    };
+    sync();
+    document.addEventListener('visibilitychange', sync);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('visibilitychange', sync);
+    };
+  }, [props.bookings]);
+
   const today = propertyDay(new Date(now), props.timeZone),
     bookings = props.bookings.filter((b) => liveStay(b, now));
   useEffect(() => {

@@ -26,12 +26,12 @@ export default async function Home({searchParams}:{searchParams:Promise<{preview
   const authorization = await authorizePreview('homepage', (await searchParams).preview);
   const previewRequested = Boolean(authorization && ['owner', 'manager', 'editor'].includes(authorization.session.role));
   const [liveProperty, liveCms, publishedHero, navigation, language, globalContent, agePolicy, draft] = await Promise.all([
-    contentRepository.getProperty(), getHomepageCms(), getPublishedHomepageHero(),
+    contentRepository.getProperty(), getHomepageCms().then(localizeHomepageCms), getPublishedHomepageHero(),
     getNavigation('header'), getLanguageContext(), getSiteDocument('global'), getOccupancyAgePolicy(),
-    previewRequested ? getHomepageCms(true) : null,
+    previewRequested ? getHomepageCms(true).then(localizeHomepageCms) : null,
   ]);
   const preview = Boolean(draft);
-  const homepageCms = await localizeHomepageCms(draft ?? liveCms);
+  const homepageCms = draft ?? liveCms;
   const section=(key:HomepageKey)=>homepageCms?.sections.find(item=>item.key===key);
   const visible=(key:HomepageKey)=>!section(key)||section(key)!.visible;
   const order=(key:HomepageKey,fallback:number)=>section(key)?.sortOrder??fallback;

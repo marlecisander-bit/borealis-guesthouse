@@ -15,15 +15,15 @@ export const getDatabaseRooms=cache(async(includeId?:string):Promise<Room[]>=>{
   if(!url||!key)return[];
   try{
     const db=includeId?await createServerSupabaseClient():createPublicCmsClient();
-    const[{data:types,error},{data:imageRows},{data:links},{data:amenities},{data:seo}]=await Promise.all([
+    const[{data:types,error},{data:imageRows},{data:links},{data:amenities},{data:seo},prices]=await Promise.all([
       includeId?db.from('room_types').select('id,slug,name,short_description,long_description,capacity,max_adults,max_children,max_infants,max_total_occupancy,min_adults,infants_count_toward_capacity,bed_configuration,size_sqm,view_type,is_featured').or(`and(status.eq.published,is_visible.eq.true),id.eq.${includeId}`).order('is_featured',{ascending:false}).order('sort_order'):db.from('room_types').select('id,slug,name,short_description,long_description,capacity,max_adults,max_children,max_infants,max_total_occupancy,min_adults,infants_count_toward_capacity,bed_configuration,size_sqm,view_type,is_featured').eq('status','published').eq('is_visible',true).order('is_featured',{ascending:false}).order('sort_order'),
       db.from('room_images').select('room_type_id,sort_order,is_featured,media_assets!inner(file_path,storage_bucket)').eq('status','published').eq('is_visible',true).eq('media_assets.status','published').eq('media_assets.is_visible',true).order('sort_order'),
       db.from('room_type_amenities').select('room_type_id,amenity_id'),
       db.from('amenities').select('id,name,icon').eq('status','published').eq('is_visible',true),
       db.from('seo_metadata').select('entity_id,title,meta_description,og_title,og_description,canonical_override,noindex').eq('entity_type','room_type').eq('status','published'),
+      getRoomPriceFromMap(),
     ]);
     if(error||!types)return[];
-    const prices=await getRoomPriceFromMap((types as TypeRow[]).map(row=>row.id));
     return(types as TypeRow[]).map(row=>{
       const roomImages=((imageRows||[]) as unknown as ImageRow[]).filter(item=>item.room_type_id===row.id&&item.media_assets?.file_path).sort((a,b)=>Number(b.is_featured)-Number(a.is_featured)||a.sort_order-b.sort_order).map(item=>resolvePublicMediaUrl(item.media_assets!.file_path,item.media_assets!.storage_bucket||undefined));
       const withoutConflictingCapacity = (copy: string | null) => row.slug === 'family-room-lake-view'

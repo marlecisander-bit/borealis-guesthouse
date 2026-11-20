@@ -9,11 +9,10 @@ import type { AdminNotification } from '@/types/notifications';
 type NotificationRow = { id: string; type: AdminNotification['type']; title: string; message: string; booking_id: string | null; is_read: boolean; created_at: string };
 const mapRow = (row: NotificationRow): AdminNotification => ({ id: row.id, type: row.type, title: row.title, message: row.message, bookingId: row.booking_id, isRead: row.is_read, createdAt: row.created_at });
 
-export function NotificationBell({ initialOpen = false }: { initialOpen?: boolean }) {
+export function NotificationBell({ propertyId, initialOpen = false }: { propertyId: string; initialOpen?: boolean }) {
   const db = useMemo(() => createClient(), []);
   const ref = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(initialOpen);
-  const [propertyId, setPropertyId] = useState('');
   const [items, setItems] = useState<AdminNotification[]>([]);
   const [unread, setUnread] = useState(0);
   const [loaded, setLoaded] = useState(false);
@@ -25,19 +24,11 @@ export function NotificationBell({ initialOpen = false }: { initialOpen?: boolea
 
   useEffect(() => {
     let active = true;
-    void (async () => {
-      // The local session identifies which profile to query. Supabase RLS still authorizes every read and write.
-      const { data: { session } } = await db.auth.getSession();
-      const user = session?.user;
-      if (!user) return;
-      const { data: profile } = await db.from('admin_profiles').select('property_id').eq('user_id', user.id).eq('is_active', true).order('created_at', { ascending: true }).limit(1).maybeSingle();
-      if (!active || !profile?.property_id) return;
-      setPropertyId(profile.property_id);
-      const { count } = await db.from('notifications').select('id', { count: 'exact', head: true }).eq('property_id', profile.property_id).eq('is_read', false);
-      if (active) setUnread(count || 0);
-    })();
+    void db.from('notifications').select('id', { count: 'exact', head: true })
+      .eq('property_id', propertyId).eq('is_read', false)
+      .then(({ count }) => { if (active) setUnread(count || 0); });
     return () => { active = false; };
-  }, [db]);
+  }, [db, propertyId]);
 
   useEffect(() => {
     if (!propertyId) return;

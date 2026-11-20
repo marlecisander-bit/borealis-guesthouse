@@ -104,3 +104,52 @@ test('room photo edits invalidate the shared gallery and all room card surfaces'
  await refreshRoomGallery('room-id');
  assert.deepEqual(paths, ['/rooms/triple-room-lake-view', '/admin/rooms', '/rooms', '/']);
 });
+
+test('calendar refreshes at the next hold expiry or minute boundary', () => {
+ const now = Date.parse('2026-11-20T12:00:20Z');
+ const hold = (seconds: number) => ({
+   id: 'hold', reference: 'HOLD', status: 'held' as const, roomIds: ['room'], roomTypeIds: ['type'],
+   checkIn: '2026-11-21', checkOut: '2026-11-22', holdExpiresAt: new Date(now + seconds * 1000).toISOString(),
+ });
+ assert.equal(availabilityCalendar.nextCalendarUpdate([], now), 40_000);
+ assert.equal(availabilityCalendar.nextCalendarUpdate([hold(9), hold(3), hold(-1)], now), 3000);
+ assert.equal(availabilityCalendar.nextCalendarUpdate([hold(90)], now), 40_000);
+});
+
+test('public room cards read live base rates without loading stay rules or seasonal rates', async () => {
+ const tables: string[] = [];
+ const filters: unknown[][] = [];
+ const db = {
+   from(table: string) {
+     tables.push(table);
+     const query: Record<string, unknown> = {};
+     for (const method of ['select', 'eq', 'order', 'limit']) {
+       query[method] = (...args: unknown[]) => { filters.push([table, method, ...args]); return query; };
+     }
+     query.maybeSingle = async () => ({ data: { id: 'property', currency: 'ALL' } });
+     query.then = (resolve: (value: unknown) => unknown) =>
+       Promise.resolve({ data: [{ room_type_id: 'room', base_price: '70', currency: null }] }).then(resolve);
+     return query;
+   },
+ };
+ const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+ const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+ process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.test';
+ process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'synthetic';
+ try {
+   const { getRoomPriceFromMap } = load('src/services/pricing.ts', {
+     react: { cache: (fn: unknown) => fn },
+     '@supabase/supabase-js': { createClient: () => db },
+     '@/lib/supabase/fetch': { fetchSupabase: () => { throw Error('Unexpected network request'); } },
+     '@/lib/pricing/core': {},
+   });
+   assert.deepEqual((await getRoomPriceFromMap()).get('room'), { date: '', amount: 70, currency: 'ALL', source: 'base' });
+   assert.deepEqual(tables, ['properties', 'rates']);
+   assert.ok(filters.some(entry => entry.join(':') === 'rates:eq:active:true'));
+ } finally {
+   if (url === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+   else process.env.NEXT_PUBLIC_SUPABASE_URL = url;
+   if (key === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+   else process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = key;
+ }
+});

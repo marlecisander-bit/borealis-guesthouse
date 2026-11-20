@@ -56,6 +56,17 @@ export function liveStay(b: AvailabilityBooking, now: number) {
     (b.status !== 'held' || Boolean(b.holdExpiresAt && Date.parse(b.holdExpiresAt) > now))
   );
 }
+export function nextCalendarUpdate(bookings: AvailabilityBooking[], now: number) {
+  // A new minute can change the property day. A room hold can expire sooner.
+  let delay = 60_000 - now % 60_000;
+  for (const booking of bookings) {
+    if (booking.status !== 'held' || !booking.holdExpiresAt) continue;
+    const remaining = Date.parse(booking.holdExpiresAt) - now;
+    if (remaining > 0) delay = Math.min(delay, remaining);
+  }
+  return delay;
+}
+
 export function pendingStay(b: AvailabilityBooking) {
   return ['held', 'pending', 'awaiting_payment'].includes(b.status);
 }

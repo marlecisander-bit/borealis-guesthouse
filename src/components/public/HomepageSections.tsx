@@ -39,11 +39,11 @@ export async function HomepageSections({homepageCms,liveProperty}:{homepageCms:P
 
         {visible('featured_rooms')&&<section style={{order:order('featured_rooms',30)}} className="bg-ivory py-20 md:py-28">
           <div className="shell">
-            <div className="flex items-end justify-between gap-6">
+            <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
               <SectionHeader eyebrow={roomSection?.eyebrow||'Stay at Borealis'} title={roomSection?.title||'Our Rooms'} copy={roomSection?.subtitle||roomSection?.body||'Natural textures, quiet comfort and the lake always close by.'} />
-              <Link href={roomSection?.ctaLink||'/rooms'} className="hidden border-b-2 border-sand pb-1 text-sm font-bold text-lake md:block">{roomSection?.ctaLabel||'See all rooms'}</Link>
+              <Link href={roomSection?.ctaLink||'/rooms'} className="inline-flex min-h-11 items-center border-b-2 border-sand text-sm font-bold text-lake">{roomSection?.ctaLabel||'See all rooms'}</Link>
             </div>
-            <div className="-mx-3 mt-12 flex snap-x snap-mandatory gap-5 overflow-x-auto px-3 pb-5 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0">
+            <div role="region" aria-label={roomSection?.title || 'Our Rooms'} tabIndex={0} className="-mx-3 mt-8 flex snap-x snap-mandatory gap-5 overflow-x-auto px-3 pb-5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0">
               {liveRooms.map((room) => <RoomCard key={room.id} room={room} variant="featured"/>)}
             </div>
           </div>

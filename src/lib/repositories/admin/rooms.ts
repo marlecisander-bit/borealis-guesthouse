@@ -14,14 +14,16 @@ export const adminRoomsRepository={
     const db=await createServerSupabaseClient(),{data,error}=await db.from('amenities').select('id,name,icon').eq('property_id',session.propertyId).neq('status','archived').eq('active',true).order('sort_order');
     if(error)return[];return data||[];
   },
-  async listRoomTypes(session:AdminSession):Promise<AdminRoomType[]>{
+  async listRoomTypes(session:AdminSession,id?:string):Promise<AdminRoomType[]>{
     const db=await createServerSupabaseClient();
+    // Detail screens ask only for the selected room and its related records.
+    const roomFilter = (column: string) => id ? { [column]: id } : {};
     const[{data:types,error},{data:rates},{data:seo},{data:links},{data:images}]=await Promise.all([
-      db.from('room_types').select('id,name,slug,short_description,long_description,capacity,adults,children,max_adults,max_children,max_infants,max_total_occupancy,min_adults,infants_count_toward_capacity,beds,bed_configuration,size_sqm,view_type,base_occupancy,inventory_count,is_featured,is_visible,status,sort_order,updated_at').eq('property_id',session.propertyId).order('sort_order'),
-      db.from('rates').select('room_type_id,base_price,currency,active,updated_at').eq('property_id',session.propertyId).neq('status','archived').order('updated_at',{ascending:false}).order('id'),
-      db.from('seo_metadata').select('entity_id,title,meta_description').eq('property_id',session.propertyId).eq('entity_type','room_type'),
-      db.from('room_type_amenities').select('room_type_id,amenity_id').eq('property_id',session.propertyId),
-      db.from('room_images').select('id,room_type_id,media_asset_id,sort_order,is_featured,status,media_assets(file_path,storage_bucket,alt_text,status,is_visible)').eq('property_id',session.propertyId).eq('status','published').eq('is_visible',true).order('is_featured',{ascending:false}).order('sort_order'),
+      db.from('room_types').select('id,name,slug,short_description,long_description,capacity,adults,children,max_adults,max_children,max_infants,max_total_occupancy,min_adults,infants_count_toward_capacity,beds,bed_configuration,size_sqm,view_type,base_occupancy,inventory_count,is_featured,is_visible,status,sort_order,updated_at').eq('property_id',session.propertyId).match(roomFilter('id')).order('sort_order'),
+      db.from('rates').select('room_type_id,base_price,currency,active,updated_at').eq('property_id',session.propertyId).neq('status','archived').match(roomFilter('room_type_id')).order('updated_at',{ascending:false}).order('id'),
+      db.from('seo_metadata').select('entity_id,title,meta_description').eq('property_id',session.propertyId).eq('entity_type','room_type').match(roomFilter('entity_id')),
+      db.from('room_type_amenities').select('room_type_id,amenity_id').eq('property_id',session.propertyId).match(roomFilter('room_type_id')),
+      db.from('room_images').select('id,room_type_id,media_asset_id,sort_order,is_featured,status,media_assets(file_path,storage_bucket,alt_text,status,is_visible)').eq('property_id',session.propertyId).eq('status','published').eq('is_visible',true).match(roomFilter('room_type_id')).order('is_featured',{ascending:false}).order('sort_order'),
     ]);
     if(error)throw error;
     return((types||[])as RoomTypeRow[]).map(row=>{
@@ -30,7 +32,7 @@ export const adminRoomsRepository={
       return{id:row.id,name:row.name,slug:row.slug||'',shortDescription:row.short_description||'',longDescription:row.long_description||'',capacity:maxTotal,adults:row.adults,children:row.children,maxAdults:row.max_adults??row.adults??maxTotal,maxChildren:row.max_children??row.children??0,maxInfants:row.max_infants??0,maxTotalOccupancy:maxTotal,minAdults:row.min_adults??1,infantsCountTowardCapacity:row.infants_count_toward_capacity??true,beds:row.beds,bedConfiguration:row.bed_configuration||'',sizeSqm:row.size_sqm===null?null:Number(row.size_sqm),viewType:row.view_type||'',baseOccupancy:row.base_occupancy,inventoryCount:row.inventory_count||1,featured:row.is_featured,visible:row.is_visible,status:row.status,sortOrder:row.sort_order,basePrice:price?Number(price.base_price):null,currency:price?.currency||'EUR',rateActive:price?.active??false,seoTitle:meta?.title||'',seoDescription:meta?.meta_description||'',amenityIds:(links||[]).filter(item=>item.room_type_id===row.id).map(item=>item.amenity_id),images:roomImages,updatedAt:row.updated_at};
     });
   },
-  async getRoomType(session:AdminSession,id:string){return(await this.listRoomTypes(session)).find(item=>item.id===id)||null},
+  async getRoomType(session:AdminSession,id:string){return(await this.listRoomTypes(session,id))[0]||null},
   async saveRoomType(session:AdminSession,id:string|null,input:RoomTypeInput){
     const db=await createServerSupabaseClient();
     const values={property_id:session.propertyId,name:input.name,title:input.name,slug:input.slug,short_description:input.shortDescription,long_description:input.longDescription,description:input.shortDescription,capacity:input.maxTotalOccupancy,adults:input.maxAdults,children:input.maxChildren,max_adults:input.maxAdults,max_children:input.maxChildren,max_infants:input.maxInfants,max_total_occupancy:input.maxTotalOccupancy,min_adults:input.minAdults,infants_count_toward_capacity:input.infantsCountTowardCapacity,beds:input.beds,bed_configuration:input.bedConfiguration,size_sqm:input.sizeSqm,view_type:input.viewType,base_occupancy:input.baseOccupancy,is_featured:input.featured,is_visible:input.visible,status:input.status,sort_order:input.sortOrder,updated_by:session.userId,archived_at:null};
