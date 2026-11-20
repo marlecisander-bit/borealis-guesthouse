@@ -24,8 +24,10 @@ export function useEditorForm(saved:object){
   const leave=(event:MouseEvent)=>{const link=(event.target as Element)?.closest?.('a');if(!dirty.current||!link||link.target==='_blank'||event.defaultPrevented||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;const url=new URL(link.href,location.href);if(url.pathname===location.pathname&&url.search===location.search)return;if(!window.confirm('You have unsaved changes. Leave this editor?')){event.preventDefault();event.stopPropagation()}};
   const traverse=(event:Event)=>{const nav=event as Event&{navigationType?:string};if(nav.navigationType==='traverse'&&dirty.current&&event.cancelable&&!window.confirm('You have unsaved changes. Leave this editor?'))event.preventDefault()};
   const navigation=(window as Window&{navigation?:EventTarget}).navigation;
+  const resume=(event:Event)=>{if(dirty.current)event.preventDefault()};
+  window.addEventListener('borealis-admin-resume',resume);
   window.addEventListener('beforeunload',unload);document.addEventListener('click',leave,true);navigation?.addEventListener('navigate',traverse);
-  return()=>{window.removeEventListener('beforeunload',unload);document.removeEventListener('click',leave,true);navigation?.removeEventListener('navigate',traverse)};
+  return()=>{window.removeEventListener('borealis-admin-resume',resume);window.removeEventListener('beforeunload',unload);document.removeEventListener('click',leave,true);navigation?.removeEventListener('navigate',traverse)};
  },[]);
  const changed=()=>{dirty.current=true;generation.current++;setRevision(n=>n+1)};
  const submit=()=>{submitted.current=generation.current};
