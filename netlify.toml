@@ -10,3 +10,8 @@
   for = "/_next/static/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/fonts/cormorant-garamond-ae1ccee3fa8d.woff2"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
