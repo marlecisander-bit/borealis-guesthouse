@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { AdminNavLink } from '@/components/admin/AdminNavLink';
 import { SettingsForm } from '@/components/admin/SettingsForm';
 import { AdminPageHeader } from '@/components/admin/ui';
 import { requireAdmin } from '@/lib/admin/auth';
@@ -22,7 +22,7 @@ export default async function SettingsPage() {
         description="Manage property information, booking policies and owner notifications."
       />
       <nav aria-label="Settings destinations" className="grid overflow-hidden rounded-2xl border border-stone-200 bg-white sm:grid-cols-2">
-        {destinations.filter(([,href])=>href!=='/admin/settings/team'||session.role==='owner').map(([label,href])=>{const Destination=href.startsWith('#')?'a':Link;return <Destination key={href} href={href} className="flex min-h-12 items-center justify-between gap-3 border-b border-stone-100 px-4 py-2 text-sm font-semibold text-brand hover:bg-ivory">{label}<span aria-hidden="true">→</span></Destination>})}
+        {destinations.filter(([,href])=>href!=='/admin/settings/team'||session.role==='owner').map(([label,href])=>{const Destination=href.startsWith('#')?'a':AdminNavLink;return <Destination key={href} href={href} className="flex min-h-12 items-center justify-between gap-3 border-b border-stone-100 px-4 py-2 text-sm font-semibold text-brand hover:bg-ivory">{label}<span aria-hidden="true">→</span></Destination>})}
       </nav>
       <PropertyPublication published={data.propertyPublished} />
       <SettingsForm data={data} />

@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { AdminNavLink } from '@/components/admin/AdminNavLink';
 import { usePathname } from 'next/navigation';
 import { adminNavigationFor, isAdminNavItemActive } from '@/lib/admin/navigation';
 
@@ -13,10 +13,10 @@ export function AdminMobileNav({ role = 'owner' }: { role?: AdminRole | null }) 
     <div className="admin-bottom-nav-tabs">
     {adminNavigationFor(role).map(item=>{
       const active=isAdminNavItemActive(pathname,item);
-      return <Link key={item.href} href={item.href} prefetch={false} aria-current={active?'page':undefined} className="admin-tab">
+      return <AdminNavLink key={item.href} href={item.href} aria-current={active?'page':undefined} className="admin-tab">
         <AdminNavIcon href={item.href}/>
         {item.label}
-      </Link>;
+      </AdminNavLink>;
     })}
     </div>
   </nav>;

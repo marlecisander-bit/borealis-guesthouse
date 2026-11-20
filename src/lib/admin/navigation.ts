@@ -12,7 +12,7 @@ const editingRoles: AdminRole[] = ['owner', 'manager', 'editor'];
 
 export const adminWorkspaces: AdminNavItem[] = [
   { label: 'Rooms & pricing', href: '/admin/rooms', description: 'Rooms, amenities and nightly prices', matches: ['/admin/rates', '/admin/amenities', '/admin/room-types', '/admin/rate-rules'] },
-  { label: 'Guest services', href: '/admin/services', description: 'Experiences, equipment rentals and transfers', matches: ['/admin/experiences', '/admin/transfers'] },
+  { label: 'Guest services', href: '/admin/experiences', description: 'Experiences, equipment rentals and transfers', matches: ['/admin/services', '/admin/transfers'] },
   { label: 'Website', href: '/admin/content', description: 'Pages, articles, photos and translations', roles: editingRoles, matches: ['/admin/explore-koman', '/admin/seo', '/admin/media', '/admin/pages', '/admin/languages'] },
   { label: 'Settings', href: '/admin/settings', description: 'Property details, policies and team access', roles: ['owner', 'manager'] },
 ];

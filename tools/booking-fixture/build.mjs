@@ -23,6 +23,7 @@ export async function buildFixture(env = process.env, options = {}) {
   modules['next/image']+=`;module.exports.getImageProps=({fill,src,alt,sizes,className,quality,fetchPriority,loading,...props})=>({props:{src,alt,sizes,className,fetchPriority,loading,...props,style:fill?{position:'absolute',inset:0,width:'100%',height:'100%'}:props.style}});`;
   if(options.rental||options.admin)modules['next/link']=`module.exports=({href,children,...props})=>require('react').createElement('a',{href,...props},children);`;
   if(options.admin){
+    modules['next/link']+=`;module.exports.useLinkStatus=()=>({pending:false});`;
     modules['next/navigation']+=`exports.usePathname=()=>window.__adminPath||'/admin/content';exports.useSearchParams=()=>new URLSearchParams();`;
     modules['@/components/brand/BorealisLogo']=`exports.BorealisLogo=()=>require('react').createElement('span',{},'BOREALIS');`;
     modules['next/dynamic']=`module.exports=loader=>{const React=require('react'),Component=React.lazy(()=>loader().then(value=>({default:value})));return props=>React.createElement(React.Suspense,{fallback:React.createElement('p',{},'Loading upload controls…')},React.createElement(Component,props))};`;

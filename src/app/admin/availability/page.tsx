@@ -19,17 +19,21 @@ export default async function AvailabilityPage({ searchParams }: {
     let calendar: { rooms: AvailabilityRoom[]; blocks: AvailabilityBlock[]; occupancy: AvailabilityBooking[] };
     let bookings: AvailabilityBooking[], today: string, from: string, timeZone: string, periodDays: number;
     try {
-        const { data: property, error: propertyError } = await db.rpc('admin_calendar_inventory', { property: session.propertyId, first_day: null, last_day: null });
-        if (propertyError) throw propertyError;
-        timeZone = property?.timeZone || 'Europe/Tirane';
-        today = propertyDay(new Date(), timeZone);
-        from = validDay(query.from) ? query.from : today;
+        if (validDay(query.from)) {
+            from = query.from;
+        } else {
+            const { data: property, error } = await db.rpc('admin_calendar_inventory', { property: session.propertyId, first_day: null, last_day: null });
+            if (error) throw error;
+            from = propertyDay(new Date(), property?.timeZone || 'Europe/Tirane');
+        }
         periodDays = validDay(query.to) && query.to >= from && nights(from, query.to) < 28 ? nights(from, query.to) + 1 : 14;
         const [inventory, details] = await Promise.all([
             db.rpc('admin_calendar_inventory', { property: session.propertyId, first_day: from, last_day: shiftDay(from, Math.max(periodDays, 7) - 1) }),
             restricted ? [] : adminAvailabilityRepository.bookings(session, from, shiftDay(from, Math.max(periodDays, 7))),
         ]);
         if (inventory.error || !inventory.data) throw inventory.error;
+        timeZone = inventory.data.timeZone || 'Europe/Tirane';
+        today = propertyDay(new Date(), timeZone);
         calendar = inventory.data;
         const byId = new Map(details.map(detail => [detail.id, detail]));
         bookings = calendar.occupancy.filter(item => item.roomIds.length || item.unassignedTypeIds?.length).map(item => {

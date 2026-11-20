@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { AdminNavLink } from '@/components/admin/AdminNavLink';
 import { usePathname, useSearchParams } from 'next/navigation';
 import type { AdminRole } from '@/lib/admin/auth';
 import { canSeeAdminNav } from '@/lib/admin/navigation';
@@ -54,11 +54,11 @@ export function AdminWorkspaceNav({ role = 'owner' }: { role?: AdminRole | null 
         const active = base === '/admin/bookings'
           ? pathname === base
           : matches(pathname, base) && (!type || type === (search.get('type') || 'experience'));
-        return <Link href={tab.href} prefetch={false} key={tab.href} aria-current={active ? 'page' : undefined}
-          className="admin-tab inline-flex min-h-11 items-center rounded-lg px-2.5 text-sm font-semibold">{tab.label}</Link>;
+        return <AdminNavLink href={tab.href} key={tab.href} aria-current={active ? 'page' : undefined}
+          className="admin-tab inline-flex min-h-11 items-center rounded-lg px-2.5 text-sm font-semibold">{tab.label}</AdminNavLink>;
       })}
     </nav>}
-    {back && <Link href={back[0]} className="inline-flex min-h-11 items-center text-sm font-bold text-brand">← Back to {back[1]}</Link>}
+    {back && <AdminNavLink href={back[0]} className="inline-flex min-h-11 items-center text-sm font-bold text-brand">← Back to {back[1]}</AdminNavLink>}
     {role !== 'staff' && <TranslationShortcut/>}
   </div>;
 }

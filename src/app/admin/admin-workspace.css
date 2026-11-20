@@ -349,3 +349,27 @@ body:has([role="dialog"][aria-modal="true"],dialog[open]) .admin-bottom-nav { vi
     align-content: center;
   }
 }
+
+.admin-nav-link { position: relative; }
+.admin-nav-progress {
+  position: absolute;
+  inset-inline: .45rem;
+  bottom: 2px;
+  height: 2px;
+  border-radius: 2px;
+  pointer-events: none;
+}
+.admin-nav-progress[data-pending] {
+  background: currentColor;
+  opacity: .55;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .admin-nav-progress[data-pending] {
+    animation: admin-nav-pending .8s ease-in-out infinite alternate;
+    transform-origin: left;
+  }
+}
+@keyframes admin-nav-pending {
+  from { transform: scaleX(.2); }
+  to { transform: scaleX(1); }
+}

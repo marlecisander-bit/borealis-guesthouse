@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { AdminNavLink } from '@/components/admin/AdminNavLink';
 import { AdminPageHeader } from '@/components/admin/ui';
 import { WebsiteStatusLabel } from '@/components/admin/WebsiteStatusLabel';
 import type { WebsiteStatus } from '@/lib/admin/website-status';
@@ -41,13 +41,13 @@ export default async function ContentPage() {
     <AdminPageHeader title="Website" actions={<a href="/" target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center rounded-lg border border-stone-300 bg-white px-4 text-sm font-semibold text-brand">View live website ↗</a>} />
     {pending.length > 0 && <section className="overflow-hidden rounded-xl border border-amber-200 bg-amber-50/60">
       <h2 className="px-4 pt-3 text-base font-bold text-lake">Unpublished changes</h2>
-      <ul className="divide-y divide-amber-100">{pending.map(([label, key]) => <li key={key}><Link className={rowLink} href={'/admin/content/' + key}><span className="font-semibold text-lake">{label}</span><span className="text-sm font-semibold text-brand">Review <span aria-hidden="true">→</span></span></Link></li>)}</ul>
+      <ul className="divide-y divide-amber-100">{pending.map(([label, key]) => <li key={key}><AdminNavLink className={rowLink} href={'/admin/content/' + key}><span className="font-semibold text-lake">{label}</span><span className="text-sm font-semibold text-brand">Review <span aria-hidden="true">→</span></span></AdminNavLink></li>)}</ul>
     </section>}
     <PageRows title="Pages" entries={pages} statuses={statuses}/>
     <PageRows title="Site-wide content" entries={shared} statuses={statuses}/>
     {visibleTools.length > 0 && <section className="overflow-hidden rounded-xl border border-stone-200 bg-white">
       <h2 className="border-b border-stone-200 px-4 py-3 text-base font-bold text-lake">Website tools</h2>
-      <ul className="divide-y divide-stone-100">{visibleTools.map(([label, href]) => <li key={href}><Link href={href} className={rowLink}><span className="font-semibold text-lake">{label}</span><span aria-hidden="true" className="text-brand">→</span></Link></li>)}</ul>
+      <ul className="divide-y divide-stone-100">{visibleTools.map(([label, href]) => <li key={href}><AdminNavLink href={href} className={rowLink}><span className="font-semibold text-lake">{label}</span><span aria-hidden="true" className="text-brand">→</span></AdminNavLink></li>)}</ul>
     </section>}
   </div>;
 }
@@ -56,11 +56,11 @@ function PageRows({ title, entries, statuses }: { title: string; entries: readon
   return <section className="overflow-hidden rounded-xl border border-stone-200 bg-white">
     <h2 className="border-b border-stone-200 px-4 py-3 text-base font-bold text-lake">{title}</h2>
     <ul className="divide-y divide-stone-100">{entries.map(([label, key, description]) => <li key={key}>
-      <Link href={'/admin/content/' + key} className={rowLink + ' sm:grid-cols-[minmax(0,1fr)_11rem_2.75rem]'}>
+      <AdminNavLink href={'/admin/content/' + key} className={rowLink + ' sm:grid-cols-[minmax(0,1fr)_11rem_2.75rem]'}>
         <span className="min-w-0 self-center text-sm font-semibold text-lake">{label}{description && <span className="mt-0.5 hidden font-normal text-slate-600 sm:block">{description}</span>}</span>
         <span className="col-start-1 row-start-2 sm:col-start-2 sm:row-start-1"><WebsiteStatusLabel status={statuses?.[key] ?? 'Status unavailable'}/></span>
         <span className="col-start-2 row-span-2 row-start-1 text-sm font-semibold text-brand sm:col-start-3 sm:row-span-1">Edit <span aria-hidden="true">→</span></span>
-      </Link>
+      </AdminNavLink>
     </li>)}</ul>
   </section>;
 }

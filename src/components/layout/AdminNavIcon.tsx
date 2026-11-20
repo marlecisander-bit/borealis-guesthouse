@@ -4,7 +4,7 @@ const paths: Record<string, string> = {
   '/admin/availability': 'M4 6h16v14H4zM8 3v6m8-6v6M4 11h16',
   '/admin/more': 'M4 12h.01M12 12h.01M20 12h.01',
   '/admin/rooms': 'M3 18V6m18 12v-6a2 2 0 0 0-2-2H9v6M3 16h18M3 10h6',
-  '/admin/services': 'M3 17l6-9 4 6 2-3 6 6H3zM16 6h.01',
+  '/admin/experiences': 'M3 17l6-9 4 6 2-3 6 6H3zM16 6h.01',
   '/admin/content': 'M3 5h18v14H3zM3 9h18M7 13h4m3 0h3m-10 3h10',
   '/admin/settings': 'M4 7h5m4 0h7M4 12h11m4 0h1M4 17h2m4 0h10M9 5v4m6 1v4m-9 1v4',
   '/': 'M13 5h6v6m0-6-9 9m7 0v5H5V7h5',
