@@ -6,6 +6,7 @@ import'server-only';
 import{requireAdmin}from'@/lib/admin/auth';
 import{adminSiteContentRepository}from'@/lib/repositories/admin/site-content';
 import{getEntityTranslationMap}from'@/services/translations';
+import{createServerSupabaseClient}from'@/lib/supabase/server';
 import{resolvePublicMediaUrl}from'@/lib/media-url';
 import{landingPageDefaults,type LandingPageKey}from'@/lib/landing-page-content';
 import type{ContactInfo}from'@/types/public';
@@ -17,16 +18,20 @@ export const getSiteDocument = cache(async function getSiteDocument(key:SiteDocu
   if(preview){const session=await requireAdmin(['owner','manager','editor']);const document=await adminSiteContentRepository.document(session,key);return document.data;}
   try{const db=createPublicCmsClient();const{data,error}=await db.from('cms_documents').select('id,data').eq('document_key',key).eq('status','published').returns<{id:string;data:Record<string,string>}[]>().maybeSingle();if(error)return{};const base=data?.data||{};if(!data?.id)return base;const translated=await getEntityTranslationMap('cms_document',[data.id]);return{...base,...translated.get(data.id)}}catch{return{}}
 });
-export const getLandingPageContent = cache(async function getLandingPageContent(key:LandingPageKey):Promise<LandingPageContent>{
+export const getLandingPageContent = cache(async function getLandingPageContent(key:LandingPageKey,draft?:Record<string,string>):Promise<LandingPageContent>{
   const fallback=landingPageDefaults[key];
   try{
-    const data=await getSiteDocument(key),db=createPublicCmsClient();
+    const data={...await getSiteDocument(key),...draft};
+    const db=draft?await createServerSupabaseClient():createPublicCmsClient();
     const read=async(id:string)=>{
       if(!/^[0-9a-f-]{36}$/i.test(id))return null;
-      const{data:asset}=await db.from('media_assets').select('file_path,storage_bucket,alt_text').eq('id',id).eq('status','published').eq('is_visible',true).maybeSingle();
+      let query=db.from('media_assets').select('file_path,storage_bucket,alt_text').eq('id',id);
+      query=draft?query.neq('status','archived'):query.eq('status','published').eq('is_visible',true);
+      const{data:asset}=await query.maybeSingle();
       return asset?.file_path?{url:resolvePublicMediaUrl(asset.file_path,asset.storage_bucket||undefined),alt:asset.alt_text}:null;
     };
-    const[desktop,mobile]=await Promise.all([read(data.heroImageId||''),read(data.heroMobileImageId||'')]);
+    const desktopRead=read(data.heroImageId||'');
+    const[desktop,mobile]=await Promise.all([desktopRead,data.heroMobileImageId===data.heroImageId?desktopRead:read(data.heroMobileImageId||'')]);
     return{...fallback,...data,heroImage:desktop?.url||'',heroMobileImage:mobile?.url||'',heroImageAlt:data.heroImageAlt||desktop?.alt||fallback.heroImageAlt,heroMobileImageAlt:data.heroMobileImageAlt||mobile?.alt||data.heroImageAlt||desktop?.alt||fallback.heroImageAlt};
   }catch{return fallback}
 });

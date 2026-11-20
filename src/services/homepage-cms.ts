@@ -1,6 +1,7 @@
 import {cache} from 'react';
 import { fetchPublicCms } from '@/lib/supabase/public-cms';
 import 'server-only';
+import { resolvePublicMediaUrl } from '@/lib/media-url';
 import { readHeroAssets } from '@/lib/hero-assets';
 import type { HeroAsset } from '@/lib/hero-image-config';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
@@ -38,13 +39,13 @@ export const getHomepageCms = cache(async function getHomepageCms(preview = fals
       const sections = payload.sections.filter(section => publicHomepageKeys.some(key => key === section.key));
       const mediaIds = sections.flatMap(section => [section.backgroundMediaId, typeof section.settings.mobileMediaId === 'string' ? section.settings.mobileMediaId : ''].filter(Boolean));
       const mediaResult = mediaIds.length
-        ? await db.from('media_assets').select('id,file_path').in('id', mediaIds)
-        : { data: [] as { id: string; file_path: string }[] };
+        ? await db.from('media_assets').select('id,file_path,storage_bucket').in('id', mediaIds)
+        : { data: [] as { id: string; file_path: string; storage_bucket: string | null }[] };
       return {
         sections,
         heroAssets: await readHeroAssets(db, sections),
         reviews: [],
-        mediaUrls: Object.fromEntries((mediaResult.data || []).map(item => [item.id, `${url}/storage/v1/object/public/public-media/${item.file_path}`])),
+        mediaUrls: Object.fromEntries((mediaResult.data || []).map(item => [item.id, resolvePublicMediaUrl(item.file_path, item.storage_bucket || undefined)])),
       };
     }
     return null;
@@ -65,8 +66,8 @@ export const getHomepageCms = cache(async function getHomepageCms(preview = fals
   const [links, media] = await Promise.all([
     db.from('homepage_section_links').select('section_id,entity_type,entity_id,sort_order').in('section_id', sectionIds).order('sort_order'),
     mediaIds.length
-      ? db.from('media_assets').select('id,file_path').in('id', mediaIds)
-      : Promise.resolve({ data: [] as { id: string; file_path: string }[] }),
+      ? db.from('media_assets').select('id,file_path,storage_bucket').in('id', mediaIds).eq('status','published').eq('is_visible',true)
+      : Promise.resolve({ data: [] as { id: string; file_path: string; storage_bucket: string | null }[] }),
   ]);
 
   const mapped = sections.map(row => ({
@@ -92,6 +93,6 @@ export const getHomepageCms = cache(async function getHomepageCms(preview = fals
     heroAssets: await readHeroAssets(db, mapped),
     sections: publicHomepageKeys.map(key => mapped.find(section => section.key === key)).filter(Boolean) as HomepageSection[],
     reviews: [],
-    mediaUrls: Object.fromEntries((media.data || []).map(row => [row.id, `${url}/storage/v1/object/public/public-media/${row.file_path}`])),
+    mediaUrls: Object.fromEntries((media.data || []).map(row => [row.id, resolvePublicMediaUrl(row.file_path, row.storage_bucket || undefined)])),
   };
 });

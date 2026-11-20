@@ -61,16 +61,18 @@ export default async function ContentSectionPage({params}:{params:Promise<{secti
   const media=assets.filter(asset=>asset.status!=='archived').map(asset=>({id:asset.id,label:asset.title||asset.alt_text||asset.filename||'Untitled image',imageUrl:asset.publicUrl}));
   const roomSections = [
     { id: 'main', title: 'Page heading & introduction', fields: common.filter(field => field.name !== 'heroImageId').map(field => field.name) },
-    { id: 'legacy', title: 'Saved photo fields (unused on Rooms)', fields: ['heroImageId'] },
+    { id: 'legacy', title: 'Hero images', fields: ['heroImageId'] },
     { id: 'room-details', title: 'Shared room-detail headings', fields: [...detail, ...related].map(field => field.name) },
   ];
+  const live = section === 'transfers' ? '/experiences#transfers' : `/${section}`;
+  const preview = section === 'transfers' ? '/experiences?preview=transfers#transfers' : `/${section}?preview=${section}`;
   return <div className="max-w-5xl space-y-4">
-    <WebsiteEditorHeader title={page.label} status={document.publication} live={`/${section}`} description={section==='rooms'?'Edit the public introduction and headings shared by room pages. Room photos, amenities and prices are managed with each room. The page photo fields are retained for compatibility. The public hero uses photos assigned to rooms.':page.description}>
+    <WebsiteEditorHeader title={page.label} status={document.publication} live={live} description={section==='rooms'?'Edit the public hero, introduction and shared room headings. Manage individual room photos, amenities and prices under Rooms.':page.description}>
       {section==='rooms' && <Link href="/admin/rooms" className={websiteShortcut}>Manage rooms and rates</Link>}
       {section==='experiences' && <><Link href="/admin/experiences?type=experience" className={websiteShortcut}>Manage experiences and dinner</Link><Link href="/admin/experiences?type=rental" className={websiteShortcut}>Manage rentals</Link></>}
       {section==='transfers' && <Link href="/admin/transfers" className={websiteShortcut}>Manage transfer listings</Link>}
       {section==='explore-koman' && <Link href="/admin/explore-koman" className={websiteShortcut}>Manage Explore Koman articles</Link>}
     </WebsiteEditorHeader>
-    <SiteDocumentForm documentKey={section} fields={[...page.fields]} data={document.data} media={media} sections={section==='rooms'?roomSections:undefined} preview={section==='rooms'?'/rooms?preview=rooms':undefined}/>
+    <SiteDocumentForm documentKey={section} fields={[...page.fields]} data={document.data} media={media} sections={section==='rooms'?roomSections:[{id:'main',title:'Page content',fields:page.fields.map(field=>field.name)}]} preview={preview}/>
   </div>;
 }

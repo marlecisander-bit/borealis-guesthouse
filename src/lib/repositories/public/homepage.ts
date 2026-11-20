@@ -1,4 +1,4 @@
-import { fetchPublicCms } from '@/lib/supabase/public-cms';
+import { fetchPublicCms, PUBLIC_CMS_TAG } from '@/lib/supabase/public-cms';
 import 'server-only';
 
 import { unstable_cache } from 'next/cache';
@@ -67,5 +67,5 @@ async function readPublishedHomepageHero(): Promise<PublishedHomepageHero | null
 export const getPublishedHomepageHero = unstable_cache(
   readPublishedHomepageHero,
   ['published-homepage-hero-v2'],
-  { tags: [HOMEPAGE_HERO_CACHE_TAG], revalidate: 300 },
+  { tags: [HOMEPAGE_HERO_CACHE_TAG, PUBLIC_CMS_TAG, 'public-cms:homepage_sections', 'public-cms:media_assets'], revalidate: 300 },
 );

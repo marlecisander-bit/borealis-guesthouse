@@ -20,12 +20,13 @@ export default async function GalleryContentPage(){
   const[document,assets]=await Promise.all([adminSiteContentRepository.document(session,'gallery'),adminMediaRepository.options(session).catch(()=>[])]);
   const media=assets.filter(asset=>asset.status!=='archived').map(asset=>({id:asset.id,label:asset.title||asset.alt_text||asset.filename||'Untitled image',imageUrl:asset.publicUrl}));
   return <div className="max-w-5xl space-y-4">
-    <WebsiteEditorHeader title="Gallery" status={document.publication} live="/gallery" description="Edit the Gallery page copy. The photo grid uses existing gallery entries and their published media.">
+    <WebsiteEditorHeader title="Gallery" status={document.publication} live="/gallery" description="Edit the Gallery hero and page copy. The photo grid uses existing gallery entries and their published media.">
       <Link href="/admin/media" className={websiteShortcut}>Open media library</Link>
     </WebsiteEditorHeader>
     <SiteDocumentForm documentKey="gallery" fields={fields} data={document.data} media={media} preview="/gallery?preview=gallery" sections={[
-      {id:'main',title:'Gallery introduction',fields:['eyebrow','description']},
-      {id:'legacy',title:'Saved photo & headings (unused on Gallery)',fields:fields.filter(field=>field.name!=='eyebrow'&&field.name!=='description').map(field=>field.name)},
+      {id:'main',title:'Gallery introduction',fields:['eyebrow','heading','description']},
+      {id:'legacy',title:'Hero images',fields:['heroImageId']},
+      {id:'gallery-intro',title:'Photo grid introduction',fields:['introEyebrow','introHeading','introDescription']},
     ]}/>
   </div>;
 }

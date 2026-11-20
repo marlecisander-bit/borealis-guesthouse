@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import ts from 'typescript';
 import {createRequire} from 'node:module';
 import {PGlite} from '@electric-sql/pglite';
-import {landingPageFieldNames,landingPageDefaults} from '../src/lib/landing-page-content.ts';
+import {landingPageFieldNames,landingPageDefaults,landingHeroImageProps} from '../src/lib/landing-page-content.ts';
 import {validateArticle} from '../src/lib/admin/explore-validation.ts';
 const require=createRequire(import.meta.url);
 function load(file:string,mocks:Record<string,any>):any{const code=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;const m={exports:{}};new Function('require','module','exports',code)((id:string)=>{if(id==='server-only')return{};if(id in mocks)return mocks[id];if(['react','react/jsx-runtime','next/image'].includes(id))return require(id);throw Error('Unexpected '+id)},m,m.exports);return m.exports}
@@ -15,14 +15,54 @@ test('landing hero fields save, replace and clear through actual CMS action and 
  let saved:any={},status='draft';const paths:string[]=[],roles:any[]=[];
  const db={from:(table:string)=>{const filters:any={};const q:any={select:()=>q,eq:(k:string,v:any)=>{filters[k]=v;return q},neq:()=>q,in:(_k:string,values:string[])=>{filters.ids=values;return q},returns:()=>q};q.maybeSingle=async()=>({data:table==='cms_documents'?{id:'doc',data:saved}:filters.id===desktop?{file_path:'desktop.jpg',alt_text:'Desktop lake'}:filters.id===mobile?{file_path:'mobile.jpg',alt_text:'Portrait lake'}:null});q.then=(resolve:any)=>Promise.resolve({data:[{id:desktop},{id:mobile}].filter(x=>!filters.ids||filters.ids.includes(x.id)),error:null}).then(resolve);return q}};
  const action=load('src/app/admin/content/site-actions.ts',{'@/lib/supabase/server':{createServerSupabaseClient:async()=>db},'@/lib/admin/auth':{requireAdmin:async(r:any)=>{roles.push(r);return{propertyId:'property'}}},'@/lib/landing-page-content':{isLandingPageKey:(x:string)=>x==='rooms',landingPageFieldNames},'@/types/site-content-cms':{SITE_DOCUMENT_KEYS:['rooms']},'@/lib/repositories/admin/site-content':{adminSiteContentRepository:{saveDocument:async(_:any,key:any,data:any,s:any)=>{saved=data;status=s}}},'@/lib/revalidate-public-content':{contentRevalidatePath:(p:string)=>paths.push(p)}});
- const reader=load('src/services/site-content.ts',{'@/lib/property-contact':{resolvePropertyContact},'react':{cache:(fn:any)=>fn},'@/lib/whatsapp':{},'@/lib/supabase/public-cms':{createPublicCmsClient:()=>db},'@/lib/admin/auth':{},'@/lib/repositories/admin/site-content':{},'@/services/translations':{getEntityTranslationMap:async()=>new Map()},'@/lib/media-url':{resolvePublicMediaUrl:(path:string)=>'/'+path},'@/lib/landing-page-content':{landingPageDefaults}});
+ const reader=load('src/services/site-content.ts',{'@/lib/supabase/server':{createServerSupabaseClient:async()=>db},'@/lib/property-contact':{resolvePropertyContact},'react':{cache:(fn:any)=>fn},'@/lib/whatsapp':{},'@/lib/supabase/public-cms':{createPublicCmsClient:()=>db},'@/lib/admin/auth':{},'@/lib/repositories/admin/site-content':{},'@/services/translations':{getEntityTranslationMap:async()=>new Map()},'@/lib/media-url':{resolvePublicMediaUrl:(path:string)=>'/'+path},'@/lib/landing-page-content':{landingPageDefaults}});
  const form=new FormData();for(const[k,v]of Object.entries({status:'draft',heroImageId:desktop,heroMobileImageId:mobile,heroImageAlt:'Lake landscape',heroMobileImageAlt:'Lake portrait',heroDesktopX:'60',heroMobileY:'35',eyebrow:'Stay',heading:'Lake rooms',description:'A comfortable stay by the lake.'}))form.set(k,v);
  assert.equal((await action.saveSiteDocument('rooms',{},form)).ok,true);assert.equal(status,'draft');assert.ok(!paths.includes('/rooms'));
  form.set('status','published');assert.equal((await action.saveSiteDocument('rooms',{},form)).ok,true);let page=await reader.getLandingPageContent('rooms');assert.equal(page.heroImage,'/desktop.jpg');assert.equal(page.heroMobileImage,'/mobile.jpg');assert.equal(page.heroMobileImageAlt,'Lake portrait');assert.equal(page.heroDesktopX,'60');assert.ok(paths.includes('/rooms'));assert.deepEqual(roles[0],['owner','manager','editor']);
+ const draft = await reader.getLandingPageContent('rooms', {heroImageId:mobile,heroMobileImageId:'',heroDesktopX:'25'});
+ assert.equal(draft.heroImage,'/mobile.jpg');
+ assert.equal(draft.heroMobileImage,'');
+ assert.equal(draft.heroDesktopX,'25');
+ assert.equal((await reader.getLandingPageContent('rooms')).heroImage,'/desktop.jpg');
  form.set('heroMobileImageId',desktop);assert.equal((await action.saveSiteDocument('rooms',{},form)).ok,true);assert.equal((await reader.getLandingPageContent('rooms')).heroMobileImage,'/desktop.jpg');
  form.set('heroMobileImageId','');assert.equal((await action.saveSiteDocument('rooms',{},form)).ok,true);page=await reader.getLandingPageContent('rooms');assert.equal(page.heroMobileImage,'');assert.equal(page.heroImage,'/desktop.jpg');
  form.set('heroMobileImageId','invalid');assert.equal((await action.saveSiteDocument('rooms',{},form)).ok,false);
  form.set('heroMobileImageId','');form.set('heroDesktopX','101');assert.equal((await action.saveSiteDocument('rooms',{},form)).ok,false);
+});
+test('Rooms renders the saved desktop and mobile heroes ahead of its gallery fallback', async () => {
+ const fallback = { slug: 'family-room-lake-view', name: 'Family room', gallery: ['/room-gallery.jpg'] };
+ let pageImage = '/selected-desktop.jpg';
+ let mobileImage = '/selected-mobile.jpg';
+ const { default: RoomsPage } = load('src/app/rooms/page.tsx', {
+   'next/link': () => null,
+   '@/lib/preview': { getWebsiteDraft: async () => null },
+   '@/components/public/PreviewBanner': {},
+   '@/components/public/Amenities': {},
+   '@/components/public/BookingSearch': {},
+   '@/components/public/BookingLink': {},
+   '@/components/public/PageShell': { PublicShell: 'main', CTASection: 'footer' },
+   '@/components/public/ResponsiveHeroImage': { ResponsiveHeroImage: 'picture' },
+   '@/lib/seo': {},
+   '@/services/content': { contentRepository: { getRooms: async () => [fallback] } },
+   '@/lib/landing-page-content': { landingHeroImageProps },
+   '@/services/site-content': { getLandingPageContent: async () => ({
+     ...landingPageDefaults.rooms, heroImage: pageImage, heroMobileImage: mobileImage,
+     heroImageAlt: 'Room entrance', heroDesktopX: '25',
+   }) },
+   '@/lib/pricing/format': {},
+ });
+ const props = async () => {
+   const tree = await RoomsPage({searchParams: Promise.resolve({})});
+   return tree.props.children[1].props.children.props.children[1].props.children.props;
+ };
+ assert.equal((await props()).desktopImage, '/selected-desktop.jpg');
+ assert.equal((await props()).mobileImage, '/selected-mobile.jpg');
+ assert.equal((await props()).alt, 'Room entrance');
+ assert.deepEqual((await props()).desktopFocal, {x:25,y:50});
+ pageImage = '';
+ mobileImage = '';
+ assert.equal((await props()).desktopImage, '/room-gallery.jpg');
+ assert.equal((await props()).alt, 'Family room');
 });
 test('responsive hero produces one optimized picture without image preloads',()=>{
  const{heroFocalPoint}=load('src/lib/hero-image-config.ts',{});const{ResponsiveHeroImage}=load('src/components/public/ResponsiveHeroImage.tsx',{'@/lib/hero-image-config':{heroFocalPoint}});const html=require('react-dom/server').renderToStaticMarkup(require('react').createElement(ResponsiveHeroImage,{desktopImage:'/desktop.jpg',mobileImage:'/mobile.jpg',alt:'Lake',desktopFocal:{x:60,y:55},mobileFocal:{x:40,y:25}}));assert.equal((html.match(/<img /g)||[]).length,1);assert.equal((html.match(/<picture/g)||[]).length,1);assert.ok(html.includes('mobile.jpg'));assert.ok(html.includes('desktop.jpg'));assert.ok(html.includes('_next/image'));assert.ok(!html.includes('rel="preload"'));assert.ok(html.includes('loading="eager"'));assert.ok(html.includes('fetchPriority="high"'));assert.ok(html.includes('--hero-mobile-position:40% 25%'));

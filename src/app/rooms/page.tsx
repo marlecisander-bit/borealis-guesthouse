@@ -10,6 +10,7 @@ import { CTASection, PublicShell } from '@/components/public/PageShell';
 import {ResponsiveHeroImage} from '@/components/public/ResponsiveHeroImage';
 import { createPageMetadata } from '@/lib/seo';
 import { contentRepository } from '@/services/content';
+import {landingHeroImageProps} from '@/lib/landing-page-content';
 import {getLandingPageContent} from '@/services/site-content';
 import {formatRoomRate} from '@/lib/pricing/format';
 
@@ -17,16 +18,17 @@ export async function generateMetadata():Promise<Metadata>{return createPageMeta
 
 export default async function RoomsPage({searchParams}: {searchParams: Promise<{preview?: string}>}) {
   const draft = await getWebsiteDraft('rooms', (await searchParams).preview);
-  const [live, rooms] = await Promise.all([getLandingPageContent('rooms'), contentRepository.getRooms()]);
-  const page = draft?.data ? {...live, ...draft.data} : live;
+  const [page, rooms] = await Promise.all([getLandingPageContent('rooms', draft?.data), contentRepository.getRooms()]);
   const heroRoom = rooms.find(room => room.slug === 'family-room-lake-view' && room.gallery.length)
     || rooms.find(room => room.gallery.length);
+  const heroImage = page.heroImage || heroRoom?.gallery[0] || page.heroMobileImage;
+  const heroAlt = page.heroImage ? page.heroImageAlt : heroRoom?.name || page.heroMobileImageAlt || page.heroImageAlt;
   return <PublicShell>
     {draft && <PreviewBanner label={draft.saved ? "Rooms draft preview" : draft.unavailable ? "Draft unavailable" : "No saved draft"} liveHref="/rooms" showingLive={!draft.saved}/>}
     <section className="bg-ivory pb-12 pt-8 md:pb-14 md:pt-10">
       <div className="shell grid gap-10 lg:grid-cols-[.8fr_1.2fr] lg:items-center">
         <div><p className="eyebrow">{page.eyebrow}</p><h1 className="mt-4 font-serif text-5xl leading-[.98] text-lake sm:text-6xl md:text-6xl">{page.heading}</h1><p className="mt-6 max-w-lg text-lg leading-8 text-muted">{page.description}</p></div>
-        {heroRoom && <div className="relative aspect-video max-h-72 overflow-hidden rounded-3xl"><ResponsiveHeroImage desktopImage={heroRoom.gallery[0]} alt={heroRoom.name} sizes="(width < 360px) calc(100vw - 1.5rem), (width < 768px) calc(100vw - 2rem), (width < 1024px) calc(100vw - 4rem), (width < 1344px) calc(60vw - 3.9rem), 46.5rem" /></div>}
+        {heroImage && <div className="relative aspect-video max-h-72 overflow-hidden rounded-3xl"><ResponsiveHeroImage {...landingHeroImageProps(page)} desktopImage={heroImage} alt={heroAlt} sizes="(width < 360px) calc(100vw - 1.5rem), (width < 768px) calc(100vw - 2rem), (width < 1024px) calc(100vw - 4rem), (width < 1344px) calc(60vw - 3.9rem), 46.5rem" /></div>}
       </div>
     </section>
     <section className="relative z-10 -mt-6 pb-9 md:-mt-7"><div className="shell"><BookingSearch /></div></section>

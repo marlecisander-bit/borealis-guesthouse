@@ -2,9 +2,10 @@ import 'server-only';
 import { draftMode } from 'next/headers';
 import { adminSiteContentRepository } from '@/lib/repositories/admin/site-content';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import type { LandingPageKey } from '@/lib/landing-page-content';
 import { getAdminIdentity, getAdminSession } from '@/lib/admin/auth';
 
-export type PreviewType = 'homepage'|'room'|'experience'|'transfer'|'article'|'about'|'contact'|'footer'|'rooms'|'gallery';
+export type PreviewType = 'homepage'|'room'|'experience'|'transfer'|'article'|'about'|'contact'|'footer'|LandingPageKey;
 
 export async function authorizePreview(type:PreviewType,value:string|undefined){
   if(!value)return null;
@@ -13,7 +14,7 @@ export async function authorizePreview(type:PreviewType,value:string|undefined){
   if(!session)return null;
   // Existing authenticated CMS preview links remain valid while the central
   // gateway upgrades the session to Next.js draft mode.
-  if(type==='homepage'||type==='about'||type==='contact'||type==='footer'||type==='rooms'||type==='gallery')return value===type?{session,id:value,draftMode:mode.isEnabled}:null;
+  if(type==='homepage'||type==='about'||type==='contact'||type==='footer'||type==='rooms'||type==='gallery'||type==='experiences'||type==='transfers'||type==='explore-koman')return value===type?{session,id:value,draftMode:mode.isEnabled}:null;
   return value?{session,id:value,draftMode:mode.isEnabled}:null;
 }
 
@@ -22,11 +23,11 @@ export function previewHref(type:PreviewType,id:string,returnTo:string){
   return `/admin/preview?${query.toString()}`;
 }
 
-export async function getWebsiteDraft(key: 'rooms' | 'gallery' | 'contact', requested: string | undefined) {
+export async function getWebsiteDraft(key: LandingPageKey | 'contact', requested: string | undefined) {
   if (requested !== key) return null;
   const identity = await getAdminIdentity();
   if (identity?.permissions) {
-    if (!identity.permissions.includes('website.draft')) return null;
+    if (!identity.permissions.includes('website.draft') || !['rooms','gallery','contact'].includes(key)) return null;
     const db = await createServerSupabaseClient();
     const {data,error} = await db.rpc('team_workspace',{target_property:identity.propertyId,area:'website.draft',subject:key});
     if (error) return {saved:false,unavailable:true,data:undefined};

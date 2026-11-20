@@ -5,27 +5,31 @@ import { PageHero, PublicShell } from '@/components/public/PageShell';
 import { landingHeroImageProps } from '@/lib/landing-page-content';
 import { publicContentRepository } from '@/lib/repositories/public/content';
 import { createPageMetadata } from '@/lib/seo';
+import { getWebsiteDraft } from '@/lib/preview';
+import { PreviewBanner } from '@/components/public/PreviewBanner';
 import { getLandingPageContent } from '@/services/site-content';
 
 export async function generateMetadata(): Promise<Metadata> {
   return createPageMetadata('explore-koman');
 }
 
-export default async function ExploreKomanPage() {
+export default async function ExploreKomanPage({searchParams}: {searchParams: Promise<{preview?: string}>}) {
+  const draft = await getWebsiteDraft('explore-koman', (await searchParams).preview);
   const [articles, property, page] = await Promise.all([
     publicContentRepository.getExploreArticles(),
     publicContentRepository.getProperty(),
-    getLandingPageContent('explore-koman'),
+    getLandingPageContent('explore-koman', draft?.data),
   ]);
   const destination = articles.find(article => article.image !== property.heroImage && article.image !== '/borealis-placeholder.svg');
-  const usePageImage = page.heroImage && page.heroImage !== property.heroImage && page.heroImage !== '/borealis-placeholder.svg';
+  const usePageImage = Boolean(page.heroImage);
   const ferryArticles = articles.filter(article => /ferry|lake trips?/.test(`${article.category.slug} ${article.slug.replaceAll('-', ' ')}`));
   const arrivalArticles = articles.filter(article => !ferryArticles.includes(article) && /getting.here|getting.to|transport|directions/.test(`${article.category.slug} ${article.slug}`));
   const nearbyArticles = articles.filter(article => !ferryArticles.includes(article) && !arrivalArticles.includes(article));
 
   return <PublicShell>
+    {draft && <PreviewBanner label={draft.saved ? 'Explore Koman draft preview' : draft.unavailable ? 'Draft unavailable' : 'No saved draft'} liveHref="/explore-koman" showingLive={!draft.saved}/>}
     <PageHero
-      {...(usePageImage ? landingHeroImageProps(page) : {})}
+      {...landingHeroImageProps(page)}
       eyebrow={page.eyebrow}
       title={page.heading}
       copy={page.description}
